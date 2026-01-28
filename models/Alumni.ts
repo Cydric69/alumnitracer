@@ -1,341 +1,400 @@
 // models/Alumni.ts
 import mongoose, { Document, Schema, Types } from "mongoose";
+import { z } from "zod";
 
-export interface IAlumni extends Document {
+// Zod Schema based on your AlumniInput type
+export const AlumniZodSchema = z.object({
   // Personal Information
-  firstName: string;
-  lastName: string;
-  gender: "Male" | "Female" | "Other";
-  civilStatus: "Single" | "Married" | "Widowed" | "Separated";
-  dateOfBirth?: Date;
-  placeOfBirth?: string;
+  firstName: z
+    .string()
+    .min(2, "First name must be at least 2 characters")
+    .max(100, "First name cannot exceed 100 characters")
+    .transform((val) => val.toUpperCase().trim()),
+
+  lastName: z
+    .string()
+    .min(2, "Last name must be at least 2 characters")
+    .max(100, "Last name cannot exceed 100 characters")
+    .transform((val) => val.toUpperCase().trim()),
+
+  gender: z.enum(["Male", "Female", "Other"]),
+
+  civilStatus: z.enum(["Single", "Married", "Widowed", "Separated"]),
+
+  dateOfBirth: z
+    .string()
+    .regex(/^\d{4}-\d{2}-\d{2}$/, "Date must be in YYYY-MM-DD format")
+    .optional(),
+
+  placeOfBirth: z
+    .string()
+    .max(500, "Place of birth cannot exceed 500 characters")
+    .transform((val) => val.trim())
+    .optional(),
 
   // Contact Information
-  email: string;
-  phoneNumber: string;
-  facebookAccount?: string;
-  address: string;
+  email: z
+    .string()
+    .email("Please enter a valid email address")
+    .transform((val) => val.toLowerCase().trim()),
+
+  phoneNumber: z
+    .string()
+    .min(10, "Phone number must be at least 10 characters")
+    .max(20, "Phone number cannot exceed 20 characters")
+    .transform((val) => val.trim()),
+
+  facebookAccount: z
+    .string()
+    .max(200, "Facebook account cannot exceed 200 characters")
+    .transform((val) => val.trim())
+    .optional(),
+
+  address: z
+    .string()
+    .min(10, "Address must be at least 10 characters")
+    .max(500, "Address cannot exceed 500 characters")
+    .transform((val) => val.trim()),
 
   // Academic Information
-  studentId?: string;
-  yearGraduated: string;
-  campus: Types.ObjectId;
-  department: Types.ObjectId;
-  course: Types.ObjectId;
-  degree: string;
+  studentId: z
+    .string()
+    .max(50, "Student ID cannot exceed 50 characters")
+    .transform((val) => val.trim())
+    .optional(),
+
+  yearGraduated: z.string().regex(/^\d{4}$/, "Year must be 4 digits"),
+
+  campus: z.string().transform((val) => val.trim()),
+
+  department: z.string().transform((val) => val.trim()),
+
+  course: z.string().transform((val) => val.trim()),
+
+  degree: z
+    .string()
+    .min(5, "Degree must be at least 5 characters")
+    .max(200, "Degree cannot exceed 200 characters")
+    .transform((val) => val.toUpperCase().trim()),
 
   // Employment Information
-  employmentStatus:
-    | "Employed"
-    | "Self-Employed"
-    | "Unemployed"
-    | "Never Employed"
-    | "Further Studies";
-  employmentSector:
-    | "Government"
-    | "Private"
-    | "Entrepreneurial"
-    | "Freelance"
-    | "N/A";
-  presentEmploymentStatus:
-    | "Regular"
-    | "Probationary"
-    | "Casual"
-    | "Others"
-    | "N/A";
-  locationOfEmployment: "Local" | "Abroad" | "N/A";
+  employmentStatus: z.enum([
+    "Employed",
+    "Self-Employed",
+    "Unemployed",
+    "Never Employed",
+    "Further Studies",
+  ]),
+
+  employmentSector: z.enum([
+    "Government",
+    "Private",
+    "Entrepreneurial",
+    "Freelance",
+    "N/A",
+  ]),
+
+  presentEmploymentStatus: z.enum([
+    "Regular",
+    "Probationary",
+    "Casual",
+    "Others",
+    "N/A",
+  ]),
+
+  locationOfEmployment: z.enum(["Local", "Abroad", "N/A"]),
 
   // Job Details
-  currentPosition?: string;
-  employer?: string;
-  companyAddress?: string;
+  currentPosition: z
+    .string()
+    .max(100, "Current position cannot exceed 100 characters")
+    .transform((val) => val.trim())
+    .optional(),
+
+  employer: z
+    .string()
+    .max(200, "Employer cannot exceed 200 characters")
+    .transform((val) => val.trim())
+    .optional(),
+
+  companyAddress: z
+    .string()
+    .max(500, "Company address cannot exceed 500 characters")
+    .transform((val) => val.trim())
+    .optional(),
 
   // Board Exam Information
-  boardExamPassed?: string;
-  yearPassedBoardExam?: string;
-  dateEmploymentAfterBoardExam?:
-    | "Within one month"
-    | "1 to 3 months"
-    | "3 to 6 months"
-    | "6 months to 1 year"
-    | "Within 2 years"
-    | "After 2 years";
+  boardExamPassed: z
+    .string()
+    .max(100, "Board exam passed cannot exceed 100 characters")
+    .transform((val) => val.trim())
+    .optional(),
+
+  yearPassedBoardExam: z
+    .string()
+    .regex(/^\d{4}$/, "Year must be 4 digits")
+    .optional(),
+
+  dateEmploymentAfterBoardExam: z
+    .enum([
+      "Within one month",
+      "1 to 3 months",
+      "3 to 6 months",
+      "6 months to 1 year",
+      "Within 2 years",
+      "After 2 years",
+    ])
+    .optional(),
 
   // Job Search Information
-  jobInformationSource?:
-    | "CHMSU Career Fair"
-    | "Personal"
-    | "Other Job Fairs"
-    | "None";
-  firstJobDuration?:
-    | "3 to 6 months"
-    | "6 months to 1 year"
-    | "1 to 2 years"
-    | "2 years & above"
-    | "Currently Working";
+  jobInformationSource: z
+    .enum(["CHMSU Career Fair", "Personal", "Other Job Fairs", "None"])
+    .optional(),
+
+  firstJobDuration: z
+    .enum([
+      "3 to 6 months",
+      "6 months to 1 year",
+      "1 to 2 years",
+      "2 years & above",
+      "Currently Working",
+    ])
+    .optional(),
 
   // Job Relationship Questions
-  isFirstJobRelatedToDegree?: boolean;
-  firstJobReasons?: string[]; // Array of reasons for first job
+  isFirstJobRelatedToDegree: z.boolean().optional(),
+  isCurrentJobRelatedToDegree: z.boolean().optional(),
 
-  isCurrentJobRelatedToDegree?: boolean;
-  currentJobReasons?: string[]; // Array of reasons for current job
+  firstJobReasons: z
+    .array(
+      z
+        .string()
+        .max(100, "Reason cannot exceed 100 characters")
+        .transform((val) => val.trim()),
+    )
+    .optional(),
 
-  // File Upload (store file path or URL)
-  employmentProof?: string;
+  currentJobReasons: z
+    .array(
+      z
+        .string()
+        .max(100, "Reason cannot exceed 100 characters")
+        .transform((val) => val.trim()),
+    )
+    .optional(),
+
+  // File Upload
+  employmentProof: z
+    .string()
+    .transform((val) => val.trim())
+    .optional(),
 
   // Awards & Scholarships
-  awardsRecognition?: string[];
-  scholarshipsDuringEmployment?: string[];
-  eligibility?: string[];
+  awardsRecognition: z
+    .array(
+      z
+        .string()
+        .max(200, "Award/Recognition cannot exceed 200 characters")
+        .transform((val) => val.trim()),
+    )
+    .optional(),
+
+  scholarshipsDuringEmployment: z
+    .array(
+      z
+        .string()
+        .max(200, "Scholarship name cannot exceed 200 characters")
+        .transform((val) => val.trim()),
+    )
+    .optional(),
+
+  eligibility: z
+    .array(
+      z
+        .string()
+        .max(100, "Eligibility cannot exceed 100 characters")
+        .transform((val) => val.trim()),
+    )
+    .optional(),
 
   // Preferences
-  willingToMentor: boolean;
-  receiveUpdates: boolean;
-  suggestions?: string;
+  willingToMentor: z.boolean().default(false),
+  receiveUpdates: z.boolean().default(true),
 
-  createdAt: Date;
-  updatedAt: Date;
-}
+  suggestions: z
+    .string()
+    .max(1000, "Suggestions cannot exceed 1000 characters")
+    .transform((val) => val.trim())
+    .optional(),
+});
 
+// Extract TypeScript type from Zod schema (matches AlumniInput)
+export type IAlumni = z.infer<typeof AlumniZodSchema> & Document;
+
+// Mongoose Schema
 const AlumniSchema = new Schema<IAlumni>(
   {
     // Personal Information
     firstName: {
       type: String,
       required: [true, "First name is required"],
-      trim: true,
-      minlength: [2, "First name must be at least 2 characters"],
-      maxlength: [100, "First name cannot exceed 100 characters"],
     },
 
     lastName: {
       type: String,
       required: [true, "Last name is required"],
-      trim: true,
-      minlength: [2, "Last name must be at least 2 characters"],
-      maxlength: [100, "Last name cannot exceed 100 characters"],
     },
 
     gender: {
       type: String,
       required: [true, "Gender is required"],
-      enum: {
-        values: ["Male", "Female", "Other"],
-        message: "Gender must be Male, Female, or Other",
-      },
+      enum: ["Male", "Female", "Other"],
     },
 
     civilStatus: {
       type: String,
       required: [true, "Civil status is required"],
-      enum: {
-        values: ["Single", "Married", "Widowed", "Separated"],
-        message: "Civil status must be Single, Married, Widowed, or Separated",
-      },
+      enum: ["Single", "Married", "Widowed", "Separated"],
     },
 
     dateOfBirth: {
-      type: Date,
+      type: String,
     },
 
     placeOfBirth: {
       type: String,
-      trim: true,
-      maxlength: [200, "Place of birth cannot exceed 200 characters"],
     },
 
     // Contact Information
     email: {
       type: String,
       required: [true, "Email is required"],
-      trim: true,
-      lowercase: true,
-      match: [/^\S+@\S+\.\S+$/, "Please enter a valid email address"],
     },
 
     phoneNumber: {
       type: String,
       required: [true, "Phone number is required"],
-      trim: true,
-      minlength: [10, "Phone number must be at least 10 characters"],
-      maxlength: [20, "Phone number cannot exceed 20 characters"],
     },
 
     facebookAccount: {
       type: String,
-      trim: true,
-      maxlength: [200, "Facebook account cannot exceed 200 characters"],
     },
 
     address: {
       type: String,
       required: [true, "Address is required"],
-      trim: true,
-      minlength: [10, "Address must be at least 10 characters"],
-      maxlength: [500, "Address cannot exceed 500 characters"],
     },
 
     // Academic Information
     studentId: {
       type: String,
-      trim: true,
-      unique: true,
-      sparse: true,
-      maxlength: [50, "Student ID cannot exceed 50 characters"],
     },
 
     yearGraduated: {
       type: String,
       required: [true, "Year graduated is required"],
-      match: [/^\d{4}$/, "Year must be 4 digits"],
     },
 
     campus: {
-      type: Schema.Types.ObjectId,
-      ref: "Campus",
+      type: String,
       required: [true, "Campus is required"],
     },
 
     department: {
-      type: Schema.Types.ObjectId,
-      ref: "Department",
+      type: String,
       required: [true, "Department is required"],
     },
 
     course: {
-      type: Schema.Types.ObjectId,
-      ref: "Course",
+      type: String,
       required: [true, "Course is required"],
     },
 
     degree: {
       type: String,
       required: [true, "Degree is required"],
-      trim: true,
-      minlength: [5, "Degree must be at least 5 characters"],
-      maxlength: [200, "Degree cannot exceed 200 characters"],
     },
 
     // Employment Information
     employmentStatus: {
       type: String,
       required: [true, "Employment status is required"],
-      enum: {
-        values: [
-          "Employed",
-          "Self-Employed",
-          "Unemployed",
-          "Never Employed",
-          "Further Studies",
-        ],
-        message:
-          "Employment status must be Employed, Self-Employed, Unemployed, Never Employed, or Further Studies",
-      },
+      enum: [
+        "Employed",
+        "Self-Employed",
+        "Unemployed",
+        "Never Employed",
+        "Further Studies",
+      ],
     },
 
     employmentSector: {
       type: String,
       required: [true, "Employment sector is required"],
-      enum: {
-        values: [
-          "Government",
-          "Private",
-          "Entrepreneurial",
-          "Freelance",
-          "N/A",
-        ],
-        message:
-          "Employment sector must be Government, Private, Entrepreneurial, Freelance, or N/A",
-      },
+      enum: ["Government", "Private", "Entrepreneurial", "Freelance", "N/A"],
     },
 
     presentEmploymentStatus: {
       type: String,
       required: [true, "Present employment status is required"],
-      enum: {
-        values: ["Regular", "Probationary", "Casual", "Others", "N/A"],
-        message:
-          "Present employment status must be Regular, Probationary, Casual, Others, or N/A",
-      },
+      enum: ["Regular", "Probationary", "Casual", "Others", "N/A"],
     },
 
     locationOfEmployment: {
       type: String,
       required: [true, "Location of employment is required"],
-      enum: {
-        values: ["Local", "Abroad", "N/A"],
-        message: "Location of employment must be Local, Abroad, or N/A",
-      },
+      enum: ["Local", "Abroad", "N/A"],
     },
 
     // Job Details
     currentPosition: {
       type: String,
-      trim: true,
-      maxlength: [100, "Current position cannot exceed 100 characters"],
     },
 
     employer: {
       type: String,
-      trim: true,
-      maxlength: [200, "Employer cannot exceed 200 characters"],
     },
 
     companyAddress: {
       type: String,
-      trim: true,
-      maxlength: [500, "Company address cannot exceed 500 characters"],
     },
 
     // Board Exam Information
     boardExamPassed: {
       type: String,
-      trim: true,
-      maxlength: [100, "Board exam passed cannot exceed 100 characters"],
     },
 
     yearPassedBoardExam: {
       type: String,
-      match: [/^\d{4}$/, "Year must be 4 digits"],
     },
 
     dateEmploymentAfterBoardExam: {
       type: String,
-      enum: {
-        values: [
-          "Within one month",
-          "1 to 3 months",
-          "3 to 6 months",
-          "6 months to 1 year",
-          "Within 2 years",
-          "After 2 years",
-        ],
-        message: "Invalid date of employment after board exam",
-      },
+      enum: [
+        "Within one month",
+        "1 to 3 months",
+        "3 to 6 months",
+        "6 months to 1 year",
+        "Within 2 years",
+        "After 2 years",
+      ],
     },
 
     // Job Search Information
     jobInformationSource: {
       type: String,
-      enum: {
-        values: ["CHMSU Career Fair", "Personal", "Other Job Fairs", "None"],
-        message: "Invalid job information source",
-      },
+      enum: ["CHMSU Career Fair", "Personal", "Other Job Fairs", "None"],
     },
 
     firstJobDuration: {
       type: String,
-      enum: {
-        values: [
-          "3 to 6 months",
-          "6 months to 1 year",
-          "1 to 2 years",
-          "2 years & above",
-          "Currently Working",
-        ],
-        message: "Invalid first job duration",
-      },
+      enum: [
+        "3 to 6 months",
+        "6 months to 1 year",
+        "1 to 2 years",
+        "2 years & above",
+        "Currently Working",
+      ],
     },
 
     // Job Relationship Questions
@@ -346,8 +405,6 @@ const AlumniSchema = new Schema<IAlumni>(
     firstJobReasons: [
       {
         type: String,
-        trim: true,
-        maxlength: [100, "Reason cannot exceed 100 characters"],
       },
     ],
 
@@ -358,39 +415,30 @@ const AlumniSchema = new Schema<IAlumni>(
     currentJobReasons: [
       {
         type: String,
-        trim: true,
-        maxlength: [100, "Reason cannot exceed 100 characters"],
       },
     ],
 
     // File Upload
     employmentProof: {
       type: String,
-      trim: true,
     },
 
     // Awards & Scholarships
     awardsRecognition: [
       {
         type: String,
-        trim: true,
-        maxlength: [200, "Award/Recognition cannot exceed 200 characters"],
       },
     ],
 
     scholarshipsDuringEmployment: [
       {
         type: String,
-        trim: true,
-        maxlength: [200, "Scholarship name cannot exceed 200 characters"],
       },
     ],
 
     eligibility: [
       {
         type: String,
-        trim: true,
-        maxlength: [100, "Eligibility cannot exceed 100 characters"],
       },
     ],
 
@@ -407,25 +455,35 @@ const AlumniSchema = new Schema<IAlumni>(
 
     suggestions: {
       type: String,
-      trim: true,
-      maxlength: [1000, "Suggestions cannot exceed 1000 characters"],
     },
   },
   {
     timestamps: true,
     collection: "alumni",
-  }
+  },
 );
 
 // Create indexes for better query performance
-AlumniSchema.index({ email: 1 }, { unique: true });
 AlumniSchema.index({ campus: 1 });
 AlumniSchema.index({ department: 1 });
 AlumniSchema.index({ course: 1 });
 AlumniSchema.index({ yearGraduated: 1 });
 AlumniSchema.index({ employmentStatus: 1 });
 AlumniSchema.index({ firstName: 1, lastName: 1 });
+AlumniSchema.index({ email: 1 });
 
-// Prevent model recompilation in development
-export default mongoose.models.Alumni ||
-  mongoose.model<IAlumni>("Alumni", AlumniSchema);
+// Static method for Zod validation
+AlumniSchema.statics.validateData = async function (data: any) {
+  return AlumniZodSchema.parseAsync(data);
+};
+
+// Static method for safe validation (returns errors instead of throwing)
+AlumniSchema.statics.safeValidate = async function (data: any) {
+  const result = await AlumniZodSchema.safeParseAsync(data);
+  return result;
+};
+
+// Create and export the model
+const Alumni =
+  mongoose.models.Alumni || mongoose.model<IAlumni>("Alumni", AlumniSchema);
+export default Alumni;

@@ -2,15 +2,16 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import Header from "@/components/Header";
-import HeroSection from "@/components/HeroSection";
-import Footer from "@/components/Footer";
-import SurveyModal from "@/components/SurveyModal";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { ChevronDown, ChevronUp } from "lucide-react";
 
 export default function Home() {
   const router = useRouter();
+  const pathname = usePathname();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
-  const [isSurveyModalOpen, setIsSurveyModalOpen] = useState(false);
+  const [showCampuses, setShowCampuses] = useState(false);
+  const [showPrograms, setShowPrograms] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -21,12 +22,10 @@ export default function Home() {
         });
 
         if (response.ok) {
-          // Already logged in, redirect to dashboard
           router.replace("/dashboard");
           return;
         }
       } catch (error) {
-        // Not authenticated, stay on landing page
         console.log("User not authenticated");
       } finally {
         setIsCheckingAuth(false);
@@ -36,24 +35,11 @@ export default function Home() {
     checkAuth();
   }, [router]);
 
-  const handleOpenSurvey = () => {
-    setIsSurveyModalOpen(true);
+  const isActive = (href: string) => {
+    if (href === "/") return pathname === "/";
+    return pathname?.startsWith(href);
   };
 
-  const handleCloseSurvey = () => {
-    setIsSurveyModalOpen(false);
-  };
-
-  const handleSurveySuccess = () => {
-    console.log("Survey submitted successfully!");
-    // You can add a toast notification here
-    // toast.success('Survey submitted successfully!');
-
-    // Optional: Redirect to dashboard after successful submission
-    // router.push('/dashboard');
-  };
-
-  // Show loading while checking auth
   if (isCheckingAuth) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-white">
@@ -66,29 +52,548 @@ export default function Home() {
   }
 
   return (
-    <>
-      <Header />
-      <main>
-        <HeroSection onOpenSurvey={handleOpenSurvey} />
-      </main>
-      <Footer />
+    <main className="min-h-screen bg-white p-4 md:p-6 font-serif">
+      {/* Newspaper Masthead with Navigation */}
+      <div className="max-w-7xl mx-auto border-b-4 border-black pb-6 mb-8">
+        <div className="text-center mb-6">
+          <h1 className="text-7xl md:text-8xl font-['Manufacturing_Consent'] tracking-relaxed text-green-800 mb-2">
+            CHMSU Alumni Registry
+          </h1>
 
-      {/* Survey Modal */}
-      <SurveyModal
-        isOpen={isSurveyModalOpen}
-        onClose={handleCloseSurvey}
-        onSuccess={handleSurveySuccess}
-      />
+          {/* Navigation Bar - Clean & Minimalistic */}
+          <div className="flex flex-col md:flex-row justify-between items-center text-sm uppercase tracking-widest border-t border-b border-black py-3 gap-4 md:gap-0">
+            {/* Navigation Links - Clean Design */}
+            <nav className="flex items-center gap-6 md:gap-8">
+              <Link
+                href="/"
+                className={`
+                  transition-all duration-200 font-medium
+                  ${
+                    isActive("/")
+                      ? "text-black font-bold border-b-2 border-black pb-1"
+                      : "text-gray-700 hover:text-black hover:border-b-2 hover:border-gray-400 hover:pb-1"
+                  }
+                `}
+              >
+                Home
+              </Link>
 
-      {/* Hidden fallback trigger (optional) */}
-      <button
-        data-survey-trigger
-        onClick={handleOpenSurvey}
-        className="hidden"
-        aria-hidden="true"
-      >
-        Open Survey
-      </button>
-    </>
+              <Link
+                href="/events"
+                className={`
+                  transition-all duration-200 font-medium
+                  ${
+                    isActive("/events")
+                      ? "text-black font-bold border-b-2 border-black pb-1"
+                      : "text-gray-700 hover:text-black hover:border-b-2 hover:border-gray-400 hover:pb-1"
+                  }
+                `}
+              >
+                Events
+              </Link>
+
+              <Link
+                href="/announcements"
+                className={`
+                  transition-all duration-200 font-medium
+                  ${
+                    isActive("/announcements")
+                      ? "text-black font-bold border-b-2 border-black pb-1"
+                      : "text-gray-700 hover:text-black hover:border-b-2 hover:border-gray-400 hover:pb-1"
+                  }
+                `}
+              >
+                Announcements
+              </Link>
+
+              <Link
+                href="/login"
+                className={`
+                  transition-all duration-200 font-medium
+                  ${
+                    isActive("/login")
+                      ? "text-gray-800 font-bold border-b-2 border-gray-800 pb-1"
+                      : "text-gray-600 hover:text-gray-800 hover:border-b-2 hover:border-gray-600 hover:pb-1"
+                  }
+                `}
+              >
+                Admin
+              </Link>
+            </nav>
+
+            {/* Date Display */}
+            <div className="text-gray-700">
+              <span className="text-xs md:text-sm">
+                {new Date()
+                  .toLocaleDateString("en-US", {
+                    weekday: "long",
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  })
+                  .toUpperCase()}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        {/* Main Newspaper Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
+          {/* Left Column - Featured Story - Full Width */}
+          <div className="lg:col-span-8 space-y-8">
+            {/* Main Feature - Now full width */}
+            <article className="border-b-2 border-black pb-8">
+              <div className="mb-4">
+                <span className="bg-green-800 text-white px-3 py-1 text-sm uppercase tracking-widest">
+                  Official Announcement
+                </span>
+              </div>
+              <h2 className="text-4xl md:text-5xl font-bold font-['Times_New_Roman'] leading-tight mb-4">
+                CHMSU Launches Alumni Information Registry System
+              </h2>
+              <div className="flex items-center mb-6 text-sm text-gray-600">
+                <span className="mr-4">By ALUMNI RELATIONS OFFICE</span>
+                <span>Published Today</span>
+              </div>
+
+              <div className="mb-6">
+                <p className="text-lg leading-relaxed mb-4">
+                  Carlos Hilado Memorial State University announces the launch
+                  of its official Alumni Information Registry System. This
+                  platform allows all graduates from Talisay Main Campus,
+                  Alijis, Fortune Towne, and Binalbagan to submit their contact
+                  information to stay connected with the university.
+                </p>
+                <p className="text-lg leading-relaxed mb-4">
+                  "No registration required! Simply provide your basic
+                  information, and we'll ensure you receive all updates about
+                  alumni events, anniversary celebrations, and university news,"
+                  said Dr. Maria Lourdes D. Santos, University President. "This
+                  will help us properly organize our Golden Anniversary
+                  celebrations next year."
+                </p>
+              </div>
+
+              {/* Campuses Accordion */}
+              <div className="mb-6">
+                <button
+                  onClick={() => setShowCampuses(!showCampuses)}
+                  className="w-full flex justify-between items-center p-4 bg-gray-50 border border-gray-300 hover:bg-gray-100 transition-colors"
+                >
+                  <h4 className="font-bold text-lg text-green-800">
+                    View All CHMSU Campuses
+                  </h4>
+                  {showCampuses ? (
+                    <ChevronUp className="h-5 w-5 text-gray-600" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-gray-600" />
+                  )}
+                </button>
+
+                {showCampuses && (
+                  <div className="border border-gray-300 border-t-0 p-4 bg-white">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <div className="p-3 border border-gray-300 bg-gray-50">
+                          <h5 className="font-bold text-green-800">
+                            Talisay Main Campus
+                          </h5>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Primary campus with comprehensive facilities
+                          </p>
+                        </div>
+                        <div className="p-3 border border-gray-300 bg-gray-50">
+                          <h5 className="font-bold text-green-800">
+                            Alijis Campus
+                          </h5>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Technology and engineering programs
+                          </p>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <div className="p-3 border border-gray-300 bg-gray-50">
+                          <h5 className="font-bold text-green-800">
+                            Fortune Towne Campus
+                          </h5>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Education and business programs
+                          </p>
+                        </div>
+                        <div className="p-3 border border-gray-300 bg-gray-50">
+                          <h5 className="font-bold text-green-800">
+                            Binalbagan Campus
+                          </h5>
+                          <p className="text-sm text-gray-600 mt-1">
+                            Criminology and security programs
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Programs Accordion */}
+              <div className="mb-6">
+                <button
+                  onClick={() => setShowPrograms(!showPrograms)}
+                  className="w-full flex justify-between items-center p-4 bg-gray-50 border border-gray-300 hover:bg-gray-100 transition-colors"
+                >
+                  <h4 className="font-bold text-lg text-green-800">
+                    View All CHMSU Programs
+                  </h4>
+                  {showPrograms ? (
+                    <ChevronUp className="h-5 w-5 text-gray-600" />
+                  ) : (
+                    <ChevronDown className="h-5 w-5 text-gray-600" />
+                  )}
+                </button>
+
+                {showPrograms && (
+                  <div className="border border-gray-300 border-t-0 p-4 bg-white">
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
+                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
+                        <div className="font-bold">BSIT</div>
+                        <div className="text-xs text-gray-600">
+                          Information Technology
+                        </div>
+                      </div>
+                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
+                        <div className="font-bold">BSED</div>
+                        <div className="text-xs text-gray-600">
+                          Secondary Education
+                        </div>
+                      </div>
+                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
+                        <div className="font-bold">BEED</div>
+                        <div className="text-xs text-gray-600">
+                          Elementary Education
+                        </div>
+                      </div>
+                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
+                        <div className="font-bold">BA</div>
+                        <div className="text-xs text-gray-600">
+                          Business Administration
+                        </div>
+                      </div>
+                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
+                        <div className="font-bold">BSFI</div>
+                        <div className="text-xs text-gray-600">Finance</div>
+                      </div>
+                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
+                        <div className="font-bold">BSCRIM</div>
+                        <div className="text-xs text-gray-600">Criminology</div>
+                      </div>
+                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
+                        <div className="font-bold">BSIS</div>
+                        <div className="text-xs text-gray-600">
+                          Information Systems
+                        </div>
+                      </div>
+                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
+                        <div className="font-bold">BSIE</div>
+                        <div className="text-xs text-gray-600">
+                          Industrial Engineering
+                        </div>
+                      </div>
+                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
+                        <div className="font-bold">BSE</div>
+                        <div className="text-xs text-gray-600">
+                          Science Education
+                        </div>
+                      </div>
+                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
+                        <div className="font-bold">POLSCI</div>
+                        <div className="text-xs text-gray-600">
+                          Political Science
+                        </div>
+                      </div>
+                      <div className="p-2 border border-gray-300 bg-gray-50 text-center col-span-2 md:col-span-1">
+                        <div className="font-bold">BSPSYCH</div>
+                        <div className="text-xs text-gray-600">Psychology</div>
+                      </div>
+                    </div>
+                    <p className="text-sm text-gray-600 mt-4">
+                      Plus all other degree programs offered across CHMSU
+                      campuses
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="mb-6 p-5 bg-gray-50 border-l-4 border-green-800">
+                <h4 className="font-bold text-xl mb-3 text-green-800">
+                  Why Submit Your Information?
+                </h4>
+                <ul className="list-disc pl-5 space-y-2">
+                  <li className="font-medium">
+                    Receive invitations to alumni events and homecomings
+                  </li>
+                  <li className="font-medium">
+                    Get notified about batch reunions and anniversary
+                    celebrations
+                  </li>
+                  <li className="font-medium">
+                    Stay updated on university developments and achievements
+                  </li>
+                  <li className="font-medium">
+                    Connect with former classmates and professors
+                  </li>
+                  <li className="font-medium">
+                    Access exclusive alumni benefits and discounts
+                  </li>
+                </ul>
+              </div>
+
+              <div className="text-center">
+                <Link
+                  href="/information-form"
+                  className="inline-block bg-green-800 text-white px-10 py-5 font-bold hover:bg-green-900 transition-colors text-xl w-full md:w-auto"
+                >
+                  SUBMIT YOUR ALUMNI INFORMATION NOW
+                </Link>
+                <p className="text-sm text-gray-600 mt-3">
+                  No registration required • Takes only 3-5 minutes • All
+                  information is confidential
+                </p>
+              </div>
+            </article>
+
+            {/* Secondary Stories Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <article className="border-b border-gray-300 pb-6">
+                <h3 className="text-2xl font-bold font-['Times_New_Roman'] mb-3">
+                  Golden Anniversary Preparation Begins
+                </h3>
+                <p className="text-gray-700 mb-4">
+                  CHMSU prepares for its 50th Anniversary celebrations in 2027.
+                  The alumni registry will help organize batch reunions, special
+                  events, and anniversary activities across all campuses.
+                </p>
+                <span className="text-sm text-gray-500">
+                  CONTINUED ON PAGE A2
+                </span>
+              </article>
+
+              <article className="border-b border-gray-300 pb-6">
+                <h3 className="text-2xl font-bold font-['Times_New_Roman'] mb-3">
+                  Batch Coordinators Needed
+                </h3>
+                <p className="text-gray-700 mb-4">
+                  The Alumni Office seeks volunteers from each graduating batch
+                  to help coordinate communications and events for their
+                  respective groups.
+                </p>
+                <span className="text-sm text-gray-500">
+                  CONTINUED ON PAGE B1
+                </span>
+              </article>
+            </div>
+          </div>
+
+          {/* Right Column - Sidebar & Additional Content */}
+          <div className="lg:col-span-4 space-y-8">
+            {/* Information Registry Callout */}
+            <div className="bg-gray-50 p-6 border-2 border-green-800">
+              <h3 className="text-2xl font-bold font-['Times_New_Roman'] mb-4 border-b border-green-800 pb-2">
+                ALUMNI REGISTRY
+              </h3>
+              <p className="mb-4">
+                <strong>Simple Process:</strong>
+              </p>
+              <ol className="list-decimal pl-5 mb-4 space-y-2">
+                <li>Click "Submit Information" button</li>
+                <li>Fill out your details (3-5 minutes)</li>
+                <li>No registration or login required</li>
+                <li>Receive confirmation email</li>
+                <li>Get notified about upcoming events</li>
+              </ol>
+              <Link
+                href="/information-form"
+                target="_blank"
+                className="inline-block w-full bg-green-800 text-white py-4 font-bold hover:bg-green-900 transition-colors text-center text-lg"
+              >
+                SUBMIT INFORMATION
+              </Link>
+              <p className="text-sm text-gray-600 mt-3">
+                All information is confidential and used only for alumni
+                communications
+              </p>
+            </div>
+
+            {/* Information Required Section */}
+            <div className="border-t-4 border-black pt-6">
+              <h3 className="text-2xl font-bold font-['Times_New_Roman'] mb-4">
+                INFORMATION WE COLLECT
+              </h3>
+              <ul className="space-y-4">
+                <li className="border-b border-gray-200 pb-3">
+                  <h4 className="font-bold">Basic Information</h4>
+                  <p className="text-sm text-gray-600">
+                    Full name, graduation year, campus, and program
+                  </p>
+                </li>
+                <li className="border-b border-gray-200 pb-3">
+                  <h4 className="font-bold">Contact Details</h4>
+                  <p className="text-sm text-gray-600">
+                    Email address, mobile number, current city
+                  </p>
+                </li>
+                <li className="border-b border-gray-200 pb-3">
+                  <h4 className="font-bold">Professional Information</h4>
+                  <p className="text-sm text-gray-600">
+                    Current occupation and organization (optional)
+                  </p>
+                </li>
+                <li className="pb-3">
+                  <h4 className="font-bold">Event Preferences</h4>
+                  <p className="text-sm text-gray-600">
+                    Types of alumni events you'd like to attend
+                  </p>
+                </li>
+              </ul>
+            </div>
+
+            {/* Data Privacy Section */}
+            <div className="bg-gray-50 p-6 border border-gray-300">
+              <h3 className="text-xl font-bold font-['Times_New_Roman'] mb-4 border-b border-gray-400 pb-2">
+                DATA PRIVACY
+              </h3>
+              <div className="space-y-4 text-sm">
+                <div className="border-b border-gray-300 pb-3">
+                  <h4 className="font-bold uppercase">Protected Information</h4>
+                  <p>
+                    Your data is protected under the Data Privacy Act of 2012.
+                  </p>
+                </div>
+                <div className="border-b border-gray-300 pb-3">
+                  <h4 className="font-bold uppercase">Limited Use</h4>
+                  <p>
+                    Information used only for alumni communications and event
+                    invitations.
+                  </p>
+                </div>
+                <div>
+                  <h4 className="font-bold uppercase">No Sharing</h4>
+                  <p>
+                    Your contact details will never be shared with third
+                    parties.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Section - Important Information */}
+        <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 border-t-4 border-black pt-8">
+          <article>
+            <h3 className="text-2xl font-bold font-['Times_New_Roman'] mb-3">
+              Data Privacy Assurance
+            </h3>
+            <p className="text-gray-700">
+              Your information is protected under the Data Privacy Act. We
+              collect data solely for alumni communications, event invitations,
+              and university updates. Information will never be shared with
+              third parties without your consent.
+            </p>
+          </article>
+
+          <article>
+            <h3 className="text-2xl font-bold font-['Times_New_Roman'] mb-3">
+              Why This Registry Matters
+            </h3>
+            <p className="text-gray-700">
+              With thousands of alumni across four campuses, maintaining
+              accurate contact information ensures everyone receives important
+              announcements about reunions, anniversary events, and
+              opportunities to reconnect with the CHMSU community.
+            </p>
+          </article>
+
+          <article>
+            <h3 className="text-2xl font-bold font-['Times_New_Roman'] mb-3">
+              Update Your Information
+            </h3>
+            <p className="text-gray-700">
+              If you've already submitted your information but need to update
+              your contact details, simply submit the form again. Our system
+              will automatically update your existing record with the new
+              information.
+            </p>
+          </article>
+        </div>
+
+        {/* Call to Action Section */}
+        <div className="mt-12 bg-gray-50 border-4 border-green-800 p-8 text-center">
+          <h2 className="text-3xl font-bold font-['Times_New_Roman'] mb-4">
+            Help Us Build a Complete Alumni Network
+          </h2>
+          <p className="text-lg mb-6 max-w-3xl mx-auto">
+            Whether you graduated from Talisay Main, Alijis, Fortune Towne, or
+            Binalbagan, your information helps us create meaningful connections
+            and organize memorable anniversary celebrations.
+          </p>
+          <Link
+            href="/information-form"
+            className="inline-block bg-green-800 text-white px-10 py-4 text-xl font-bold hover:bg-green-900 transition-colors"
+          >
+            SUBMIT YOUR ALUMNI INFORMATION
+          </Link>
+          <p className="text-sm text-gray-600 mt-4">
+            No registration required • Takes only 3-5 minutes • All information
+            is confidential
+          </p>
+        </div>
+
+        {/* Footer Section */}
+        <footer className="mt-12 pt-6 border-t-4 border-black text-center text-sm text-gray-600">
+          <p className="font-bold">
+            CHMSU ALUMNI RELATIONS OFFICE • CONNECTING GRADUATES SINCE 1946
+          </p>
+          <p className="mt-2">
+            Carlos Hilado Memorial State University • Talisay, Negros
+            Occidental, Philippines
+          </p>
+          <div className="mt-4 flex flex-wrap justify-center gap-4 md:gap-6">
+            <Link
+              href="/information-form"
+              target="_blank"
+              className="hover:text-black transition-colors font-medium"
+            >
+              Submit Information
+            </Link>
+            <Link
+              href="/events"
+              className="hover:text-black transition-colors font-medium"
+            >
+              Upcoming Events
+            </Link>
+            <Link
+              href="/announcements"
+              className="hover:text-black transition-colors font-medium"
+            >
+              Alumni Announcements
+            </Link>
+            <a
+              href="mailto:alumni@chmsu.edu.ph"
+              className="hover:text-black transition-colors font-medium"
+            >
+              Email: alumni@chmsu.edu.ph
+            </a>
+          </div>
+          <div className="mt-4">
+            <p className="text-xs">
+              Contact Alumni Office: (034) 495-0000 | Email: alumni@chmsu.edu.ph
+            </p>
+            <p className="text-xs mt-2">
+              © 2026 CHMSU Alumni Information Registry System. All rights
+              reserved.
+            </p>
+          </div>
+        </footer>
+      </div>
+    </main>
   );
 }

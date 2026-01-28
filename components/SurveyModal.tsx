@@ -743,8 +743,8 @@ export default function SurveyModal({
       case "personal":
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+            <div className="text-center mb-4">
+              <h3 className="text-2xl font-bold font-['Times_New_Roman'] text-green-800">
                 Personal Information
               </h3>
               <p className="text-sm text-gray-600 mt-1">
@@ -775,7 +775,7 @@ export default function SurveyModal({
                     onChange={(e) =>
                       handleInputChange("firstName", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                     required
                   />
                   {stepErrors.firstName && (
@@ -794,7 +794,7 @@ export default function SurveyModal({
                     onChange={(e) =>
                       handleInputChange("lastName", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                     required
                   />
                   {stepErrors.lastName && (
@@ -815,7 +815,7 @@ export default function SurveyModal({
                     onChange={(e) =>
                       handleInputChange("gender", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                     required
                   >
                     <option value="">Select Gender</option>
@@ -838,7 +838,7 @@ export default function SurveyModal({
                     onChange={(e) =>
                       handleInputChange("civilStatus", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                     required
                   >
                     <option value="">Select Civil Status</option>
@@ -866,7 +866,7 @@ export default function SurveyModal({
                     onChange={(e) =>
                       handleInputChange("dateOfBirth", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   />
                 </div>
                 <div>
@@ -879,7 +879,7 @@ export default function SurveyModal({
                     onChange={(e) =>
                       handleInputChange("placeOfBirth", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   />
                 </div>
               </div>
@@ -890,8 +890,8 @@ export default function SurveyModal({
       case "contact":
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+            <div className="text-center mb-4">
+              <h3 className="text-2xl font-bold font-['Times_New_Roman'] text-green-800">
                 Contact Information
               </h3>
               <p className="text-sm text-gray-600 mt-1">
@@ -919,7 +919,7 @@ export default function SurveyModal({
                   type="email"
                   value={formData.email}
                   onChange={(e) => handleInputChange("email", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   required
                 />
                 {stepErrors.email && (
@@ -939,7 +939,7 @@ export default function SurveyModal({
                   onChange={(e) =>
                     handleInputChange("phoneNumber", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   required
                 />
                 {stepErrors.phoneNumber && (
@@ -959,7 +959,7 @@ export default function SurveyModal({
                   onChange={(e) =>
                     handleInputChange("facebookAccount", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   placeholder="https://facebook.com/username"
                 />
               </div>
@@ -971,7 +971,7 @@ export default function SurveyModal({
                 <textarea
                   value={formData.address}
                   onChange={(e) => handleInputChange("address", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   rows={3}
                   required
                 />
@@ -988,8 +988,8 @@ export default function SurveyModal({
       case "academic":
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+            <div className="text-center mb-4">
+              <h3 className="text-2xl font-bold font-['Times_New_Roman'] text-green-800">
                 Academic Information
               </h3>
               <p className="text-sm text-gray-600 mt-1">Your CHMSU journey</p>
@@ -1018,7 +1018,7 @@ export default function SurveyModal({
                     onChange={(e) =>
                       handleInputChange("studentId", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   />
                 </div>
                 <div>
@@ -1033,7 +1033,7 @@ export default function SurveyModal({
                     onChange={(e) =>
                       handleInputChange("yearGraduated", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                     required
                   />
                   {stepErrors.yearGraduated && (
@@ -1051,7 +1051,7 @@ export default function SurveyModal({
                 <select
                   value={formData.campus}
                   onChange={(e) => handleInputChange("campus", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   required
                   disabled={loading}
                 >
@@ -1078,7 +1078,7 @@ export default function SurveyModal({
                   onChange={(e) =>
                     handleInputChange("department", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   required
                   disabled={!formData.campus || departments.length === 0}
                 >
@@ -1103,7 +1103,7 @@ export default function SurveyModal({
                 <select
                   value={formData.course}
                   onChange={(e) => handleInputChange("course", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   required
                   disabled={!formData.department || courses.length === 0}
                 >
@@ -1129,7 +1129,7 @@ export default function SurveyModal({
                   type="text"
                   value={formData.degree}
                   onChange={(e) => handleInputChange("degree", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   placeholder="e.g., Bachelor of Science in Computer Science"
                   required
                 />
@@ -1146,8 +1146,8 @@ export default function SurveyModal({
       case "employment":
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+            <div className="text-center mb-4">
+              <h3 className="text-2xl font-bold font-['Times_New_Roman'] text-green-800">
                 Employment Information
               </h3>
               <p className="text-sm text-gray-600 mt-1">
@@ -1176,7 +1176,7 @@ export default function SurveyModal({
                   onChange={(e) =>
                     handleInputChange("employmentStatus", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   required
                 >
                   <option value="">Select Employment Status</option>
@@ -1202,7 +1202,7 @@ export default function SurveyModal({
                   onChange={(e) =>
                     handleInputChange("employmentSector", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   required
                 >
                   <option value="">Select Employment Sector</option>
@@ -1228,7 +1228,7 @@ export default function SurveyModal({
                   onChange={(e) =>
                     handleInputChange("presentEmploymentStatus", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   required
                 >
                   <option value="">Select Present Employment Status</option>
@@ -1254,7 +1254,7 @@ export default function SurveyModal({
                   onChange={(e) =>
                     handleInputChange("locationOfEmployment", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   required
                 >
                   <option value="">Select Location</option>
@@ -1275,8 +1275,8 @@ export default function SurveyModal({
       case "jobDetails":
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+            <div className="text-center mb-4">
+              <h3 className="text-2xl font-bold font-['Times_New_Roman'] text-green-800">
                 Job Details
               </h3>
               <p className="text-sm text-gray-600 mt-1">
@@ -1308,7 +1308,7 @@ export default function SurveyModal({
                     onChange={(e) =>
                       handleInputChange("currentPosition", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                     placeholder="e.g., Software Engineer"
                     required
                   />
@@ -1329,7 +1329,7 @@ export default function SurveyModal({
                     onChange={(e) =>
                       handleInputChange("employer", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                     placeholder="e.g., TechCorp Inc."
                     required
                   />
@@ -1349,7 +1349,7 @@ export default function SurveyModal({
                     onChange={(e) =>
                       handleInputChange("companyAddress", e.target.value)
                     }
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                     rows={3}
                     placeholder="Complete company address"
                     required
@@ -1374,8 +1374,8 @@ export default function SurveyModal({
       case "boardExam":
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+            <div className="text-center mb-4">
+              <h3 className="text-2xl font-bold font-['Times_New_Roman'] text-green-800">
                 Board Exam Information
               </h3>
               <p className="text-sm text-gray-600 mt-1">
@@ -1405,7 +1405,7 @@ export default function SurveyModal({
                   onChange={(e) =>
                     handleInputChange("boardExamPassed", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   placeholder="e.g., Civil Engineering Board Exam"
                 />
               </div>
@@ -1422,7 +1422,7 @@ export default function SurveyModal({
                   onChange={(e) =>
                     handleInputChange("yearPassedBoardExam", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   disabled={!formData.boardExamPassed}
                 />
                 {stepErrors.yearPassedBoardExam && (
@@ -1444,7 +1444,7 @@ export default function SurveyModal({
                       e.target.value,
                     )
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   disabled={!formData.boardExamPassed}
                 >
                   <option value="">Select Timeframe</option>
@@ -1463,8 +1463,8 @@ export default function SurveyModal({
       case "jobSearch":
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+            <div className="text-center mb-4">
+              <h3 className="text-2xl font-bold font-['Times_New_Roman'] text-green-800">
                 Job Search Information
               </h3>
               <p className="text-sm text-gray-600 mt-1">
@@ -1482,7 +1482,7 @@ export default function SurveyModal({
                   onChange={(e) =>
                     handleInputChange("jobInformationSource", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                 >
                   <option value="">Select Source</option>
                   <option value="CHMSU Career Fair">CHMSU Career Fair</option>
@@ -1501,7 +1501,7 @@ export default function SurveyModal({
                   onChange={(e) =>
                     handleInputChange("firstJobDuration", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                 >
                   <option value="">Select Duration</option>
                   <option value="3 to 6 months">3 to 6 months</option>
@@ -1518,8 +1518,8 @@ export default function SurveyModal({
       case "jobRelationship":
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+            <div className="text-center mb-4">
+              <h3 className="text-2xl font-bold font-['Times_New_Roman'] text-green-800">
                 Job Relationship Questions
               </h3>
               <p className="text-sm text-gray-600 mt-1">
@@ -1552,7 +1552,7 @@ export default function SurveyModal({
                           e.target.checked,
                         )
                       }
-                      className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+                      className="h-4 w-4 text-green-600 rounded focus:ring-green-500"
                     />
                   </div>
                   <div className="flex-1">
@@ -1587,7 +1587,7 @@ export default function SurveyModal({
                             onChange={() =>
                               handleJobReasonToggle(reason.value, false)
                             }
-                            className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+                            className="h-4 w-4 text-green-600 rounded focus:ring-green-500"
                           />
                           <label
                             htmlFor={`first-${reason.id}`}
@@ -1615,7 +1615,7 @@ export default function SurveyModal({
                           e.target.checked,
                         )
                       }
-                      className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+                      className="h-4 w-4 text-green-600 rounded focus:ring-green-500"
                     />
                   </div>
                   <div className="flex-1">
@@ -1650,7 +1650,7 @@ export default function SurveyModal({
                             onChange={() =>
                               handleJobReasonToggle(reason.value, true)
                             }
-                            className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+                            className="h-4 w-4 text-green-600 rounded focus:ring-green-500"
                           />
                           <label
                             htmlFor={`current-${reason.id}`}
@@ -1671,8 +1671,8 @@ export default function SurveyModal({
       case "awards":
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+            <div className="text-center mb-4">
+              <h3 className="text-2xl font-bold font-['Times_New_Roman'] text-green-800">
                 Awards & Scholarships
               </h3>
               <p className="text-sm text-gray-600 mt-1">
@@ -1689,7 +1689,7 @@ export default function SurveyModal({
                   <button
                     type="button"
                     onClick={() => addArrayField("awardsRecognition")}
-                    className="text-sm text-blue-600 hover:text-blue-500 flex items-center"
+                    className="text-sm text-green-700 hover:text-green-800 flex items-center font-serif"
                   >
                     <Plus className="h-4 w-4 mr-1" />
                     Add Award
@@ -1707,7 +1707,7 @@ export default function SurveyModal({
                           e.target.value,
                         )
                       }
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                       placeholder="e.g., Cum Laude, Best Thesis Award"
                     />
                     {formData.awardsRecognition.length > 1 && (
@@ -1735,7 +1735,7 @@ export default function SurveyModal({
                     onClick={() =>
                       addArrayField("scholarshipsDuringEmployment")
                     }
-                    className="text-sm text-blue-600 hover:text-blue-500 flex items-center"
+                    className="text-sm text-green-700 hover:text-green-800 flex items-center font-serif"
                   >
                     <Plus className="h-4 w-4 mr-1" />
                     Add Scholarship
@@ -1754,7 +1754,7 @@ export default function SurveyModal({
                             e.target.value,
                           )
                         }
-                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                         placeholder="e.g., CHED Scholarship, Company Scholarship"
                       />
                       {formData.scholarshipsDuringEmployment.length > 1 && (
@@ -1784,7 +1784,7 @@ export default function SurveyModal({
                   <button
                     type="button"
                     onClick={() => addArrayField("eligibility")}
-                    className="text-sm text-blue-600 hover:text-blue-500 flex items-center"
+                    className="text-sm text-green-700 hover:text-green-800 flex items-center font-serif"
                   >
                     <Plus className="h-4 w-4 mr-1" />
                     Add Eligibility
@@ -1798,7 +1798,7 @@ export default function SurveyModal({
                       onChange={(e) =>
                         handleArrayChange("eligibility", index, e.target.value)
                       }
-                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                       placeholder="e.g., Civil Service Professional, Licensed Engineer"
                     />
                     {formData.eligibility.length > 1 && (
@@ -1820,8 +1820,8 @@ export default function SurveyModal({
       case "preferences":
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+            <div className="text-center mb-4">
+              <h3 className="text-2xl font-bold font-['Times_New_Roman'] text-green-800">
                 Preferences
               </h3>
               <p className="text-sm text-gray-600 mt-1">
@@ -1839,7 +1839,7 @@ export default function SurveyModal({
                     onChange={(e) =>
                       handleInputChange("willingToMentor", e.target.checked)
                     }
-                    className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+                    className="h-4 w-4 text-green-600 rounded focus:ring-green-500"
                   />
                   <label
                     htmlFor="willingToMentor"
@@ -1857,7 +1857,7 @@ export default function SurveyModal({
                     onChange={(e) =>
                       handleInputChange("receiveUpdates", e.target.checked)
                     }
-                    className="h-4 w-4 text-blue-600 rounded focus:ring-blue-500"
+                    className="h-4 w-4 text-green-600 rounded focus:ring-green-500"
                   />
                   <label
                     htmlFor="receiveUpdates"
@@ -1877,7 +1877,7 @@ export default function SurveyModal({
                   onChange={(e) =>
                     handleInputChange("suggestions", e.target.value)
                   }
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   rows={4}
                   placeholder="Your suggestions for improving CHMSU programs and services..."
                 />
@@ -1889,8 +1889,8 @@ export default function SurveyModal({
       case "review":
         return (
           <div className="space-y-6">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">
+            <div className="text-center mb-4">
+              <h3 className="text-2xl font-bold font-['Times_New_Roman'] text-green-800">
                 Review Your Information
               </h3>
               <p className="text-sm text-gray-600 mt-1">
@@ -1899,59 +1899,75 @@ export default function SurveyModal({
             </div>
 
             <div className="space-y-4">
-              <div className="bg-blue-50 p-4 rounded-md">
-                <h4 className="font-medium text-blue-800 mb-2">
+              <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
+                <h4 className="font-bold text-green-800 mb-2 font-['Times_New_Roman']">
                   Personal Information
                 </h4>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>Name:</div>
-                  <div className="font-medium">
+                  <div className="text-gray-600">Name:</div>
+                  <div className="font-medium font-serif">
                     {formData.firstName} {formData.lastName}
                   </div>
-                  <div>Gender:</div>
-                  <div className="font-medium">{formData.gender}</div>
-                  <div>Civil Status:</div>
-                  <div className="font-medium">{formData.civilStatus}</div>
+                  <div className="text-gray-600">Gender:</div>
+                  <div className="font-medium font-serif">
+                    {formData.gender}
+                  </div>
+                  <div className="text-gray-600">Civil Status:</div>
+                  <div className="font-medium font-serif">
+                    {formData.civilStatus}
+                  </div>
                   {formData.dateOfBirth && (
                     <>
-                      <div>Date of Birth:</div>
-                      <div className="font-medium">{formData.dateOfBirth}</div>
+                      <div className="text-gray-600">Date of Birth:</div>
+                      <div className="font-medium font-serif">
+                        {formData.dateOfBirth}
+                      </div>
                     </>
                   )}
                 </div>
               </div>
 
-              <div className="bg-green-50 p-4 rounded-md">
-                <h4 className="font-medium text-green-800 mb-2">
+              <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
+                <h4 className="font-bold text-green-800 mb-2 font-['Times_New_Roman']">
                   Academic Information
                 </h4>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>Year Graduated:</div>
-                  <div className="font-medium">{formData.yearGraduated}</div>
-                  <div>Degree:</div>
-                  <div className="font-medium">{formData.degree}</div>
+                  <div className="text-gray-600">Year Graduated:</div>
+                  <div className="font-medium font-serif">
+                    {formData.yearGraduated}
+                  </div>
+                  <div className="text-gray-600">Degree:</div>
+                  <div className="font-medium font-serif">
+                    {formData.degree}
+                  </div>
                   {formData.studentId && (
                     <>
-                      <div>Student ID:</div>
-                      <div className="font-medium">{formData.studentId}</div>
+                      <div className="text-gray-600">Student ID:</div>
+                      <div className="font-medium font-serif">
+                        {formData.studentId}
+                      </div>
                     </>
                   )}
                 </div>
               </div>
 
-              <div className="bg-purple-50 p-4 rounded-md">
-                <h4 className="font-medium text-purple-800 mb-2">
+              <div className="bg-gray-50 p-4 rounded-md border border-gray-200">
+                <h4 className="font-bold text-green-800 mb-2 font-['Times_New_Roman']">
                   Employment Information
                 </h4>
                 <div className="grid grid-cols-2 gap-2 text-sm">
-                  <div>Status:</div>
-                  <div className="font-medium">{formData.employmentStatus}</div>
-                  <div>Sector:</div>
-                  <div className="font-medium">{formData.employmentSector}</div>
+                  <div className="text-gray-600">Status:</div>
+                  <div className="font-medium font-serif">
+                    {formData.employmentStatus}
+                  </div>
+                  <div className="text-gray-600">Sector:</div>
+                  <div className="font-medium font-serif">
+                    {formData.employmentSector}
+                  </div>
                   {formData.currentPosition && (
                     <>
-                      <div>Position:</div>
-                      <div className="font-medium">
+                      <div className="text-gray-600">Position:</div>
+                      <div className="font-medium font-serif">
                         {formData.currentPosition}
                       </div>
                     </>
@@ -1963,7 +1979,7 @@ export default function SurveyModal({
                 <div className="bg-red-50 border border-red-200 rounded-md p-4">
                   <div className="flex items-center">
                     <AlertCircle className="h-5 w-5 text-red-400 mr-2" />
-                    <p className="text-red-700 text-sm">{error}</p>
+                    <p className="text-red-700 text-sm font-serif">{error}</p>
                   </div>
                 </div>
               )}
@@ -1972,8 +1988,8 @@ export default function SurveyModal({
                 <div className="bg-green-50 border border-green-200 rounded-md p-4">
                   <div className="flex items-center">
                     <Check className="h-5 w-5 text-green-400 mr-2" />
-                    <p className="text-green-700 text-sm">
-                      Survey submitted successfully!
+                    <p className="text-green-700 text-sm font-serif">
+                      Information submitted successfully!
                     </p>
                   </div>
                 </div>
@@ -1995,24 +2011,24 @@ export default function SurveyModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Light backdrop instead of dark */}
+      {/* Light backdrop */}
       <div
         className="fixed inset-0 bg-black/30 backdrop-blur-sm"
         onClick={onClose}
       />
 
-      {/* Modal */}
-      <div className="relative bg-white rounded-lg shadow-xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
-        {/* Header */}
-        <div className="px-6 py-4 border-b border-gray-200 bg-white">
+      {/* Modal - Newspaper Style */}
+      <div className="relative bg-white rounded-none shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden border-4 border-black font-serif">
+        {/* Header - Newspaper Style */}
+        <div className="px-6 py-4 border-b-4 border-black bg-white">
           <div className="flex justify-between items-center">
             <div>
-              <h2 className="text-xl font-semibold text-gray-900">
-                Alumni Survey Form
+              <h2 className="text-3xl font-bold font-['Times_New_Roman'] text-green-800">
+                CHMSU Alumni Registry Form
               </h2>
               <p className="text-sm text-gray-600 mt-1">
                 Step {currentStepIndex + 1} of {steps.length}:{" "}
-                {steps[currentStepIndex]?.label}
+                {steps[currentStepIndex]?.description}
               </p>
             </div>
             <button
@@ -2023,26 +2039,26 @@ export default function SurveyModal({
             </button>
           </div>
 
-          {/* Progress Bar */}
+          {/* Progress Bar - Newspaper Style */}
           <div className="mt-4">
-            <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+            <div className="h-3 bg-gray-200 rounded-none overflow-hidden border border-gray-400">
               <motion.div
-                className="h-full bg-blue-600"
+                className="h-full bg-green-800"
                 initial={{ width: 0 }}
                 animate={{ width: `${progress}%` }}
                 transition={{ duration: 0.3 }}
               />
             </div>
-            <div className="flex justify-between mt-2">
+            <div className="flex justify-between mt-3">
               {steps.map((step, index) => (
                 <div
                   key={step.id}
-                  className={`text-xs font-medium flex flex-col items-center ${currentStep === step.id ? "text-blue-600" : stepErrors[step.id] ? "text-red-600" : "text-gray-500"}`}
+                  className={`text-xs font-medium flex flex-col items-center ${currentStep === step.id ? "text-green-800 font-bold" : stepErrors[step.id] ? "text-red-600" : "text-gray-500"}`}
                 >
                   <div
-                    className={`h-2 w-2 rounded-full mb-1 ${currentStep === step.id ? "bg-blue-600" : stepErrors[step.id] ? "bg-red-600" : "bg-gray-300"}`}
+                    className={`h-3 w-3 rounded-full mb-1 ${currentStep === step.id ? "bg-green-800" : stepErrors[step.id] ? "bg-red-600" : "bg-gray-300"}`}
                   ></div>
-                  {step.label}
+                  <span className="text-center">{step.label}</span>
                 </div>
               ))}
             </div>
@@ -2051,7 +2067,7 @@ export default function SurveyModal({
 
         {/* Content */}
         <form onSubmit={handleSubmit}>
-          <div className="px-6 py-4 overflow-y-auto max-h-[calc(90vh-180px)]">
+          <div className="px-6 py-6 overflow-y-auto max-h-[calc(90vh-180px)] bg-white">
             <AnimatePresence mode="wait">
               <motion.div
                 key={currentStep}
@@ -2065,57 +2081,57 @@ export default function SurveyModal({
             </AnimatePresence>
           </div>
 
-          {/* Footer */}
-          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
+          {/* Footer - Newspaper Style */}
+          <div className="px-6 py-4 border-t-4 border-black bg-gray-50">
             <div className="flex justify-between">
               <button
                 type="button"
                 onClick={prevStep}
                 disabled={currentStepIndex === 0}
-                className={`px-4 py-2 rounded-md flex items-center space-x-2 ${
+                className={`px-6 py-3 rounded-none flex items-center space-x-2 border border-gray-400 font-serif ${
                   currentStepIndex === 0
-                    ? "opacity-50 cursor-not-allowed"
-                    : "text-gray-700 hover:bg-gray-100"
+                    ? "opacity-50 cursor-not-allowed bg-gray-100 text-gray-400"
+                    : "text-gray-700 hover:bg-gray-100 hover:border-gray-600"
                 }`}
               >
                 <ChevronLeft className="h-4 w-4" />
-                <span>Previous</span>
+                <span className="font-medium">Previous</span>
               </button>
 
               {currentStepIndex === steps.length - 1 ? (
                 <button
                   type="submit"
                   disabled={submitting || hasStepError}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2"
+                  className="px-8 py-3 bg-green-800 text-white rounded-none hover:bg-green-900 disabled:opacity-50 disabled:cursor-not-allowed flex items-center space-x-2 border-2 border-black font-serif"
                 >
                   {submitting ? (
                     <>
                       <Loader2 className="h-4 w-4 animate-spin" />
-                      <span>Submitting...</span>
+                      <span className="font-bold">Submitting...</span>
                     </>
                   ) : (
-                    <span>Submit Survey</span>
+                    <span className="font-bold">Submit Information</span>
                   )}
                 </button>
               ) : (
                 <button
                   type="button"
                   onClick={nextStep}
-                  className={`px-6 py-2 bg-blue-600 text-white rounded-md flex items-center space-x-2 hover:bg-blue-700`}
+                  className={`px-8 py-3 bg-green-800 text-white rounded-none flex items-center space-x-2 border-2 border-black font-serif hover:bg-green-900`}
                 >
-                  <span>Next</span>
+                  <span className="font-bold">Next</span>
                   <ChevronRight className="h-4 w-4" />
                 </button>
               )}
             </div>
 
-            <div className="mt-2 flex justify-between items-center">
-              <p className="text-xs text-gray-500">
-                {currentStepIndex + 1} of {steps.length}
+            <div className="mt-3 flex justify-between items-center">
+              <p className="text-xs text-gray-600">
+                Step {currentStepIndex + 1} of {steps.length}
               </p>
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-600">
                 {hasStepError ? (
-                  <span className="text-red-600">
+                  <span className="text-red-600 font-medium">
                     Please complete all required fields
                   </span>
                 ) : (

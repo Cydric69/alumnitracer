@@ -4,14 +4,61 @@ import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { ChevronDown, ChevronUp } from "lucide-react";
+import {
+  ChevronDown,
+  ChevronUp,
+  Calendar,
+  Bell,
+  ArrowDown,
+} from "lucide-react";
+import {
+  getEvents,
+  getAnnouncements,
+  getEventsAnnouncementsStats,
+} from "@/app/actions/events-announcements.actions";
 
-export default function Home() {
+interface Event {
+  _id: string;
+  title: string;
+  date: string;
+  time?: string;
+  description: string;
+  year: string;
+  expiresAt?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+interface Announcement {
+  _id: string;
+  title: string;
+  date: string;
+  description: string;
+  year: string;
+  expiresAt?: string;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export default function HomePage() {
   const router = useRouter();
   const pathname = usePathname();
   const [isCheckingAuth, setIsCheckingAuth] = useState(true);
   const [showCampuses, setShowCampuses] = useState(false);
   const [showPrograms, setShowPrograms] = useState(false);
+  const [latestEvents, setLatestEvents] = useState<Event[]>([]);
+  const [latestAnnouncements, setLatestAnnouncements] = useState<
+    Announcement[]
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState<{
+    activeEvents: number;
+    activeAnnouncements: number;
+  } | null>(null);
+  const [showAllEvents, setShowAllEvents] = useState(false);
+  const [showAllAnnouncements, setShowAllAnnouncements] = useState(false);
 
   useEffect(() => {
     const checkAuth = async () => {
@@ -33,7 +80,53 @@ export default function Home() {
     };
 
     checkAuth();
+    fetchLatestData();
   }, [router]);
+
+  const fetchLatestData = async () => {
+    try {
+      setLoading(true);
+
+      // Get active events and announcements (limit to 5 each)
+      const [eventsData, announcementsData, statsData] = await Promise.all([
+        getEvents({ status: "active" }),
+        getAnnouncements({ status: "active" }),
+        getEventsAnnouncementsStats(),
+      ]);
+
+      // Sort by date (newest first) and take latest
+      const sortedEvents = eventsData
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 5);
+
+      const sortedAnnouncements = announcementsData
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 5);
+
+      setLatestEvents(sortedEvents);
+      setLatestAnnouncements(sortedAnnouncements);
+      setStats(statsData);
+    } catch (error) {
+      console.error("Error fetching latest data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const scrollToSection = (sectionId: string) => {
+    const element = document.getElementById(sectionId);
+    if (element) {
+      element.scrollIntoView({ behavior: "smooth" });
+    }
+  };
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric",
+    });
+  };
 
   const isActive = (href: string) => {
     if (href === "/") return pathname === "/";
@@ -78,33 +171,19 @@ export default function Home() {
                 Home
               </Link>
 
-              <Link
-                href="/events"
+              <button
+                onClick={() => scrollToSection("events-announcements-section")}
                 className={`
                   transition-all duration-200 font-medium
                   ${
-                    isActive("/events")
+                    isActive("/events-announcements")
                       ? "text-black font-bold border-b-2 border-black pb-1"
                       : "text-gray-700 hover:text-black hover:border-b-2 hover:border-gray-400 hover:pb-1"
                   }
                 `}
               >
-                Events
-              </Link>
-
-              <Link
-                href="/announcements"
-                className={`
-                  transition-all duration-200 font-medium
-                  ${
-                    isActive("/announcements")
-                      ? "text-black font-bold border-b-2 border-black pb-1"
-                      : "text-gray-700 hover:text-black hover:border-b-2 hover:border-gray-400 hover:pb-1"
-                  }
-                `}
-              >
-                Announcements
-              </Link>
+                Events & Announcements
+              </button>
 
               <Link
                 href="/login"
@@ -360,35 +439,321 @@ export default function Home() {
               </div>
             </article>
 
-            {/* Secondary Stories Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <article className="border-b border-gray-300 pb-6">
-                <h3 className="text-2xl font-bold font-['Times_New_Roman'] mb-3">
-                  Golden Anniversary Preparation Begins
-                </h3>
-                <p className="text-gray-700 mb-4">
-                  CHMSU prepares for its 50th Anniversary celebrations in 2027.
-                  The alumni registry will help organize batch reunions, special
-                  events, and anniversary activities across all campuses.
-                </p>
-                <span className="text-sm text-gray-500">
-                  CONTINUED ON PAGE A2
-                </span>
-              </article>
+            {/* Events & Announcements Section */}
+            <div id="events-announcements-section" className="space-y-8">
+              {/* Secondary Stories Grid */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Latest Events Section */}
+                <article className="border-b border-gray-300 pb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Calendar className="h-5 w-5 text-green-800" />
+                    <h3 className="text-2xl font-bold font-['Times_New_Roman']">
+                      Latest Events
+                    </h3>
+                    {stats && (
+                      <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                        {stats.activeEvents} active
+                      </span>
+                    )}
+                  </div>
 
-              <article className="border-b border-gray-300 pb-6">
-                <h3 className="text-2xl font-bold font-['Times_New_Roman'] mb-3">
-                  Batch Coordinators Needed
-                </h3>
-                <p className="text-gray-700 mb-4">
-                  The Alumni Office seeks volunteers from each graduating batch
-                  to help coordinate communications and events for their
-                  respective groups.
-                </p>
-                <span className="text-sm text-gray-500">
-                  CONTINUED ON PAGE B1
-                </span>
-              </article>
+                  {loading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-800"></div>
+                    </div>
+                  ) : latestEvents.length === 0 ? (
+                    <div className="text-center py-6">
+                      <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-600">No upcoming events yet.</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Check back soon for upcoming events!
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {(showAllEvents
+                        ? latestEvents
+                        : latestEvents.slice(0, 3)
+                      ).map((event, index) => {
+                        const isPast = new Date(event.date) < new Date();
+                        return (
+                          <div
+                            key={event._id}
+                            className={`p-4 border rounded-lg ${isPast ? "bg-gray-50 border-gray-200" : "bg-green-50 border-green-200"}`}
+                          >
+                            <div className="flex justify-between items-start mb-2">
+                              <h4 className="font-bold text-gray-900">
+                                {event.title}
+                              </h4>
+                              <span className="text-xs text-gray-600">
+                                {formatDate(event.date)}
+                              </span>
+                            </div>
+                            <p className="text-sm text-gray-700 mb-2 line-clamp-2">
+                              {event.description}
+                            </p>
+                            <div className="flex items-center justify-between">
+                              <span
+                                className={`text-xs px-2 py-1 rounded-full ${isPast ? "bg-gray-200 text-gray-800" : "bg-green-100 text-green-800"}`}
+                              >
+                                {isPast ? "PAST" : "UPCOMING"}
+                              </span>
+                              <span className="text-xs text-gray-500">
+                                {event.year}
+                              </span>
+                            </div>
+                          </div>
+                        );
+                      })}
+
+                      {latestEvents.length > 3 && (
+                        <button
+                          onClick={() => setShowAllEvents(!showAllEvents)}
+                          className="text-green-800 hover:text-green-900 font-medium text-sm flex items-center gap-1"
+                        >
+                          {showAllEvents
+                            ? "Show Less"
+                            : `Show All ${latestEvents.length} Events`}
+                          <ArrowDown
+                            className={`h-4 w-4 transition-transform ${showAllEvents ? "rotate-180" : ""}`}
+                          />
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-4">
+                    <button
+                      onClick={() => scrollToSection("all-events-section")}
+                      className="text-green-800 hover:text-green-900 font-medium text-sm flex items-center gap-1"
+                    >
+                      View All Events →
+                    </button>
+                  </div>
+                </article>
+
+                {/* Latest Announcements Section */}
+                <article className="border-b border-gray-300 pb-6">
+                  <div className="flex items-center gap-2 mb-3">
+                    <Bell className="h-5 w-5 text-green-800" />
+                    <h3 className="text-2xl font-bold font-['Times_New_Roman']">
+                      Latest Announcements
+                    </h3>
+                    {stats && (
+                      <span className="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">
+                        {stats.activeAnnouncements} active
+                      </span>
+                    )}
+                  </div>
+
+                  {loading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-green-800"></div>
+                    </div>
+                  ) : latestAnnouncements.length === 0 ? (
+                    <div className="text-center py-6">
+                      <Bell className="h-12 w-12 text-gray-400 mx-auto mb-3" />
+                      <p className="text-gray-600">No announcements yet.</p>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Check back soon for updates!
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {(showAllAnnouncements
+                        ? latestAnnouncements
+                        : latestAnnouncements.slice(0, 3)
+                      ).map((announcement) => (
+                        <div
+                          key={announcement._id}
+                          className="p-4 border border-blue-200 rounded-lg bg-blue-50"
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <h4 className="font-bold text-gray-900">
+                              {announcement.title}
+                            </h4>
+                            <span className="text-xs text-gray-600">
+                              {formatDate(announcement.date)}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-700 mb-2 line-clamp-2">
+                            {announcement.description}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                              ANNOUNCEMENT
+                            </span>
+                            <span className="text-xs text-gray-500">
+                              {announcement.year}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+
+                      {latestAnnouncements.length > 3 && (
+                        <button
+                          onClick={() =>
+                            setShowAllAnnouncements(!showAllAnnouncements)
+                          }
+                          className="text-green-800 hover:text-green-900 font-medium text-sm flex items-center gap-1"
+                        >
+                          {showAllAnnouncements
+                            ? "Show Less"
+                            : `Show All ${latestAnnouncements.length} Announcements`}
+                          <ArrowDown
+                            className={`h-4 w-4 transition-transform ${showAllAnnouncements ? "rotate-180" : ""}`}
+                          />
+                        </button>
+                      )}
+                    </div>
+                  )}
+
+                  <div className="mt-4">
+                    <button
+                      onClick={() =>
+                        scrollToSection("all-announcements-section")
+                      }
+                      className="text-green-800 hover:text-green-900 font-medium text-sm flex items-center gap-1"
+                    >
+                      View All Announcements →
+                    </button>
+                  </div>
+                </article>
+              </div>
+
+              {/* All Events Section (For More Details) */}
+              <div
+                id="all-events-section"
+                className="border-t border-gray-300 pt-6"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-2xl font-bold font-['Times_New_Roman'] text-gray-900">
+                    All Upcoming Events
+                  </h3>
+                  <Link
+                    href="/events-announcements?tab=events"
+                    className="text-green-800 hover:text-green-900 font-medium text-sm"
+                  >
+                    Full Events Page →
+                  </Link>
+                </div>
+
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-800"></div>
+                  </div>
+                ) : latestEvents.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                      No upcoming events scheduled
+                    </h4>
+                    <p className="text-gray-600">
+                      Check back soon for upcoming events and reunions.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {latestEvents
+                      .filter((event) => new Date(event.date) >= new Date())
+                      .map((event) => (
+                        <div
+                          key={event._id}
+                          className="p-4 border border-green-200 rounded-lg bg-green-50 hover:bg-green-100 transition-colors"
+                        >
+                          <div className="flex justify-between items-start mb-2">
+                            <div>
+                              <h4 className="font-bold text-gray-900">
+                                {event.title}
+                              </h4>
+                              <div className="flex items-center gap-4 mt-1">
+                                <span className="text-sm text-gray-600">
+                                  {formatDate(event.date)}
+                                </span>
+                                {event.time && (
+                                  <span className="text-sm text-gray-600">
+                                    {event.time}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                            <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
+                              {event.year}
+                            </span>
+                          </div>
+                          <p className="text-sm text-gray-700">
+                            {event.description}
+                          </p>
+                        </div>
+                      ))}
+                  </div>
+                )}
+              </div>
+
+              {/* All Announcements Section (For More Details) */}
+              <div
+                id="all-announcements-section"
+                className="border-t border-gray-300 pt-6"
+              >
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-2xl font-bold font-['Times_New_Roman'] text-gray-900">
+                    All Announcements
+                  </h3>
+                  <Link
+                    href="/events-announcements?tab=announcements"
+                    className="text-green-800 hover:text-green-900 font-medium text-sm"
+                  >
+                    Full Announcements Page →
+                  </Link>
+                </div>
+
+                {loading ? (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-800"></div>
+                  </div>
+                ) : latestAnnouncements.length === 0 ? (
+                  <div className="text-center py-8 bg-gray-50 rounded-lg">
+                    <Bell className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                      No announcements available
+                    </h4>
+                    <p className="text-gray-600">
+                      Check back later for important updates.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {latestAnnouncements.map((announcement) => (
+                      <div
+                        key={announcement._id}
+                        className="p-4 border border-blue-200 rounded-lg bg-blue-50 hover:bg-blue-100 transition-colors"
+                      >
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <h4 className="font-bold text-gray-900">
+                              {announcement.title}
+                            </h4>
+                            <div className="flex items-center gap-4 mt-1">
+                              <span className="text-sm text-gray-600">
+                                {formatDate(announcement.date)}
+                              </span>
+                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">
+                                FROM: ALUMNI OFFICE
+                              </span>
+                            </div>
+                          </div>
+                          <span className="text-sm text-gray-600">
+                            {announcement.year}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-700">
+                          {announcement.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
@@ -565,16 +930,10 @@ export default function Home() {
               Submit Information
             </Link>
             <Link
-              href="/events"
+              href="/events-announcements"
               className="hover:text-black transition-colors font-medium"
             >
-              Upcoming Events
-            </Link>
-            <Link
-              href="/announcements"
-              className="hover:text-black transition-colors font-medium"
-            >
-              Alumni Announcements
+              Events & Announcements
             </Link>
             <a
               href="mailto:alumni@chmsu.edu.ph"

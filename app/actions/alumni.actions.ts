@@ -9,12 +9,36 @@ import Department from "@/models/Department";
 import Course from "@/models/Course";
 import { AlumniInput } from "@/types/alumni";
 
+// Helper function to safely get object ID
+const safeGetId = (obj: any): string => {
+  if (!obj) return "";
+  if (obj._id && typeof obj._id.toString === "function") {
+    return obj._id.toString();
+  }
+  if (typeof obj.toString === "function") {
+    return obj.toString();
+  }
+  return "";
+};
+
+// Helper function to safely get name
+const safeGetName = (obj: any, fallback: string = ""): string => {
+  if (!obj) return fallback;
+  return obj.name || fallback;
+};
+
 // Main function to get all alumni
 export async function getAlumni() {
   try {
     await dbConnect();
+
+    console.log("Fetching alumni data...");
+
     const alumni = await Alumni.find()
-      .populate("campus", "name")
+      .populate({
+        path: "campus",
+        select: "name",
+      })
       .populate({
         path: "department",
         select: "name",
@@ -33,63 +57,236 @@ export async function getAlumni() {
       })
       .sort({ createdAt: -1 });
 
-    return alumni.map((alum) => ({
-      id: alum._id.toString(),
-      firstName: alum.firstName,
-      lastName: alum.lastName,
-      gender: alum.gender,
-      civilStatus: alum.civilStatus,
-      email: alum.email,
-      phoneNumber: alum.phoneNumber,
-      address: alum.address,
-      facebookAccount: alum.facebookAccount,
-      yearGraduated: alum.yearGraduated,
-      campus: {
-        id: alum.campus._id.toString(),
-        name: alum.campus.name,
-      },
-      department: {
-        id: alum.department._id.toString(),
-        name: alum.department.name,
+    console.log(`Successfully fetched ${alumni.length} alumni records`);
+
+    return alumni.map((alum) => {
+      // Safely handle all data access
+      const campusId = safeGetId(alum.campus);
+      const campusName = safeGetName(alum.campus, "Unknown Campus");
+
+      const departmentId = safeGetId(alum.department);
+      const departmentName = safeGetName(alum.department, "Unknown Department");
+
+      // Handle nested campus in department
+      let departmentCampusId = "";
+      let departmentCampusName = "Unknown Campus";
+      if (alum.department && alum.department.campus) {
+        departmentCampusId = safeGetId(alum.department.campus);
+        departmentCampusName = safeGetName(
+          alum.department.campus,
+          "Unknown Campus",
+        );
+      }
+
+      const courseId = safeGetId(alum.course);
+      const courseName = safeGetName(alum.course, "Unknown Course");
+
+      return {
+        id: alum._id.toString(),
+        firstName: alum.firstName || "",
+        lastName: alum.lastName || "",
+        gender: alum.gender || "",
+        civilStatus: alum.civilStatus || "",
+        email: alum.email || "",
+        phoneNumber: alum.phoneNumber || "",
+        address: alum.address || "",
+        studentId: alum.studentId || "",
+        facebookAccount: alum.facebookAccount || "",
+        yearGraduated: alum.yearGraduated || "",
+        dateOfBirth: alum.dateOfBirth || "",
+        placeOfBirth: alum.placeOfBirth || "",
         campus: {
-          id: alum.department.campus._id.toString(),
-          name: alum.department.campus.name,
+          id: campusId,
+          name: campusName,
         },
-      },
-      course: {
-        id: alum.course?._id.toString(),
-        name: alum.course?.name,
-      },
-      degree: alum.degree,
-      employmentStatus: alum.employmentStatus,
-      employmentSector: alum.employmentSector,
-      presentEmploymentStatus: alum.presentEmploymentStatus,
-      locationOfEmployment: alum.locationOfEmployment,
-      currentPosition: alum.currentPosition,
-      employer: alum.employer,
-      companyAddress: alum.companyAddress,
-      boardExamPassed: alum.boardExamPassed,
-      yearPassedBoardExam: alum.yearPassedBoardExam,
-      dateEmploymentAfterBoardExam: alum.dateEmploymentAfterBoardExam,
-      jobInformationSource: alum.jobInformationSource,
-      firstJobDuration: alum.firstJobDuration,
-      isFirstJobRelatedToDegree: alum.isFirstJobRelatedToDegree,
-      firstJobReasons: alum.firstJobReasons,
-      isCurrentJobRelatedToDegree: alum.isCurrentJobRelatedToDegree,
-      currentJobReasons: alum.currentJobReasons,
-      employmentProof: alum.employmentProof,
-      awardsRecognition: alum.awardsRecognition,
-      scholarshipsDuringEmployment: alum.scholarshipsDuringEmployment,
-      eligibility: alum.eligibility,
-      willingToMentor: alum.willingToMentor,
-      receiveUpdates: alum.receiveUpdates,
-      suggestions: alum.suggestions,
-      createdAt: alum.createdAt.toISOString(),
-      updatedAt: alum.updatedAt.toISOString(),
-    }));
+        department: {
+          id: departmentId,
+          name: departmentName,
+          campus: {
+            id: departmentCampusId,
+            name: departmentCampusName,
+          },
+        },
+        course: {
+          id: courseId,
+          name: courseName,
+        },
+        degree: alum.degree || "",
+        employmentStatus: alum.employmentStatus || "",
+        employmentSector: alum.employmentSector || "",
+        presentEmploymentStatus: alum.presentEmploymentStatus || "",
+        locationOfEmployment: alum.locationOfEmployment || "",
+        currentPosition: alum.currentPosition || "",
+        employer: alum.employer || "",
+        companyAddress: alum.companyAddress || "",
+        boardExamPassed: alum.boardExamPassed || "",
+        yearPassedBoardExam: alum.yearPassedBoardExam || "",
+        dateEmploymentAfterBoardExam: alum.dateEmploymentAfterBoardExam || "",
+        jobInformationSource: alum.jobInformationSource || "",
+        firstJobDuration: alum.firstJobDuration || "",
+        isFirstJobRelatedToDegree: alum.isFirstJobRelatedToDegree || false,
+        firstJobReasons: alum.firstJobReasons || [],
+        isCurrentJobRelatedToDegree: alum.isCurrentJobRelatedToDegree || false,
+        currentJobReasons: alum.currentJobReasons || [],
+        employmentProof: alum.employmentProof || "",
+        awardsRecognition: alum.awardsRecognition || [],
+        scholarshipsDuringEmployment: alum.scholarshipsDuringEmployment || [],
+        eligibility: alum.eligibility || [],
+        willingToMentor: alum.willingToMentor || false,
+        receiveUpdates: alum.receiveUpdates || false,
+        suggestions: alum.suggestions || "",
+        createdAt: alum.createdAt?.toISOString() || new Date().toISOString(),
+        updatedAt: alum.updatedAt?.toISOString() || new Date().toISOString(),
+      };
+    });
   } catch (error: any) {
     console.error("Error fetching alumni:", error);
-    throw new Error(error.message || "Failed to fetch alumni");
+    console.error("Error stack:", error.stack);
+
+    // Fallback: try without population if population fails
+    try {
+      const fallbackAlumni = await Alumni.find().lean();
+      console.log("Returning fallback alumni data:", fallbackAlumni.length);
+
+      // Try to populate individually for each alumni
+      const alumniWithPopulatedData = await Promise.all(
+        fallbackAlumni.map(async (alum: any) => {
+          try {
+            const [campus, department, course] = await Promise.all([
+              Campus.findById(alum.campus).select("name").lean(),
+              Department.findById(alum.department)
+                .select("name")
+                .populate("campus", "name")
+                .lean(),
+              Course.findById(alum.course).select("name").lean(),
+            ]);
+
+            return {
+              id: alum._id?.toString() || "",
+              firstName: alum.firstName || "",
+              lastName: alum.lastName || "",
+              gender: alum.gender || "",
+              civilStatus: alum.civilStatus || "",
+              email: alum.email || "",
+              phoneNumber: alum.phoneNumber || "",
+              address: alum.address || "",
+              studentId: alum.studentId || "",
+              facebookAccount: alum.facebookAccount || "",
+              yearGraduated: alum.yearGraduated || "",
+              dateOfBirth: alum.dateOfBirth || "",
+              placeOfBirth: alum.placeOfBirth || "",
+              campus: {
+                id: campus?._id?.toString() || "",
+                name: campus?.name || "Unknown Campus",
+              },
+              department: {
+                id: department?._id?.toString() || "",
+                name: department?.name || "Unknown Department",
+                campus: {
+                  id: department?.campus?._id?.toString() || "",
+                  name: department?.campus?.name || "Unknown Campus",
+                },
+              },
+              course: {
+                id: course?._id?.toString() || "",
+                name: course?.name || "Unknown Course",
+              },
+              degree: alum.degree || "",
+              employmentStatus: alum.employmentStatus || "",
+              employmentSector: alum.employmentSector || "",
+              presentEmploymentStatus: alum.presentEmploymentStatus || "",
+              locationOfEmployment: alum.locationOfEmployment || "",
+              currentPosition: alum.currentPosition || "",
+              employer: alum.employer || "",
+              companyAddress: alum.companyAddress || "",
+              boardExamPassed: alum.boardExamPassed || "",
+              yearPassedBoardExam: alum.yearPassedBoardExam || "",
+              dateEmploymentAfterBoardExam:
+                alum.dateEmploymentAfterBoardExam || "",
+              jobInformationSource: alum.jobInformationSource || "",
+              firstJobDuration: alum.firstJobDuration || "",
+              isFirstJobRelatedToDegree:
+                alum.isFirstJobRelatedToDegree || false,
+              firstJobReasons: alum.firstJobReasons || [],
+              isCurrentJobRelatedToDegree:
+                alum.isCurrentJobRelatedToDegree || false,
+              currentJobReasons: alum.currentJobReasons || [],
+              employmentProof: alum.employmentProof || "",
+              awardsRecognition: alum.awardsRecognition || [],
+              scholarshipsDuringEmployment:
+                alum.scholarshipsDuringEmployment || [],
+              eligibility: alum.eligibility || [],
+              willingToMentor: alum.willingToMentor || false,
+              receiveUpdates: alum.receiveUpdates || false,
+              suggestions: alum.suggestions || "",
+              createdAt:
+                alum.createdAt?.toISOString() || new Date().toISOString(),
+              updatedAt:
+                alum.updatedAt?.toISOString() || new Date().toISOString(),
+            };
+          } catch (populateError) {
+            console.error("Error populating individual alumni:", populateError);
+            return {
+              id: alum._id?.toString() || "",
+              firstName: alum.firstName || "",
+              lastName: alum.lastName || "",
+              gender: alum.gender || "",
+              civilStatus: alum.civilStatus || "",
+              email: alum.email || "",
+              phoneNumber: alum.phoneNumber || "",
+              address: alum.address || "",
+              studentId: alum.studentId || "",
+              facebookAccount: alum.facebookAccount || "",
+              yearGraduated: alum.yearGraduated || "",
+              campus: { id: "", name: "Unknown Campus" },
+              department: {
+                id: "",
+                name: "Unknown Department",
+                campus: { id: "", name: "Unknown Campus" },
+              },
+              course: { id: "", name: "Unknown Course" },
+              degree: alum.degree || "",
+              employmentStatus: alum.employmentStatus || "",
+              employmentSector: alum.employmentSector || "",
+              presentEmploymentStatus: alum.presentEmploymentStatus || "",
+              locationOfEmployment: alum.locationOfEmployment || "",
+              currentPosition: alum.currentPosition || "",
+              employer: alum.employer || "",
+              companyAddress: alum.companyAddress || "",
+              boardExamPassed: alum.boardExamPassed || "",
+              yearPassedBoardExam: alum.yearPassedBoardExam || "",
+              dateEmploymentAfterBoardExam:
+                alum.dateEmploymentAfterBoardExam || "",
+              jobInformationSource: alum.jobInformationSource || "",
+              firstJobDuration: alum.firstJobDuration || "",
+              isFirstJobRelatedToDegree:
+                alum.isFirstJobRelatedToDegree || false,
+              firstJobReasons: alum.firstJobReasons || [],
+              isCurrentJobRelatedToDegree:
+                alum.isCurrentJobRelatedToDegree || false,
+              currentJobReasons: alum.currentJobReasons || [],
+              employmentProof: alum.employmentProof || "",
+              awardsRecognition: alum.awardsRecognition || [],
+              scholarshipsDuringEmployment:
+                alum.scholarshipsDuringEmployment || [],
+              eligibility: alum.eligibility || [],
+              willingToMentor: alum.willingToMentor || false,
+              receiveUpdates: alum.receiveUpdates || false,
+              suggestions: alum.suggestions || "",
+              createdAt:
+                alum.createdAt?.toISOString() || new Date().toISOString(),
+              updatedAt:
+                alum.updatedAt?.toISOString() || new Date().toISOString(),
+            };
+          }
+        }),
+      );
+
+      return alumniWithPopulatedData;
+    } catch (fallbackError) {
+      console.error("Fallback also failed:", fallbackError);
+      return [];
+    }
   }
 }
 
@@ -172,49 +369,38 @@ export async function createAlumni(data: AlumniInput) {
       throw new Error("Course does not belong to selected department");
     }
 
-    // Prepare data for creation - handle empty enum values
+    // Prepare data for creation
     const alumniData: any = {
       ...data,
       email: data.email.toLowerCase().trim(),
       studentId: data.studentId?.trim(),
     };
 
-    // Remove empty string values for enum fields to avoid validation errors
-    if (alumniData.dateEmploymentAfterBoardExam === "") {
-      delete alumniData.dateEmploymentAfterBoardExam;
-    }
-    if (alumniData.jobInformationSource === "") {
-      delete alumniData.jobInformationSource;
-    }
-    if (alumniData.firstJobDuration === "") {
-      delete alumniData.firstJobDuration;
-    }
-
     // Clean up array fields - remove empty strings
     if (alumniData.firstJobReasons) {
       alumniData.firstJobReasons = alumniData.firstJobReasons.filter(
-        (reason: string) => reason.trim() !== "",
+        (reason: string) => reason && reason.trim() !== "",
       );
     }
     if (alumniData.currentJobReasons) {
       alumniData.currentJobReasons = alumniData.currentJobReasons.filter(
-        (reason: string) => reason.trim() !== "",
+        (reason: string) => reason && reason.trim() !== "",
       );
     }
     if (alumniData.awardsRecognition) {
       alumniData.awardsRecognition = alumniData.awardsRecognition.filter(
-        (award: string) => award.trim() !== "",
+        (award: string) => award && award.trim() !== "",
       );
     }
     if (alumniData.scholarshipsDuringEmployment) {
       alumniData.scholarshipsDuringEmployment =
         alumniData.scholarshipsDuringEmployment.filter(
-          (scholarship: string) => scholarship.trim() !== "",
+          (scholarship: string) => scholarship && scholarship.trim() !== "",
         );
     }
     if (alumniData.eligibility) {
       alumniData.eligibility = alumniData.eligibility.filter(
-        (eligibility: string) => eligibility.trim() !== "",
+        (eligibility: string) => eligibility && eligibility.trim() !== "",
       );
     }
 
@@ -242,6 +428,29 @@ export async function createAlumni(data: AlumniInput) {
 
     revalidatePath("/dashboard/alumni");
 
+    // Return the properly formatted data
+    const campusId = safeGetId(newAlumni.campus);
+    const campusName = safeGetName(newAlumni.campus, "Unknown Campus");
+
+    const departmentId = safeGetId(newAlumni.department);
+    const departmentName = safeGetName(
+      newAlumni.department,
+      "Unknown Department",
+    );
+
+    let departmentCampusId = "";
+    let departmentCampusName = "Unknown Campus";
+    if (newAlumni.department && newAlumni.department.campus) {
+      departmentCampusId = safeGetId(newAlumni.department.campus);
+      departmentCampusName = safeGetName(
+        newAlumni.department.campus,
+        "Unknown Campus",
+      );
+    }
+
+    const courseId = safeGetId(newAlumni.course);
+    const courseName = safeGetName(newAlumni.course, "Unknown Course");
+
     return {
       id: newAlumni._id.toString(),
       firstName: newAlumni.firstName,
@@ -251,48 +460,52 @@ export async function createAlumni(data: AlumniInput) {
       email: newAlumni.email,
       phoneNumber: newAlumni.phoneNumber,
       address: newAlumni.address,
-      facebookAccount: newAlumni.facebookAccount,
+      studentId: newAlumni.studentId || "",
+      facebookAccount: newAlumni.facebookAccount || "",
       yearGraduated: newAlumni.yearGraduated,
       campus: {
-        id: newAlumni.campus._id.toString(),
-        name: newAlumni.campus.name,
+        id: campusId,
+        name: campusName,
       },
       department: {
-        id: newAlumni.department._id.toString(),
-        name: newAlumni.department.name,
+        id: departmentId,
+        name: departmentName,
         campus: {
-          id: newAlumni.department.campus._id.toString(),
-          name: newAlumni.department.campus.name,
+          id: departmentCampusId,
+          name: departmentCampusName,
         },
       },
       course: {
-        id: newAlumni.course?._id.toString(),
-        name: newAlumni.course?.name,
+        id: courseId,
+        name: courseName,
       },
       degree: newAlumni.degree,
       employmentStatus: newAlumni.employmentStatus,
       employmentSector: newAlumni.employmentSector,
       presentEmploymentStatus: newAlumni.presentEmploymentStatus,
       locationOfEmployment: newAlumni.locationOfEmployment,
-      currentPosition: newAlumni.currentPosition,
-      employer: newAlumni.employer,
-      companyAddress: newAlumni.companyAddress,
-      boardExamPassed: newAlumni.boardExamPassed,
-      yearPassedBoardExam: newAlumni.yearPassedBoardExam,
-      dateEmploymentAfterBoardExam: newAlumni.dateEmploymentAfterBoardExam,
-      jobInformationSource: newAlumni.jobInformationSource,
-      firstJobDuration: newAlumni.firstJobDuration,
-      isFirstJobRelatedToDegree: newAlumni.isFirstJobRelatedToDegree,
-      firstJobReasons: newAlumni.firstJobReasons,
-      isCurrentJobRelatedToDegree: newAlumni.isCurrentJobRelatedToDegree,
-      currentJobReasons: newAlumni.currentJobReasons,
-      employmentProof: newAlumni.employmentProof,
-      awardsRecognition: newAlumni.awardsRecognition,
-      scholarshipsDuringEmployment: newAlumni.scholarshipsDuringEmployment,
-      eligibility: newAlumni.eligibility,
-      willingToMentor: newAlumni.willingToMentor,
-      receiveUpdates: newAlumni.receiveUpdates,
-      suggestions: newAlumni.suggestions,
+      currentPosition: newAlumni.currentPosition || "",
+      employer: newAlumni.employer || "",
+      companyAddress: newAlumni.companyAddress || "",
+      boardExamPassed: newAlumni.boardExamPassed || "",
+      yearPassedBoardExam: newAlumni.yearPassedBoardExam || "",
+      dateEmploymentAfterBoardExam:
+        newAlumni.dateEmploymentAfterBoardExam || "",
+      jobInformationSource: newAlumni.jobInformationSource || "",
+      firstJobDuration: newAlumni.firstJobDuration || "",
+      isFirstJobRelatedToDegree: newAlumni.isFirstJobRelatedToDegree || false,
+      firstJobReasons: newAlumni.firstJobReasons || [],
+      isCurrentJobRelatedToDegree:
+        newAlumni.isCurrentJobRelatedToDegree || false,
+      currentJobReasons: newAlumni.currentJobReasons || [],
+      employmentProof: newAlumni.employmentProof || "",
+      awardsRecognition: newAlumni.awardsRecognition || [],
+      scholarshipsDuringEmployment:
+        newAlumni.scholarshipsDuringEmployment || [],
+      eligibility: newAlumni.eligibility || [],
+      willingToMentor: newAlumni.willingToMentor || false,
+      receiveUpdates: newAlumni.receiveUpdates || false,
+      suggestions: newAlumni.suggestions || "",
       createdAt: newAlumni.createdAt.toISOString(),
       updatedAt: newAlumni.updatedAt.toISOString(),
     };
@@ -384,49 +597,38 @@ export async function updateAlumni(id: string, data: AlumniInput) {
       throw new Error("Course does not belong to selected department");
     }
 
-    // Prepare update data - handle empty enum values
+    // Prepare update data
     const updateData: any = {
       ...data,
       email: data.email.toLowerCase().trim(),
       studentId: data.studentId?.trim(),
     };
 
-    // Remove empty string values for enum fields to avoid validation errors
-    if (updateData.dateEmploymentAfterBoardExam === "") {
-      updateData.dateEmploymentAfterBoardExam = undefined;
-    }
-    if (updateData.jobInformationSource === "") {
-      updateData.jobInformationSource = undefined;
-    }
-    if (updateData.firstJobDuration === "") {
-      updateData.firstJobDuration = undefined;
-    }
-
     // Clean up array fields - remove empty strings
     if (updateData.firstJobReasons) {
       updateData.firstJobReasons = updateData.firstJobReasons.filter(
-        (reason: string) => reason.trim() !== "",
+        (reason: string) => reason && reason.trim() !== "",
       );
     }
     if (updateData.currentJobReasons) {
       updateData.currentJobReasons = updateData.currentJobReasons.filter(
-        (reason: string) => reason.trim() !== "",
+        (reason: string) => reason && reason.trim() !== "",
       );
     }
     if (updateData.awardsRecognition) {
       updateData.awardsRecognition = updateData.awardsRecognition.filter(
-        (award: string) => award.trim() !== "",
+        (award: string) => award && award.trim() !== "",
       );
     }
     if (updateData.scholarshipsDuringEmployment) {
       updateData.scholarshipsDuringEmployment =
         updateData.scholarshipsDuringEmployment.filter(
-          (scholarship: string) => scholarship.trim() !== "",
+          (scholarship: string) => scholarship && scholarship.trim() !== "",
         );
     }
     if (updateData.eligibility) {
       updateData.eligibility = updateData.eligibility.filter(
-        (eligibility: string) => eligibility.trim() !== "",
+        (eligibility: string) => eligibility && eligibility.trim() !== "",
       );
     }
 
@@ -454,6 +656,26 @@ export async function updateAlumni(id: string, data: AlumniInput) {
 
     revalidatePath("/dashboard/alumni");
 
+    // Return the properly formatted data
+    const campusId = safeGetId(alumni.campus);
+    const campusName = safeGetName(alumni.campus, "Unknown Campus");
+
+    const departmentId = safeGetId(alumni.department);
+    const departmentName = safeGetName(alumni.department, "Unknown Department");
+
+    let departmentCampusId = "";
+    let departmentCampusName = "Unknown Campus";
+    if (alumni.department && alumni.department.campus) {
+      departmentCampusId = safeGetId(alumni.department.campus);
+      departmentCampusName = safeGetName(
+        alumni.department.campus,
+        "Unknown Campus",
+      );
+    }
+
+    const courseId = safeGetId(alumni.course);
+    const courseName = safeGetName(alumni.course, "Unknown Course");
+
     return {
       id: alumni._id.toString(),
       firstName: alumni.firstName,
@@ -463,48 +685,49 @@ export async function updateAlumni(id: string, data: AlumniInput) {
       email: alumni.email,
       phoneNumber: alumni.phoneNumber,
       address: alumni.address,
-      facebookAccount: alumni.facebookAccount,
+      studentId: alumni.studentId || "",
+      facebookAccount: alumni.facebookAccount || "",
       yearGraduated: alumni.yearGraduated,
       campus: {
-        id: alumni.campus._id.toString(),
-        name: alumni.campus.name,
+        id: campusId,
+        name: campusName,
       },
       department: {
-        id: alumni.department._id.toString(),
-        name: alumni.department.name,
+        id: departmentId,
+        name: departmentName,
         campus: {
-          id: alumni.department.campus._id.toString(),
-          name: alumni.department.campus.name,
+          id: departmentCampusId,
+          name: departmentCampusName,
         },
       },
       course: {
-        id: alumni.course?._id.toString(),
-        name: alumni.course?.name,
+        id: courseId,
+        name: courseName,
       },
       degree: alumni.degree,
       employmentStatus: alumni.employmentStatus,
       employmentSector: alumni.employmentSector,
       presentEmploymentStatus: alumni.presentEmploymentStatus,
       locationOfEmployment: alumni.locationOfEmployment,
-      currentPosition: alumni.currentPosition,
-      employer: alumni.employer,
-      companyAddress: alumni.companyAddress,
-      boardExamPassed: alumni.boardExamPassed,
-      yearPassedBoardExam: alumni.yearPassedBoardExam,
-      dateEmploymentAfterBoardExam: alumni.dateEmploymentAfterBoardExam,
-      jobInformationSource: alumni.jobInformationSource,
-      firstJobDuration: alumni.firstJobDuration,
-      isFirstJobRelatedToDegree: alumni.isFirstJobRelatedToDegree,
-      firstJobReasons: alumni.firstJobReasons,
-      isCurrentJobRelatedToDegree: alumni.isCurrentJobRelatedToDegree,
-      currentJobReasons: alumni.currentJobReasons,
-      employmentProof: alumni.employmentProof,
-      awardsRecognition: alumni.awardsRecognition,
-      scholarshipsDuringEmployment: alumni.scholarshipsDuringEmployment,
-      eligibility: alumni.eligibility,
-      willingToMentor: alumni.willingToMentor,
-      receiveUpdates: alumni.receiveUpdates,
-      suggestions: alumni.suggestions,
+      currentPosition: alumni.currentPosition || "",
+      employer: alumni.employer || "",
+      companyAddress: alumni.companyAddress || "",
+      boardExamPassed: alumni.boardExamPassed || "",
+      yearPassedBoardExam: alumni.yearPassedBoardExam || "",
+      dateEmploymentAfterBoardExam: alumni.dateEmploymentAfterBoardExam || "",
+      jobInformationSource: alumni.jobInformationSource || "",
+      firstJobDuration: alumni.firstJobDuration || "",
+      isFirstJobRelatedToDegree: alumni.isFirstJobRelatedToDegree || false,
+      firstJobReasons: alumni.firstJobReasons || [],
+      isCurrentJobRelatedToDegree: alumni.isCurrentJobRelatedToDegree || false,
+      currentJobReasons: alumni.currentJobReasons || [],
+      employmentProof: alumni.employmentProof || "",
+      awardsRecognition: alumni.awardsRecognition || [],
+      scholarshipsDuringEmployment: alumni.scholarshipsDuringEmployment || [],
+      eligibility: alumni.eligibility || [],
+      willingToMentor: alumni.willingToMentor || false,
+      receiveUpdates: alumni.receiveUpdates || false,
+      suggestions: alumni.suggestions || "",
       createdAt: alumni.createdAt.toISOString(),
       updatedAt: alumni.updatedAt.toISOString(),
     };
@@ -559,62 +782,86 @@ export async function getAlumniById(id: string) {
       throw new Error("Alumni not found");
     }
 
+    // Safely handle all data access
+    const campusId = safeGetId(alumni.campus);
+    const campusName = safeGetName(alumni.campus, "Unknown Campus");
+
+    const departmentId = safeGetId(alumni.department);
+    const departmentName = safeGetName(alumni.department, "Unknown Department");
+
+    // Handle nested campus in department
+    let departmentCampusId = "";
+    let departmentCampusName = "Unknown Campus";
+    if (alumni.department && alumni.department.campus) {
+      departmentCampusId = safeGetId(alumni.department.campus);
+      departmentCampusName = safeGetName(
+        alumni.department.campus,
+        "Unknown Campus",
+      );
+    }
+
+    const courseId = safeGetId(alumni.course);
+    const courseName = safeGetName(alumni.course, "Unknown Course");
+
     return {
       id: alumni._id.toString(),
-      firstName: alumni.firstName,
-      lastName: alumni.lastName,
-      gender: alumni.gender,
-      civilStatus: alumni.civilStatus,
-      email: alumni.email,
-      phoneNumber: alumni.phoneNumber,
-      address: alumni.address,
-      facebookAccount: alumni.facebookAccount,
-      yearGraduated: alumni.yearGraduated,
+      firstName: alumni.firstName || "",
+      lastName: alumni.lastName || "",
+      gender: alumni.gender || "",
+      civilStatus: alumni.civilStatus || "",
+      email: alumni.email || "",
+      phoneNumber: alumni.phoneNumber || "",
+      address: alumni.address || "",
+      studentId: alumni.studentId || "",
+      facebookAccount: alumni.facebookAccount || "",
+      yearGraduated: alumni.yearGraduated || "",
+      dateOfBirth: alumni.dateOfBirth || "",
+      placeOfBirth: alumni.placeOfBirth || "",
       campus: {
-        id: alumni.campus._id.toString(),
-        name: alumni.campus.name,
+        id: campusId,
+        name: campusName,
       },
       department: {
-        id: alumni.department._id.toString(),
-        name: alumni.department.name,
+        id: departmentId,
+        name: departmentName,
         campus: {
-          id: alumni.department.campus._id.toString(),
-          name: alumni.department.campus.name,
+          id: departmentCampusId,
+          name: departmentCampusName,
         },
       },
       course: {
-        id: alumni.course?._id.toString(),
-        name: alumni.course?.name,
+        id: courseId,
+        name: courseName,
       },
-      degree: alumni.degree,
-      employmentStatus: alumni.employmentStatus,
-      employmentSector: alumni.employmentSector,
-      presentEmploymentStatus: alumni.presentEmploymentStatus,
-      locationOfEmployment: alumni.locationOfEmployment,
-      currentPosition: alumni.currentPosition,
-      employer: alumni.employer,
-      companyAddress: alumni.companyAddress,
-      boardExamPassed: alumni.boardExamPassed,
-      yearPassedBoardExam: alumni.yearPassedBoardExam,
-      dateEmploymentAfterBoardExam: alumni.dateEmploymentAfterBoardExam,
-      jobInformationSource: alumni.jobInformationSource,
-      firstJobDuration: alumni.firstJobDuration,
-      isFirstJobRelatedToDegree: alumni.isFirstJobRelatedToDegree,
-      firstJobReasons: alumni.firstJobReasons,
-      isCurrentJobRelatedToDegree: alumni.isCurrentJobRelatedToDegree,
-      currentJobReasons: alumni.currentJobReasons,
-      employmentProof: alumni.employmentProof,
-      awardsRecognition: alumni.awardsRecognition,
-      scholarshipsDuringEmployment: alumni.scholarshipsDuringEmployment,
-      eligibility: alumni.eligibility,
-      willingToMentor: alumni.willingToMentor,
-      receiveUpdates: alumni.receiveUpdates,
-      suggestions: alumni.suggestions,
-      createdAt: alumni.createdAt.toISOString(),
-      updatedAt: alumni.updatedAt.toISOString(),
+      degree: alumni.degree || "",
+      employmentStatus: alumni.employmentStatus || "",
+      employmentSector: alumni.employmentSector || "",
+      presentEmploymentStatus: alumni.presentEmploymentStatus || "",
+      locationOfEmployment: alumni.locationOfEmployment || "",
+      currentPosition: alumni.currentPosition || "",
+      employer: alumni.employer || "",
+      companyAddress: alumni.companyAddress || "",
+      boardExamPassed: alumni.boardExamPassed || "",
+      yearPassedBoardExam: alumni.yearPassedBoardExam || "",
+      dateEmploymentAfterBoardExam: alumni.dateEmploymentAfterBoardExam || "",
+      jobInformationSource: alumni.jobInformationSource || "",
+      firstJobDuration: alumni.firstJobDuration || "",
+      isFirstJobRelatedToDegree: alumni.isFirstJobRelatedToDegree || false,
+      firstJobReasons: alumni.firstJobReasons || [],
+      isCurrentJobRelatedToDegree: alumni.isCurrentJobRelatedToDegree || false,
+      currentJobReasons: alumni.currentJobReasons || [],
+      employmentProof: alumni.employmentProof || "",
+      awardsRecognition: alumni.awardsRecognition || [],
+      scholarshipsDuringEmployment: alumni.scholarshipsDuringEmployment || [],
+      eligibility: alumni.eligibility || [],
+      willingToMentor: alumni.willingToMentor || false,
+      receiveUpdates: alumni.receiveUpdates || false,
+      suggestions: alumni.suggestions || "",
+      createdAt: alumni.createdAt?.toISOString() || new Date().toISOString(),
+      updatedAt: alumni.updatedAt?.toISOString() || new Date().toISOString(),
     };
   } catch (error: any) {
-    console.error("Error fetching alumni:", error);
+    console.error("Error fetching alumni by ID:", error);
     throw new Error(error.message || "Failed to fetch alumni");
   }
 }
@@ -626,69 +873,65 @@ export async function getAlumniYears() {
     const years = await Alumni.distinct("yearGraduated").sort({
       yearGraduated: -1,
     });
-    return years.map((year) => ({
-      value: year,
-      label: year,
-    }));
+    return years
+      .filter((year) => year != null && year !== "")
+      .map((year) => ({
+        value: year.toString(),
+        label: year.toString(),
+      }));
   } catch (error: any) {
     console.error("Error fetching alumni years:", error);
-    throw new Error(error.message || "Failed to fetch alumni years");
+    return [];
   }
 }
 
 export async function getAlumniCampuses() {
   try {
     await dbConnect();
-    const alumni = await Alumni.find().populate("campus", "name");
-    const campuses = [
-      ...new Set(
-        alumni.map((a) => ({
-          id: a.campus._id.toString(),
-          name: a.campus.name,
-        })),
-      ),
-    ].sort((a, b) => a.name.localeCompare(b.name));
+
+    // Get all campuses that have alumni
+    const alumniCampuses = await Alumni.distinct("campus");
+
+    // Get campus details for these IDs
+    const campuses = await Campus.find({
+      _id: { $in: alumniCampuses.filter((id) => id != null) },
+    })
+      .select("name")
+      .sort({ name: 1 });
 
     return campuses.map((campus) => ({
-      value: campus.id,
+      value: campus._id.toString(),
       label: campus.name,
     }));
   } catch (error: any) {
     console.error("Error fetching alumni campuses:", error);
-    throw new Error(error.message || "Failed to fetch alumni campuses");
+    return [];
   }
 }
 
 export async function getAlumniDepartments() {
   try {
     await dbConnect();
-    const alumni = await Alumni.find().populate({
-      path: "department",
-      select: "name",
-      populate: {
-        path: "campus",
-        select: "name",
-      },
-    });
 
-    const departments = [
-      ...new Set(
-        alumni.map((a) => ({
-          id: a.department._id.toString(),
-          name: a.department.name,
-          campus: a.department.campus.name,
-        })),
-      ),
-    ].sort((a, b) => a.name.localeCompare(b.name));
+    // Get all departments that have alumni
+    const alumniDepartments = await Alumni.distinct("department");
+
+    // Get department details for these IDs
+    const departments = await Department.find({
+      _id: { $in: alumniDepartments.filter((id) => id != null) },
+    })
+      .populate("campus", "name")
+      .select("name campus")
+      .sort({ name: 1 });
 
     return departments.map((dept) => ({
-      value: dept.id,
+      value: dept._id.toString(),
       label: dept.name,
-      campus: dept.campus,
+      campus: dept.campus?.name || "Unknown Campus",
     }));
   } catch (error: any) {
     console.error("Error fetching alumni departments:", error);
-    throw new Error(error.message || "Failed to fetch alumni departments");
+    return [];
   }
 }
 
@@ -805,6 +1048,10 @@ export async function getFormData() {
 // Search alumni
 export async function searchAlumni(query: string) {
   try {
+    if (!query || query.trim() === "") {
+      return [];
+    }
+
     await dbConnect();
 
     const alumni = await Alumni.find({
@@ -830,63 +1077,85 @@ export async function searchAlumni(query: string) {
       })
       .limit(10);
 
-    return alumni.map((alum) => ({
-      id: alum._id.toString(),
-      firstName: alum.firstName,
-      lastName: alum.lastName,
-      gender: alum.gender,
-      civilStatus: alum.civilStatus,
-      email: alum.email,
-      phoneNumber: alum.phoneNumber,
-      address: alum.address,
-      facebookAccount: alum.facebookAccount,
-      yearGraduated: alum.yearGraduated,
-      campus: {
-        id: alum.campus._id.toString(),
-        name: alum.campus.name,
-      },
-      department: {
-        id: alum.department._id.toString(),
-        name: alum.department.name,
+    return alumni.map((alum) => {
+      const campusId = safeGetId(alum.campus);
+      const campusName = safeGetName(alum.campus, "Unknown Campus");
+
+      const departmentId = safeGetId(alum.department);
+      const departmentName = safeGetName(alum.department, "Unknown Department");
+
+      let departmentCampusId = "";
+      let departmentCampusName = "Unknown Campus";
+      if (alum.department && alum.department.campus) {
+        departmentCampusId = safeGetId(alum.department.campus);
+        departmentCampusName = safeGetName(
+          alum.department.campus,
+          "Unknown Campus",
+        );
+      }
+
+      const courseId = safeGetId(alum.course);
+      const courseName = safeGetName(alum.course, "Unknown Course");
+
+      return {
+        id: alum._id.toString(),
+        firstName: alum.firstName || "",
+        lastName: alum.lastName || "",
+        gender: alum.gender || "",
+        civilStatus: alum.civilStatus || "",
+        email: alum.email || "",
+        phoneNumber: alum.phoneNumber || "",
+        address: alum.address || "",
+        studentId: alum.studentId || "",
+        facebookAccount: alum.facebookAccount || "",
+        yearGraduated: alum.yearGraduated || "",
         campus: {
-          id: alum.department.campus._id.toString(),
-          name: alum.department.campus.name,
+          id: campusId,
+          name: campusName,
         },
-      },
-      course: {
-        id: alum.course?._id.toString(),
-        name: alum.course?.name,
-      },
-      degree: alum.degree,
-      employmentStatus: alum.employmentStatus,
-      employmentSector: alum.employmentSector,
-      presentEmploymentStatus: alum.presentEmploymentStatus,
-      locationOfEmployment: alum.locationOfEmployment,
-      currentPosition: alum.currentPosition,
-      employer: alum.employer,
-      companyAddress: alum.companyAddress,
-      boardExamPassed: alum.boardExamPassed,
-      yearPassedBoardExam: alum.yearPassedBoardExam,
-      dateEmploymentAfterBoardExam: alum.dateEmploymentAfterBoardExam,
-      jobInformationSource: alum.jobInformationSource,
-      firstJobDuration: alum.firstJobDuration,
-      isFirstJobRelatedToDegree: alum.isFirstJobRelatedToDegree,
-      firstJobReasons: alum.firstJobReasons,
-      isCurrentJobRelatedToDegree: alum.isCurrentJobRelatedToDegree,
-      currentJobReasons: alum.currentJobReasons,
-      employmentProof: alum.employmentProof,
-      awardsRecognition: alum.awardsRecognition,
-      scholarshipsDuringEmployment: alum.scholarshipsDuringEmployment,
-      eligibility: alum.eligibility,
-      willingToMentor: alum.willingToMentor,
-      receiveUpdates: alum.receiveUpdates,
-      suggestions: alum.suggestions,
-      createdAt: alum.createdAt.toISOString(),
-      updatedAt: alum.updatedAt.toISOString(),
-    }));
+        department: {
+          id: departmentId,
+          name: departmentName,
+          campus: {
+            id: departmentCampusId,
+            name: departmentCampusName,
+          },
+        },
+        course: {
+          id: courseId,
+          name: courseName,
+        },
+        degree: alum.degree || "",
+        employmentStatus: alum.employmentStatus || "",
+        employmentSector: alum.employmentSector || "",
+        presentEmploymentStatus: alum.presentEmploymentStatus || "",
+        locationOfEmployment: alum.locationOfEmployment || "",
+        currentPosition: alum.currentPosition || "",
+        employer: alum.employer || "",
+        companyAddress: alum.companyAddress || "",
+        boardExamPassed: alum.boardExamPassed || "",
+        yearPassedBoardExam: alum.yearPassedBoardExam || "",
+        dateEmploymentAfterBoardExam: alum.dateEmploymentAfterBoardExam || "",
+        jobInformationSource: alum.jobInformationSource || "",
+        firstJobDuration: alum.firstJobDuration || "",
+        isFirstJobRelatedToDegree: alum.isFirstJobRelatedToDegree || false,
+        firstJobReasons: alum.firstJobReasons || [],
+        isCurrentJobRelatedToDegree: alum.isCurrentJobRelatedToDegree || false,
+        currentJobReasons: alum.currentJobReasons || [],
+        employmentProof: alum.employmentProof || "",
+        awardsRecognition: alum.awardsRecognition || [],
+        scholarshipsDuringEmployment: alum.scholarshipsDuringEmployment || [],
+        eligibility: alum.eligibility || [],
+        willingToMentor: alum.willingToMentor || false,
+        receiveUpdates: alum.receiveUpdates || false,
+        suggestions: alum.suggestions || "",
+        createdAt: alum.createdAt?.toISOString() || new Date().toISOString(),
+        updatedAt: alum.updatedAt?.toISOString() || new Date().toISOString(),
+      };
+    });
   } catch (error: any) {
     console.error("Error searching alumni:", error);
-    throw new Error(error.message || "Failed to search alumni");
+    return [];
   }
 }
 
@@ -900,6 +1169,32 @@ export async function getAlumniStats() {
       employmentStatus: { $in: ["Employed", "Self-Employed"] },
     });
 
+    // Get unique campuses and departments
+    const uniqueCampuses = await Alumni.distinct("campus");
+    const uniqueDepartments = await Alumni.distinct("department");
+
+    return {
+      total,
+      employed,
+      campuses: uniqueCampuses.filter((c) => c != null).length,
+      departments: uniqueDepartments.filter((d) => d != null).length,
+    };
+  } catch (error: any) {
+    console.error("Error fetching alumni stats:", error);
+    return {
+      total: 0,
+      employed: 0,
+      campuses: 0,
+      departments: 0,
+    };
+  }
+}
+
+// Export alumni data
+export async function exportAlumniData(format: "csv" | "excel" = "csv") {
+  try {
+    await dbConnect();
+
     const alumni = await Alumni.find()
       .populate("campus", "name")
       .populate({
@@ -909,24 +1204,151 @@ export async function getAlumniStats() {
           path: "campus",
           select: "name",
         },
+      })
+      .populate({
+        path: "course",
+        select: "name",
       });
 
-    const uniqueCampuses = [
-      ...new Set(alumni.map((a) => a.campus._id.toString())),
-    ];
-
-    const uniqueDepartments = [
-      ...new Set(alumni.map((a) => a.department._id.toString())),
-    ];
+    // Prepare data for export
+    const exportData = alumni.map((alum) => ({
+      "First Name": alum.firstName || "",
+      "Last Name": alum.lastName || "",
+      Gender: alum.gender || "",
+      "Civil Status": alum.civilStatus || "",
+      Email: alum.email || "",
+      "Phone Number": alum.phoneNumber || "",
+      Address: alum.address || "",
+      "Facebook Account": alum.facebookAccount || "",
+      "Student ID": alum.studentId || "",
+      "Year Graduated": alum.yearGraduated || "",
+      Campus: alum.campus?.name || "Unknown",
+      Department: alum.department?.name || "Unknown",
+      Course: alum.course?.name || "Unknown",
+      Degree: alum.degree || "",
+      "Employment Status": alum.employmentStatus || "",
+      "Employment Sector": alum.employmentSector || "",
+      "Present Employment Status": alum.presentEmploymentStatus || "",
+      "Location of Employment": alum.locationOfEmployment || "",
+      "Current Position": alum.currentPosition || "",
+      Employer: alum.employer || "",
+      "Company Address": alum.companyAddress || "",
+      "Board Exam Passed": alum.boardExamPassed || "",
+      "Year Passed Board Exam": alum.yearPassedBoardExam || "",
+      "Date Employment After Board Exam":
+        alum.dateEmploymentAfterBoardExam || "",
+      "Job Information Source": alum.jobInformationSource || "",
+      "First Job Duration": alum.firstJobDuration || "",
+      "First Job Related to Degree": alum.isFirstJobRelatedToDegree
+        ? "Yes"
+        : "No",
+      "Current Job Related to Degree": alum.isCurrentJobRelatedToDegree
+        ? "Yes"
+        : "No",
+      "Awards & Recognition": alum.awardsRecognition?.join("; ") || "",
+      "Scholarships During Employment":
+        alum.scholarshipsDuringEmployment?.join("; ") || "",
+      Eligibility: alum.eligibility?.join("; ") || "",
+      "Willing to Mentor": alum.willingToMentor ? "Yes" : "No",
+      "Receive Updates": alum.receiveUpdates ? "Yes" : "No",
+      Suggestions: alum.suggestions || "",
+      "Date Created": alum.createdAt?.toISOString().split("T")[0] || "",
+      "Last Updated": alum.updatedAt?.toISOString().split("T")[0] || "",
+    }));
 
     return {
-      total,
-      employed,
-      campuses: uniqueCampuses.length,
-      departments: uniqueDepartments.length,
+      data: exportData,
+      format,
+      count: exportData.length,
     };
   } catch (error: any) {
-    console.error("Error fetching alumni stats:", error);
-    throw new Error(error.message || "Failed to fetch alumni stats");
+    console.error("Error exporting alumni data:", error);
+    throw new Error(error.message || "Failed to export alumni data");
+  }
+}
+
+// Bulk delete alumni
+export async function bulkDeleteAlumni(ids: string[]) {
+  try {
+    await dbConnect();
+
+    const result = await Alumni.deleteMany({ _id: { $in: ids } });
+
+    revalidatePath("/dashboard/alumni");
+
+    return {
+      success: true,
+      deletedCount: result.deletedCount,
+      message: `Successfully deleted ${result.deletedCount} alumni records`,
+    };
+  } catch (error: any) {
+    console.error("Error bulk deleting alumni:", error);
+    throw new Error(error.message || "Failed to bulk delete alumni");
+  }
+}
+
+// Update alumni batch
+export async function updateAlumniBatch(
+  updates: Array<{ id: string; data: Partial<AlumniInput> }>,
+) {
+  try {
+    await dbConnect();
+
+    const results = [];
+
+    for (const update of updates) {
+      try {
+        const alumni = await Alumni.findByIdAndUpdate(
+          update.id,
+          { ...update.data, updatedAt: new Date() },
+          { new: true, runValidators: true },
+        )
+          .populate("campus", "name")
+          .populate({
+            path: "department",
+            select: "name",
+            populate: {
+              path: "campus",
+              select: "name",
+            },
+          })
+          .populate({
+            path: "course",
+            select: "name",
+          });
+
+        if (alumni) {
+          results.push({
+            id: alumni._id.toString(),
+            success: true,
+            name: `${alumni.firstName} ${alumni.lastName}`,
+          });
+        } else {
+          results.push({
+            id: update.id,
+            success: false,
+            error: "Alumni not found",
+          });
+        }
+      } catch (error: any) {
+        results.push({
+          id: update.id,
+          success: false,
+          error: error.message,
+        });
+      }
+    }
+
+    revalidatePath("/dashboard/alumni");
+
+    return {
+      success: true,
+      results,
+      updatedCount: results.filter((r) => r.success).length,
+      failedCount: results.filter((r) => !r.success).length,
+    };
+  } catch (error: any) {
+    console.error("Error updating alumni batch:", error);
+    throw new Error(error.message || "Failed to update alumni batch");
   }
 }

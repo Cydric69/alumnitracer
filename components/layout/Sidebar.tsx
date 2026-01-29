@@ -1,4 +1,3 @@
-// components/layout/Sidebar.tsx
 "use client";
 
 import { useState } from "react";
@@ -18,6 +17,7 @@ import {
   BarChart3,
   MessageSquare,
   Building,
+  Newspaper,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -31,7 +31,6 @@ interface NavItem {
   label: string;
   href: string;
   icon: LucideIcon;
-  badge?: string;
 }
 
 interface NavSection {
@@ -76,7 +75,6 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
           label: "Alumni Data",
           href: "/dashboard/alumni",
           icon: Users,
-          badge: "2.4k",
         },
       ],
     },
@@ -88,19 +86,16 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
           label: "Courses",
           href: "/dashboard/courses",
           icon: Bookmark,
-          badge: "28",
         },
         {
           label: "Departments",
           href: "/dashboard/departments",
           icon: Building,
-          badge: "12",
         },
         {
           label: "Campuses",
           href: "/dashboard/campuses",
           icon: MapPin,
-          badge: "5",
         },
       ],
     },
@@ -108,33 +103,9 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
       title: "Content Management",
       items: [
         {
-          label: "Events",
-          href: "/dashboard/events",
-          icon: Calendar,
-          badge: "12",
-        },
-        {
-          label: "Announcements",
-          href: "/dashboard/announcements",
-          icon: Bell,
-          badge: "5",
-        },
-      ],
-    },
-    {
-      title: "Data & Analytics",
-      section: "data",
-      items: [
-        {
-          label: "Survey Results",
-          href: "/dashboard/data/surveys",
-          icon: BarChart3,
-        },
-        {
-          label: "Alumni Feedback",
-          href: "/dashboard/data/feedback",
-          icon: MessageSquare,
-          badge: "48",
+          label: "Events & Announcements",
+          href: "/dashboard/events-announcements",
+          icon: Newspaper,
         },
       ],
     },
@@ -159,7 +130,7 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
       <aside
         className={cn(
           "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r bg-white transition-transform duration-200 ease-in-out lg:translate-x-0 lg:fixed lg:inset-y-0 lg:left-0",
-          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
+          isOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0",
         )}
       >
         {/* Sidebar Header */}
@@ -210,7 +181,7 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
                               "flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors",
                               isActive(item.href)
                                 ? "bg-gray-100 text-gray-900 font-medium"
-                                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                                : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
                             )}
                             onClick={() => setIsOpen(false)}
                           >
@@ -218,11 +189,6 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
                               <item.icon className="h-4 w-4" />
                               {item.label}
                             </div>
-                            {item.badge && (
-                              <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
-                                {item.badge}
-                              </span>
-                            )}
                           </Link>
                         ))}
                       </div>
@@ -241,7 +207,7 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
                           "flex items-center justify-between rounded-md px-3 py-2 text-sm transition-colors",
                           isActive(item.href)
                             ? "bg-gray-100 text-gray-900 font-medium"
-                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900"
+                            : "text-gray-600 hover:bg-gray-50 hover:text-gray-900",
                         )}
                         onClick={() => setIsOpen(false)}
                       >
@@ -249,11 +215,6 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
                           <item.icon className="h-4 w-4" />
                           {item.label}
                         </div>
-                        {item.badge && (
-                          <span className="rounded-full bg-gray-100 px-2 py-1 text-xs font-medium text-gray-700">
-                            {item.badge}
-                          </span>
-                        )}
                       </Link>
                     ))}
                   </>
@@ -262,8 +223,6 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
             ))}
           </nav>
         </div>
-
-        {/* Removed the entire footer section */}
       </aside>
     </>
   );

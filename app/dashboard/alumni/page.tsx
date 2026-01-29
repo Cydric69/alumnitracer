@@ -1,4 +1,3 @@
-// app/dashboard/alumni/page.tsx
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
@@ -72,7 +71,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-// FIXED IMPORT: Changed from '@/actions/alumni-actions' to '@/actions/alumni.actions'
 import {
   getAlumni,
   getAlumniCampuses,
@@ -156,10 +154,21 @@ export default function AlumniDataPage() {
           alum.employmentStatus === "Self-Employed",
       ).length;
 
-      const uniqueCampuses = [...new Set(data.map((alum) => alum.campus.id))];
+      // Safe check for campus and department existence
+      const alumniWithValidData = data.filter(
+        (alum) =>
+          alum.campus &&
+          alum.campus.id &&
+          alum.department &&
+          alum.department.id,
+      );
+
+      const uniqueCampuses = [
+        ...new Set(alumniWithValidData.map((alum) => alum.campus.id)),
+      ];
 
       const uniqueDepartments = [
-        ...new Set(data.map((alum) => alum.department.id)),
+        ...new Set(alumniWithValidData.map((alum) => alum.department.id)),
       ];
 
       setStats({
@@ -184,8 +193,8 @@ export default function AlumniDataPage() {
       const campusList: CampusFilterOption[] = [
         { value: "all", label: "All Campuses" },
         ...campusOptions.map((campus) => ({
-          value: campus.value, // This is the ID
-          label: campus.label, // This is the name
+          value: campus.value,
+          label: campus.label,
           id: campus.value,
         })),
       ];
@@ -196,8 +205,8 @@ export default function AlumniDataPage() {
       const departmentList: DepartmentFilterOption[] = [
         { value: "all", label: "All Departments" },
         ...departmentOptions.map((dept) => ({
-          value: dept.value, // This is the ID
-          label: dept.label, // This is the name
+          value: dept.value,
+          label: dept.label,
           campus: dept.campus,
         })),
       ];
@@ -215,7 +224,10 @@ export default function AlumniDataPage() {
       setGraduationYears(yearList);
     } catch (err: any) {
       console.error("Error fetching filter options:", err);
-      // Don't set error here to prevent blocking the main data display
+      // Set default values if fetch fails
+      setCampuses([{ value: "all", label: "All Campuses" }]);
+      setDepartments([{ value: "all", label: "All Departments" }]);
+      setGraduationYears([{ value: "all", label: "All Years" }]);
     }
   }, []);
 
@@ -258,6 +270,16 @@ export default function AlumniDataPage() {
     }
   };
 
+  // Safe get campus name
+  const getCampusName = (alumni: AlumniType): string => {
+    return alumni.campus?.name || "Unknown Campus";
+  };
+
+  // Safe get department name
+  const getDepartmentName = (alumni: AlumniType): string => {
+    return alumni.department?.name || "Unknown Department";
+  };
+
   // Clear all filters
   const clearFilters = () => {
     setSelectedCampus("all");
@@ -290,11 +312,11 @@ export default function AlumniDataPage() {
         alumni.id.toLowerCase().includes(searchQuery.toLowerCase());
 
       const matchesCampus =
-        selectedCampus === "all" || alumni.campus.id === selectedCampus;
+        selectedCampus === "all" || alumni.campus?.id === selectedCampus;
 
       const matchesDepartment =
         selectedDepartment === "all" ||
-        alumni.department.id === selectedDepartment;
+        alumni.department?.id === selectedDepartment;
 
       const matchesYear =
         selectedYear === "all" || alumni.yearGraduated === selectedYear;
@@ -334,7 +356,7 @@ export default function AlumniDataPage() {
   };
 
   // Loading state
-  if (isLoading) {
+  if (isLoading && alumniData.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center min-h-[400px] space-y-4">
         <Loader2 className="h-12 w-12 animate-spin text-blue-500" />
@@ -343,8 +365,8 @@ export default function AlumniDataPage() {
     );
   }
 
-  // Error state
-  if (error) {
+  // Error state for initial load
+  if (error && alumniData.length === 0) {
     return (
       <div className="space-y-6">
         <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
@@ -742,13 +764,13 @@ export default function AlumniDataPage() {
                             <div className="flex items-center gap-2">
                               <GraduationCap className="h-3 w-3 text-purple-500" />
                               <span className="text-sm font-medium">
-                                {alumni.department.name}
+                                {getDepartmentName(alumni)}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
                               <Building className="h-3 w-3 text-green-500" />
                               <span className="text-sm">
-                                {alumni.campus.name}
+                                {getCampusName(alumni)}
                               </span>
                             </div>
                             <div className="flex items-center gap-2">
@@ -850,7 +872,7 @@ export default function AlumniDataPage() {
                       <DialogTitle>{getFullName(selectedAlumni)}</DialogTitle>
                       <DialogDescription>
                         {getDisplayId(selectedAlumni)} •{" "}
-                        {selectedAlumni.department.name}
+                        {getDepartmentName(selectedAlumni)}
                       </DialogDescription>
                     </div>
                   </div>
@@ -1019,19 +1041,19 @@ export default function AlumniDataPage() {
                         <div>
                           <p className="text-sm text-gray-500">Campus</p>
                           <p className="font-medium">
-                            {selectedAlumni.campus.name}
+                            {getCampusName(selectedAlumni)}
                           </p>
                         </div>
                         <div>
                           <p className="text-sm text-gray-500">Department</p>
                           <p className="font-medium">
-                            {selectedAlumni.department.name}
+                            {getDepartmentName(selectedAlumni)}
                           </p>
                         </div>
                         <div className="md:col-span-2">
                           <p className="text-sm text-gray-500">Course</p>
                           <p className="font-medium">
-                            {selectedAlumni.course.name}
+                            {selectedAlumni.course?.name || "N/A"}
                           </p>
                         </div>
                         <div className="md:col-span-2">

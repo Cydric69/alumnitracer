@@ -65,11 +65,17 @@ export const AlumniZodSchema = z.object({
 
   yearGraduated: z.string().regex(/^\d{4}$/, "Year must be 4 digits"),
 
-  campus: z.string().transform((val) => val.trim()),
+  campus: z
+    .instanceof(Types.ObjectId)
+    .or(z.string().transform((val) => new Types.ObjectId(val))),
 
-  department: z.string().transform((val) => val.trim()),
+  department: z
+    .instanceof(Types.ObjectId)
+    .or(z.string().transform((val) => new Types.ObjectId(val))),
 
-  course: z.string().transform((val) => val.trim()),
+  course: z
+    .instanceof(Types.ObjectId)
+    .or(z.string().transform((val) => new Types.ObjectId(val))),
 
   degree: z
     .string()
@@ -269,6 +275,7 @@ const AlumniSchema = new Schema<IAlumni>(
     email: {
       type: String,
       required: [true, "Email is required"],
+      unique: true,
     },
 
     phoneNumber: {
@@ -288,6 +295,8 @@ const AlumniSchema = new Schema<IAlumni>(
     // Academic Information
     studentId: {
       type: String,
+      unique: true,
+      sparse: true, // Allows null values but enforces uniqueness for non-null values
     },
 
     yearGraduated: {
@@ -296,17 +305,20 @@ const AlumniSchema = new Schema<IAlumni>(
     },
 
     campus: {
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: "Campus",
       required: [true, "Campus is required"],
     },
 
     department: {
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: "Department",
       required: [true, "Department is required"],
     },
 
     course: {
-      type: String,
+      type: Schema.Types.ObjectId,
+      ref: "Course",
       required: [true, "Course is required"],
     },
 
@@ -471,6 +483,32 @@ AlumniSchema.index({ yearGraduated: 1 });
 AlumniSchema.index({ employmentStatus: 1 });
 AlumniSchema.index({ firstName: 1, lastName: 1 });
 AlumniSchema.index({ email: 1 });
+
+// Virtual population for easier access
+AlumniSchema.virtual("campusDetails", {
+  ref: "Campus",
+  localField: "campus",
+  foreignField: "_id",
+  justOne: true,
+});
+
+AlumniSchema.virtual("departmentDetails", {
+  ref: "Department",
+  localField: "department",
+  foreignField: "_id",
+  justOne: true,
+});
+
+AlumniSchema.virtual("courseDetails", {
+  ref: "Course",
+  localField: "course",
+  foreignField: "_id",
+  justOne: true,
+});
+
+// Enable virtuals in JSON output
+AlumniSchema.set("toJSON", { virtuals: true });
+AlumniSchema.set("toObject", { virtuals: true });
 
 // Static method for Zod validation
 AlumniSchema.statics.validateData = async function (data: any) {

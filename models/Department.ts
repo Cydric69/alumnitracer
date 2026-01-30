@@ -1,38 +1,79 @@
-// models/Department.ts
-import mongoose, { Schema, Document, Types } from "mongoose";
+import mongoose, { Schema, Document, Model, models } from "mongoose";
+import { DepartmentType } from "@/types/department";
+import { Counter } from "@/models/Counter";
 
-export interface IDepartment extends Document {
-  name: string;
-  campus: Types.ObjectId;
-  createdAt: Date;
-  updatedAt: Date;
+export interface IDepartmentDocument extends DepartmentType, Document {
+  _id: mongoose.Types.ObjectId;
 }
 
-const departmentSchema: Schema = new Schema(
+interface DepartmentModel extends Model<IDepartmentDocument> {
+  getNextDepartmentId(): Promise<string>;
+}
+
+const DepartmentSchema = new Schema<IDepartmentDocument>(
   {
+    departmentId: {
+      type: String,
+      required: true,
+      unique: true,
+      index: true,
+    },
     name: {
       type: String,
-      required: [true, "Department name is required"],
+      required: true,
       trim: true,
+      maxlength: 100,
     },
-
-    campus: {
-      type: Schema.Types.ObjectId,
+    campusId: {
+      type: String,
+      required: true,
       ref: "Campus",
-      required: [true, "Campus is required"],
+    },
+    campusName: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 100,
+    },
+    timestamp: {
+      type: Date,
+      default: () => new Date(),
     },
   },
   {
-    timestamps: true,
-    versionKey: false,
-  }
+    timestamps: {
+      createdAt: "timestamp",
+      updatedAt: false,
+    },
+  },
 );
 
-// Optional: Create unique index for name per campus
-departmentSchema.index({ name: 1, campus: 1 }, { unique: true });
+DepartmentSchema.pre("save", async function () {
+  if (this.isNew) {
+    const counter = await Counter.findByIdAndUpdate(
+      { _id: "departmentId" },
+      { $inc: { sequenceValue: 1 } },
+      { new: true, upsert: true },
+    );
+    this.departmentId = counter.sequenceValue.toString().padStart(3, "0");
+  }
+});
 
-const Department =
-  mongoose.models.Department ||
-  mongoose.model<IDepartment>("Department", departmentSchema);
+DepartmentSchema.statics.getNextDepartmentId =
+  async function (): Promise<string> {
+    const counter = await Counter.findByIdAndUpdate(
+      { _id: "departmentId" },
+      { $inc: { sequenceValue: 1 } },
+      { new: true, upsert: true },
+    );
+    return counter.sequenceValue.toString().padStart(3, "0");
+  };
+
+export const Department =
+  (models.Department as DepartmentModel) ||
+  mongoose.model<IDepartmentDocument, DepartmentModel>(
+    "Department",
+    DepartmentSchema,
+  );
 
 export default Department;

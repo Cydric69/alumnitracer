@@ -11,14 +11,16 @@ export async function getDepartments() {
   try {
     await dbConnect();
     const departments = await Department.find()
-      .populate("campus", "name")
+      .populate("campus", "name campusId") // Added campusId
       .sort({ createdAt: -1 });
 
     return departments.map((dept) => ({
       id: dept._id.toString(),
+      departmentId: dept.departmentId, // Return custom ID
       name: dept.name,
       campus: {
         id: dept.campus._id.toString(),
+        campusId: dept.campus.campusId, // Return campus custom ID
         name: dept.campus.name,
       },
       createdAt: dept.createdAt.toISOString(),
@@ -33,13 +35,19 @@ export async function getDepartments() {
 export async function getDepartmentsByCampus(campusId: string) {
   try {
     await dbConnect();
-    const departments = await Department.find({ campus: campusId }).sort({
-      name: 1,
-    });
+    const departments = await Department.find({ campus: campusId })
+      .populate("campus", "name campusId") // Added campusId
+      .sort({ name: 1 });
 
     return departments.map((dept) => ({
       id: dept._id.toString(),
+      departmentId: dept.departmentId, // Return custom ID
       name: dept.name,
+      campus: {
+        id: dept.campus._id.toString(),
+        campusId: dept.campus.campusId, // Return campus custom ID
+        name: dept.campus.name,
+      },
       createdAt: dept.createdAt.toISOString(),
       updatedAt: dept.updatedAt.toISOString(),
     }));
@@ -72,7 +80,7 @@ export async function createDepartment(data: DepartmentInput) {
 
     if (existingDepartment) {
       throw new Error(
-        "A department with this name already exists in this campus"
+        "A department with this name already exists in this campus",
       );
     }
 
@@ -81,17 +89,28 @@ export async function createDepartment(data: DepartmentInput) {
       campus: data.campus,
     });
 
+    // Populate to get the department with campus data
+    const populatedDepartment = await Department.findById(
+      department._id,
+    ).populate("campus", "name campusId");
+
+    if (!populatedDepartment) {
+      throw new Error("Failed to create department");
+    }
+
     revalidatePath("/dashboard/departments");
 
     return {
-      id: department._id.toString(),
-      name: department.name,
+      id: populatedDepartment._id.toString(),
+      departmentId: populatedDepartment.departmentId, // Return custom ID
+      name: populatedDepartment.name,
       campus: {
-        id: campusExists._id.toString(),
-        name: campusExists.name,
+        id: populatedDepartment.campus._id.toString(),
+        campusId: populatedDepartment.campus.campusId, // Return campus custom ID
+        name: populatedDepartment.campus.name,
       },
-      createdAt: department.createdAt.toISOString(),
-      updatedAt: department.updatedAt.toISOString(),
+      createdAt: populatedDepartment.createdAt.toISOString(),
+      updatedAt: populatedDepartment.updatedAt.toISOString(),
     };
   } catch (error: any) {
     console.error("Error creating department:", error);
@@ -123,7 +142,7 @@ export async function updateDepartment(id: string, data: DepartmentInput) {
 
     if (existingDepartment) {
       throw new Error(
-        "A department with this name already exists in this campus"
+        "A department with this name already exists in this campus",
       );
     }
 
@@ -136,8 +155,8 @@ export async function updateDepartment(id: string, data: DepartmentInput) {
       {
         new: true,
         runValidators: true,
-      }
-    ).populate("campus", "name");
+      },
+    ).populate("campus", "name campusId"); // Added campusId
 
     if (!department) {
       throw new Error("Department not found");
@@ -147,9 +166,11 @@ export async function updateDepartment(id: string, data: DepartmentInput) {
 
     return {
       id: department._id.toString(),
+      departmentId: department.departmentId, // Return custom ID
       name: department.name,
       campus: {
         id: department.campus._id.toString(),
+        campusId: department.campus.campusId, // Return campus custom ID
         name: department.campus.name,
       },
       createdAt: department.createdAt.toISOString(),
@@ -184,7 +205,10 @@ export async function getDepartmentById(id: string) {
   try {
     await dbConnect();
 
-    const department = await Department.findById(id).populate("campus", "name");
+    const department = await Department.findById(id).populate(
+      "campus",
+      "name campusId",
+    ); // Added campusId
 
     if (!department) {
       throw new Error("Department not found");
@@ -192,9 +216,11 @@ export async function getDepartmentById(id: string) {
 
     return {
       id: department._id.toString(),
+      departmentId: department.departmentId, // Return custom ID
       name: department.name,
       campus: {
         id: department.campus._id.toString(),
+        campusId: department.campus.campusId, // Return campus custom ID
         name: department.campus.name,
       },
       createdAt: department.createdAt.toISOString(),

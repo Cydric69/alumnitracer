@@ -21,26 +21,32 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { CourseInput } from "@/types/course";
 import { Loader2, Building } from "lucide-react";
-import { getDepartmentsForSelection } from "@/app/actions/course.actions";
-import { getCampuses } from "@/app/actions/campus.actions";
-import { Campus } from "@/types/campus";
+import { getCampuses } from "@/app/actions/campus";
+import { getDepartmentsWithFullCampusDetails } from "@/app/actions/department";
+import { CourseFormData } from "@/app/actions/course";
 
 interface DepartmentForSelection {
   id: string;
+  departmentId: string;
   name: string;
-  campus: {
-    id: string;
-    name: string;
-  };
+  campusId: string;
+  campusName: string;
+  campusLocation?: string;
+}
+
+interface CampusForSelection {
+  id: string;
+  campusId: string;
+  campusName: string;
+  location?: string;
 }
 
 interface CourseFormProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  formData: CourseInput;
-  onInputChange: (field: keyof CourseInput, value: string) => void;
+  formData: CourseFormData;
+  onInputChange: (field: keyof CourseFormData, value: string) => void;
   onSubmit: () => Promise<void>;
   title: string;
   description: string;
@@ -59,7 +65,7 @@ export default function CourseForm({
 }: CourseFormProps) {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [departments, setDepartments] = useState<DepartmentForSelection[]>([]);
-  const [campuses, setCampuses] = useState<Campus[]>([]);
+  const [campuses, setCampuses] = useState<CampusForSelection[]>([]);
   const [loadingDepartments, setLoadingDepartments] = useState(false);
   const [loadingCampuses, setLoadingCampuses] = useState(false);
   const [filteredDepartments, setFilteredDepartments] = useState<
@@ -77,6 +83,7 @@ export default function CourseForm({
     } else {
       // Reset filters when form closes
       setSelectedCampusId("all");
+      setSelectedDepartment(null);
     }
   }, [open]);
 
@@ -84,44 +91,56 @@ export default function CourseForm({
   useEffect(() => {
     if (selectedCampusId && selectedCampusId !== "all") {
       const filtered = departments.filter(
-        (dept) => dept.campus.id === selectedCampusId
+        (dept) => dept.campusId === selectedCampusId,
       );
       setFilteredDepartments(filtered);
 
       // If current department is not in filtered list, clear it
       if (
-        formData.department &&
-        !filtered.some((dept) => dept.id === formData.department)
+        formData.departmentId &&
+        !filtered.some((dept) => dept.departmentId === formData.departmentId)
       ) {
-        onInputChange("department", "");
-        setSelectedDepartment(null);
+        handleClearDepartment();
       }
     } else {
       setFilteredDepartments(departments);
     }
-  }, [selectedCampusId, departments, formData.department]);
+  }, [selectedCampusId, departments]);
 
-  // Update selected department when formData.department changes
+  // Update selected department when formData.departmentId changes
   useEffect(() => {
-    if (formData.department && departments.length > 0) {
-      const dept = departments.find((d) => d.id === formData.department);
+    if (formData.departmentId && departments.length > 0) {
+      const dept = departments.find(
+        (d) => d.departmentId === formData.departmentId,
+      );
       if (dept) {
         setSelectedDepartment(dept);
         // Auto-select the campus of the selected department
         if (selectedCampusId === "all") {
-          setSelectedCampusId(dept.campus.id);
+          setSelectedCampusId(dept.campusId);
         }
       }
     } else {
       setSelectedDepartment(null);
     }
-  }, [formData.department, departments]);
+  }, [formData.departmentId, departments, selectedCampusId]);
 
   const loadCampuses = async () => {
     try {
       setLoadingCampuses(true);
-      const data = await getCampuses();
-      setCampuses(data);
+      const result = await getCampuses();
+
+      if (result.success && result.data) {
+        const campusData = result.data.map((campus: any) => ({
+          id: campus.id || campus._id,
+          campusId: campus.campusId,
+          campusName: campus.campusName,
+          location: campus.location,
+        }));
+        setCampuses(campusData);
+      } else {
+        toast.error(result.message || "Failed to load campuses");
+      }
     } catch (error: any) {
       toast.error("Failed to load campuses: " + error.message);
     } finally {
@@ -132,13 +151,47 @@ export default function CourseForm({
   const loadDepartments = async () => {
     try {
       setLoadingDepartments(true);
-      const data = await getDepartmentsForSelection();
-      setDepartments(data);
-      setFilteredDepartments(data);
+      const result = await getDepartmentsWithFullCampusDetails();
+
+      if (result.success && result.data) {
+        const departmentData = result.data.map((dept: any) => ({
+          id: dept.id || dept._id,
+          departmentId: dept.departmentId,
+          name: dept.name,
+          campusId: dept.campusId,
+          campusName: dept.campusName,
+          campusLocation: dept.campusLocation,
+        }));
+        setDepartments(departmentData);
+        setFilteredDepartments(departmentData);
+      } else {
+        toast.error(result.message || "Failed to load departments");
+      }
     } catch (error: any) {
       toast.error("Failed to load departments: " + error.message);
     } finally {
       setLoadingDepartments(false);
+    }
+  };
+
+  const handleClearDepartment = () => {
+    onInputChange("departmentId", "");
+    onInputChange("departmentName", "");
+    onInputChange("campusId", "");
+    onInputChange("campusName", "");
+    setSelectedDepartment(null);
+  };
+
+  const handleDepartmentChange = (departmentId: string) => {
+    const selectedDept = departments.find(
+      (dept) => dept.departmentId === departmentId,
+    );
+    if (selectedDept) {
+      onInputChange("departmentId", departmentId);
+      onInputChange("departmentName", selectedDept.name);
+      onInputChange("campusId", selectedDept.campusId);
+      onInputChange("campusName", selectedDept.campusName);
+      setSelectedDepartment(selectedDept);
     }
   };
 
@@ -152,7 +205,14 @@ export default function CourseForm({
   };
 
   const isFormValid = () => {
-    return formData.name.trim() && formData.department.trim();
+    // Safely check if required fields exist and have non-empty values
+    return (
+      formData?.courseName?.trim() &&
+      formData?.departmentId?.trim() &&
+      formData?.departmentName?.trim() &&
+      formData?.campusId?.trim() &&
+      formData?.campusName?.trim()
+    );
   };
 
   return (
@@ -166,14 +226,14 @@ export default function CourseForm({
         <div className="grid gap-4 py-4">
           {/* Course Name */}
           <div className="space-y-2">
-            <Label htmlFor="name" className="required">
+            <Label htmlFor="courseName" className="required">
               Course Name *
             </Label>
             <Input
-              id="name"
+              id="courseName"
               placeholder="e.g., Bachelor of Science in Information Technology"
-              value={formData.name}
-              onChange={(e) => onInputChange("name", e.target.value)}
+              value={formData?.courseName || ""}
+              onChange={(e) => onInputChange("courseName", e.target.value)}
               className="capitalize"
             />
             <p className="text-xs text-gray-500">
@@ -202,10 +262,17 @@ export default function CourseForm({
               <SelectContent>
                 <SelectItem value="all">All Campuses</SelectItem>
                 {campuses.map((campus) => (
-                  <SelectItem key={campus.id} value={campus.id}>
+                  <SelectItem key={campus.id} value={campus.campusId}>
                     <div className="flex items-center gap-2">
                       <Building className="h-4 w-4" />
-                      <span>{campus.name}</span>
+                      <div className="flex flex-col">
+                        <span>{campus.campusName}</span>
+                        {campus.location && (
+                          <span className="text-xs text-gray-500">
+                            {campus.location}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </SelectItem>
                 ))}
@@ -222,8 +289,8 @@ export default function CourseForm({
               Department *
             </Label>
             <Select
-              value={formData.department}
-              onValueChange={(value) => onInputChange("department", value)}
+              value={formData?.departmentId || ""}
+              onValueChange={handleDepartmentChange}
               disabled={
                 loadingDepartments ||
                 (selectedCampusId !== "all" && filteredDepartments.length === 0)
@@ -247,12 +314,15 @@ export default function CourseForm({
               <SelectContent>
                 {filteredDepartments.length > 0 ? (
                   filteredDepartments.map((dept) => (
-                    <SelectItem key={dept.id} value={dept.id}>
+                    <SelectItem key={dept.id} value={dept.departmentId}>
                       <div className="flex flex-col">
                         <span className="font-medium">{dept.name}</span>
-                        <span className="text-xs text-gray-500">
-                          Campus: {dept.campus.name}
-                        </span>
+                        <div className="flex flex-col text-xs text-gray-500">
+                          <span>Campus: {dept.campusName}</span>
+                          {dept.campusLocation && (
+                            <span>Location: {dept.campusLocation}</span>
+                          )}
+                        </div>
                       </div>
                     </SelectItem>
                   ))
@@ -268,25 +338,29 @@ export default function CourseForm({
             {selectedDepartment && (
               <div className="mt-2 p-3 bg-blue-50 rounded-md border border-blue-100">
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="flex-1">
                     <div className="flex items-center gap-2 text-sm">
                       <span className="font-medium">Selected Department:</span>
                       <span>{selectedDepartment.name}</span>
                     </div>
                     <div className="flex items-center gap-2 text-sm text-gray-600 mt-1">
-                      <Building className="h-4 w-4" />
-                      <span>Campus: {selectedDepartment.campus.name}</span>
+                      <Building className="h-4 w-4 flex-shrink-0" />
+                      <div className="flex flex-col">
+                        <span>Campus: {selectedDepartment.campusName}</span>
+                        {selectedDepartment.campusLocation && (
+                          <span className="text-xs">
+                            Location: {selectedDepartment.campusLocation}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <Button
                     type="button"
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      onInputChange("department", "");
-                      setSelectedDepartment(null);
-                    }}
-                    className="h-7 px-2 text-xs"
+                    onClick={handleClearDepartment}
+                    className="h-7 px-2 text-xs flex-shrink-0"
                   >
                     Clear
                   </Button>
@@ -313,6 +387,32 @@ export default function CourseForm({
                 </p>
               </div>
             )}
+          </div>
+
+          {/* Course Availability */}
+          <div className="space-y-2">
+            <Label htmlFor="courseAvailability">Course Status</Label>
+            <Select
+              value={formData?.courseAvailability || "Active"}
+              onValueChange={(value) =>
+                onInputChange(
+                  "courseAvailability",
+                  value as "Active" | "Inactive" | "Archived",
+                )
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Select status" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="Active">Active</SelectItem>
+                <SelectItem value="Inactive">Inactive</SelectItem>
+                <SelectItem value="Archived">Archived</SelectItem>
+              </SelectContent>
+            </Select>
+            <p className="text-xs text-gray-500">
+              Set the availability status of this course
+            </p>
           </div>
         </div>
 

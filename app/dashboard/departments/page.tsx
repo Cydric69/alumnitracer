@@ -17,16 +17,13 @@ import {
   Filter,
   Download,
   Plus,
-  MoreVertical,
   Building,
   Users,
   Calendar,
   Edit,
   Trash2,
-  ChevronDown,
   X,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -35,14 +32,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Dialog,
   DialogContent,
@@ -61,9 +50,25 @@ import {
   createDepartment,
   updateDepartment,
   deleteDepartment,
-} from "@/app/actions/department.actions";
-import { Department, DepartmentInput } from "@/types/department";
-import { Skeleton } from "@/components/ui/skeleton";
+  searchDepartments,
+  DepartmentFormData,
+} from "@/app/actions/department";
+
+// Update the Department interface to match the database model
+interface Department {
+  id: string;
+  name: string;
+  campusId: string;
+  campusName: string;
+  departmentId?: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Define Skeleton component
+const Skeleton = ({ className }: { className: string }) => (
+  <div className={`animate-pulse rounded-md bg-muted ${className}`} />
+);
 
 export default function DepartmentsPage() {
   // State management
@@ -74,11 +79,12 @@ export default function DepartmentsPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentDepartment, setCurrentDepartment] = useState<Department | null>(
-    null
+    null,
   );
-  const [formData, setFormData] = useState<DepartmentInput>({
+  const [formData, setFormData] = useState<DepartmentFormData>({
     name: "",
-    campus: "",
+    campusId: "",
+    campusName: "",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -87,13 +93,35 @@ export default function DepartmentsPage() {
     fetchDepartments();
   }, []);
 
+  // Helper function to map database department to frontend Department interface
+  const mapDbDepartmentToFrontend = (dbDepartment: any): Department => {
+    return {
+      id: dbDepartment._id || dbDepartment.id,
+      name: dbDepartment.name,
+      campusId: dbDepartment.campusId,
+      campusName: dbDepartment.campusName,
+      departmentId: dbDepartment.departmentId,
+      createdAt: dbDepartment.timestamp || dbDepartment.createdAt || new Date(),
+      updatedAt: dbDepartment.updatedAt || new Date(),
+    };
+  };
+
   const fetchDepartments = async () => {
     try {
       setLoading(true);
-      const data = await getDepartments();
-      setDepartments(data);
+      const result = await getDepartments();
+
+      if (result.success && result.data) {
+        // Map database departments to frontend interface
+        const mappedDepartments = result.data.map(mapDbDepartmentToFrontend);
+        setDepartments(mappedDepartments);
+      } else {
+        toast.error(result.message || "Failed to load departments");
+        setDepartments([]);
+      }
     } catch (error: any) {
       toast.error("Failed to load departments: " + error.message);
+      setDepartments([]);
     } finally {
       setLoading(false);
     }
@@ -107,13 +135,14 @@ export default function DepartmentsPage() {
     return departments.filter(
       (dept) =>
         dept.name.toLowerCase().includes(query) ||
-        dept.campus.name.toLowerCase().includes(query)
+        dept.campusName.toLowerCase().includes(query) ||
+        dept.departmentId?.toLowerCase().includes(query),
     );
   }, [departments, searchQuery]);
 
   // Calculate stats
   const stats = useMemo(() => {
-    const campuses = new Set(departments.map((dept) => dept.campus.id));
+    const campuses = new Set(departments.map((dept) => dept.campusId));
 
     return {
       totalDepartments: departments.length,
@@ -129,12 +158,16 @@ export default function DepartmentsPage() {
   const resetForm = () => {
     setFormData({
       name: "",
-      campus: "",
+      campusId: "",
+      campusName: "",
     });
     setCurrentDepartment(null);
   };
 
-  const handleInputChange = (field: keyof DepartmentInput, value: string) => {
+  const handleInputChange = (
+    field: keyof DepartmentFormData,
+    value: string,
+  ) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -150,7 +183,8 @@ export default function DepartmentsPage() {
     setCurrentDepartment(department);
     setFormData({
       name: department.name,
-      campus: department.campus.id,
+      campusId: department.campusId,
+      campusName: department.campusName,
     });
     setIsEditDialogOpen(true);
   };
@@ -160,15 +194,45 @@ export default function DepartmentsPage() {
     setIsDeleteDialogOpen(true);
   };
 
+  // Handle search
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      fetchDepartments();
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const result = await searchDepartments(searchQuery);
+
+      if (result.success && result.data) {
+        const mappedDepartments = result.data.map(mapDbDepartmentToFrontend);
+        setDepartments(mappedDepartments);
+      } else {
+        toast.error(result.message || "Search failed");
+      }
+    } catch (error: any) {
+      toast.error("Search failed: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   // Submit handlers
   const handleSubmitAdd = async () => {
     setIsSubmitting(true);
     try {
-      const newDepartment = await createDepartment(formData);
-      setDepartments((prev) => [newDepartment, ...prev]);
-      setIsAddDialogOpen(false);
-      resetForm();
-      toast.success("Department added successfully!");
+      const result = await createDepartment(formData);
+
+      if (result.success && result.data) {
+        const newDepartment = mapDbDepartmentToFrontend(result.data);
+        setDepartments((prev) => [newDepartment, ...prev]);
+        setIsAddDialogOpen(false);
+        resetForm();
+        toast.success("Department added successfully!");
+      } else {
+        toast.error(result.message || "Failed to add department");
+      }
     } catch (error: any) {
       toast.error("Failed to add department: " + error.message);
     } finally {
@@ -181,18 +245,21 @@ export default function DepartmentsPage() {
 
     setIsSubmitting(true);
     try {
-      const updatedDepartment = await updateDepartment(
-        currentDepartment.id,
-        formData
-      );
-      setDepartments((prev) =>
-        prev.map((dept) =>
-          dept.id === currentDepartment.id ? updatedDepartment : dept
-        )
-      );
-      setIsEditDialogOpen(false);
-      resetForm();
-      toast.success("Department updated successfully!");
+      const result = await updateDepartment(currentDepartment.id, formData);
+
+      if (result.success && result.data) {
+        const updatedDepartment = mapDbDepartmentToFrontend(result.data);
+        setDepartments((prev) =>
+          prev.map((dept) =>
+            dept.id === currentDepartment.id ? updatedDepartment : dept,
+          ),
+        );
+        setIsEditDialogOpen(false);
+        resetForm();
+        toast.success("Department updated successfully!");
+      } else {
+        toast.error(result.message || "Failed to update department");
+      }
     } catch (error: any) {
       toast.error("Failed to update department: " + error.message);
     } finally {
@@ -205,13 +272,18 @@ export default function DepartmentsPage() {
 
     setIsSubmitting(true);
     try {
-      await deleteDepartment(currentDepartment.id);
-      setDepartments((prev) =>
-        prev.filter((dept) => dept.id !== currentDepartment.id)
-      );
-      setIsDeleteDialogOpen(false);
-      setCurrentDepartment(null);
-      toast.success("Department deleted successfully!");
+      const result = await deleteDepartment(currentDepartment.id);
+
+      if (result.success) {
+        setDepartments((prev) =>
+          prev.filter((dept) => dept.id !== currentDepartment.id),
+        );
+        setIsDeleteDialogOpen(false);
+        setCurrentDepartment(null);
+        toast.success("Department deleted successfully!");
+      } else {
+        toast.error(result.message || "Failed to delete department");
+      }
     } catch (error: any) {
       toast.error("Failed to delete department: " + error.message);
     } finally {
@@ -364,14 +436,22 @@ export default function DepartmentsPage() {
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                placeholder="Search departments by name or campus..."
+                placeholder="Search departments by name, campus, or ID..."
                 className="pl-9 text-sm sm:text-base transition-all focus:ring-2 focus:ring-primary"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSearch();
+                  }
+                }}
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => {
+                    setSearchQuery("");
+                    fetchDepartments();
+                  }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-70"
                 >
                   <X className="h-4 w-4 text-muted-foreground" />
@@ -379,7 +459,6 @@ export default function DepartmentsPage() {
               )}
             </div>
 
-            {/* Filter Actions */}
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
               <div className="text-sm text-muted-foreground">
                 {searchQuery && (
@@ -388,7 +467,10 @@ export default function DepartmentsPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setSearchQuery("")}
+                      onClick={() => {
+                        setSearchQuery("");
+                        fetchDepartments();
+                      }}
                       className="h-6 px-2 text-xs transition-all hover:bg-muted"
                     >
                       Clear
@@ -468,7 +550,9 @@ export default function DepartmentsPage() {
                           <div>
                             <p className="font-medium">{department.name}</p>
                             <p className="text-xs text-muted-foreground">
-                              ID: {department.id.slice(-8)}
+                              ID:{" "}
+                              {department.departmentId ||
+                                department.id.slice(-8)}
                             </p>
                           </div>
                         </div>
@@ -477,7 +561,7 @@ export default function DepartmentsPage() {
                         <div className="flex items-center gap-2">
                           <Building className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">
-                            {department.campus.name}
+                            {department.campusName}
                           </span>
                         </div>
                       </TableCell>
@@ -486,7 +570,7 @@ export default function DepartmentsPage() {
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           <span className="text-sm">
                             {new Date(
-                              department.createdAt
+                              department.createdAt,
                             ).toLocaleDateString()}
                           </span>
                         </div>
@@ -575,7 +659,7 @@ export default function DepartmentsPage() {
         </CardContent>
       </Card>
 
-      {/* Form Dialogs */}
+      {/* Department Form Dialogs */}
       <DepartmentForm
         open={isAddDialogOpen}
         onOpenChange={(open) => {
@@ -628,17 +712,21 @@ export default function DepartmentsPage() {
                   <div className="flex-1 space-y-1">
                     <h4 className="font-semibold">{currentDepartment.name}</h4>
                     <p className="text-sm text-muted-foreground">
-                      Campus: {currentDepartment.campus.name}
+                      Campus: {currentDepartment.campusName}
                     </p>
                     <div className="flex items-center gap-4 pt-2 text-xs text-muted-foreground">
                       <span>
                         Created:{" "}
                         {new Date(
-                          currentDepartment.createdAt
+                          currentDepartment.createdAt,
                         ).toLocaleDateString()}
                       </span>
                       <span>•</span>
-                      <span>ID: {currentDepartment.id.slice(-8)}</span>
+                      <span>
+                        ID:{" "}
+                        {currentDepartment.departmentId ||
+                          currentDepartment.id.slice(-8)}
+                      </span>
                     </div>
                   </div>
                 </div>

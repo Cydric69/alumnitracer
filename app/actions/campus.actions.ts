@@ -2,7 +2,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { dbConnect } from "@/lib/dbConnect"; // Changed from connectToDatabase
+import { dbConnect } from "@/lib/dbConnect";
 import Campus from "@/models/Campus";
 import { CampusInput } from "@/types/campus";
 
@@ -12,6 +12,7 @@ export async function getCampuses() {
     const campuses = await Campus.find().sort({ createdAt: -1 });
     return campuses.map((campus) => ({
       id: campus._id.toString(),
+      campusId: campus.campusId, // Custom sequential ID
       name: campus.name,
       description: campus.description,
       address: campus.address,
@@ -52,6 +53,7 @@ export async function createCampus(data: CampusInput) {
 
     return {
       id: campus._id.toString(),
+      campusId: campus.campusId, // Custom sequential ID
       name: campus.name,
       description: campus.description,
       address: campus.address,
@@ -100,7 +102,7 @@ export async function updateCampus(id: string, data: CampusInput) {
       {
         new: true,
         runValidators: true, // Ensure validations run on update
-      }
+      },
     );
 
     if (!campus) {
@@ -111,6 +113,7 @@ export async function updateCampus(id: string, data: CampusInput) {
 
     return {
       id: campus._id.toString(),
+      campusId: campus.campusId, // Custom sequential ID
       name: campus.name,
       description: campus.description,
       address: campus.address,
@@ -149,7 +152,6 @@ export async function deleteCampus(id: string) {
   }
 }
 
-// Optional: Get single campus by ID
 export async function getCampusById(id: string) {
   try {
     await dbConnect();
@@ -162,6 +164,7 @@ export async function getCampusById(id: string) {
 
     return {
       id: campus._id.toString(),
+      campusId: campus.campusId, // Custom sequential ID
       name: campus.name,
       description: campus.description,
       address: campus.address,

@@ -2,7 +2,7 @@
 import mongoose, { Document, Schema, Types } from "mongoose";
 import { z } from "zod";
 
-// Zod Schema based on your AlumniInput type
+// Zod Schema - Updated to store names directly
 export const AlumniZodSchema = z.object({
   // Personal Information
   firstName: z
@@ -56,7 +56,7 @@ export const AlumniZodSchema = z.object({
     .max(500, "Address cannot exceed 500 characters")
     .transform((val) => val.trim()),
 
-  // Academic Information
+  // Academic Information - Store IDs AND Names
   studentId: z
     .string()
     .max(50, "Student ID cannot exceed 50 characters")
@@ -65,17 +65,41 @@ export const AlumniZodSchema = z.object({
 
   yearGraduated: z.string().regex(/^\d{4}$/, "Year must be 4 digits"),
 
-  campus: z
+  // Campus - Store both ID and Name
+  campusId: z
     .instanceof(Types.ObjectId)
-    .or(z.string().transform((val) => new Types.ObjectId(val))),
+    .or(z.string().transform((val) => new Types.ObjectId(val)))
+    .optional(),
 
-  department: z
-    .instanceof(Types.ObjectId)
-    .or(z.string().transform((val) => new Types.ObjectId(val))),
+  campusName: z
+    .string()
+    .min(2, "Campus name must be at least 2 characters")
+    .max(200, "Campus name cannot exceed 200 characters")
+    .transform((val) => val.trim()),
 
-  course: z
+  // Department - Store both ID and Name
+  departmentId: z
     .instanceof(Types.ObjectId)
-    .or(z.string().transform((val) => new Types.ObjectId(val))),
+    .or(z.string().transform((val) => new Types.ObjectId(val)))
+    .optional(),
+
+  departmentName: z
+    .string()
+    .min(2, "Department name must be at least 2 characters")
+    .max(200, "Department name cannot exceed 200 characters")
+    .transform((val) => val.trim()),
+
+  // Course - Store both ID and Name
+  courseId: z
+    .instanceof(Types.ObjectId)
+    .or(z.string().transform((val) => new Types.ObjectId(val)))
+    .optional(),
+
+  courseName: z
+    .string()
+    .min(2, "Course name must be at least 2 characters")
+    .max(200, "Course name cannot exceed 200 characters")
+    .transform((val) => val.trim()),
 
   degree: z
     .string()
@@ -234,10 +258,10 @@ export const AlumniZodSchema = z.object({
     .optional(),
 });
 
-// Extract TypeScript type from Zod schema (matches AlumniInput)
+// Extract TypeScript type from Zod schema
 export type IAlumni = z.infer<typeof AlumniZodSchema> & Document;
 
-// Mongoose Schema
+// Updated Mongoose Schema - Store names directly
 const AlumniSchema = new Schema<IAlumni>(
   {
     // Personal Information
@@ -292,11 +316,11 @@ const AlumniSchema = new Schema<IAlumni>(
       required: [true, "Address is required"],
     },
 
-    // Academic Information
+    // Academic Information - Store both ID and Name
     studentId: {
       type: String,
       unique: true,
-      sparse: true, // Allows null values but enforces uniqueness for non-null values
+      sparse: true,
     },
 
     yearGraduated: {
@@ -304,22 +328,37 @@ const AlumniSchema = new Schema<IAlumni>(
       required: [true, "Year graduated is required"],
     },
 
-    campus: {
+    // Campus - Store both
+    campusId: {
       type: Schema.Types.ObjectId,
       ref: "Campus",
-      required: [true, "Campus is required"],
     },
 
-    department: {
+    campusName: {
+      type: String,
+      required: [true, "Campus name is required"],
+    },
+
+    // Department - Store both
+    departmentId: {
       type: Schema.Types.ObjectId,
       ref: "Department",
-      required: [true, "Department is required"],
     },
 
-    course: {
+    departmentName: {
+      type: String,
+      required: [true, "Department name is required"],
+    },
+
+    // Course - Store both
+    courseId: {
       type: Schema.Types.ObjectId,
       ref: "Course",
-      required: [true, "Course is required"],
+    },
+
+    courseName: {
+      type: String,
+      required: [true, "Course name is required"],
     },
 
     degree: {
@@ -476,39 +515,20 @@ const AlumniSchema = new Schema<IAlumni>(
 );
 
 // Create indexes for better query performance
-AlumniSchema.index({ campus: 1 });
-AlumniSchema.index({ department: 1 });
-AlumniSchema.index({ course: 1 });
+AlumniSchema.index({ campusId: 1 });
+AlumniSchema.index({ departmentId: 1 });
+AlumniSchema.index({ courseId: 1 });
+AlumniSchema.index({ campusName: 1 });
+AlumniSchema.index({ departmentName: 1 });
+AlumniSchema.index({ courseName: 1 });
 AlumniSchema.index({ yearGraduated: 1 });
 AlumniSchema.index({ employmentStatus: 1 });
 AlumniSchema.index({ firstName: 1, lastName: 1 });
 AlumniSchema.index({ email: 1 });
 
-// Virtual population for easier access
-AlumniSchema.virtual("campusDetails", {
-  ref: "Campus",
-  localField: "campus",
-  foreignField: "_id",
-  justOne: true,
-});
-
-AlumniSchema.virtual("departmentDetails", {
-  ref: "Department",
-  localField: "department",
-  foreignField: "_id",
-  justOne: true,
-});
-
-AlumniSchema.virtual("courseDetails", {
-  ref: "Course",
-  localField: "course",
-  foreignField: "_id",
-  justOne: true,
-});
-
-// Enable virtuals in JSON output
-AlumniSchema.set("toJSON", { virtuals: true });
-AlumniSchema.set("toObject", { virtuals: true });
+// Remove virtuals since we're storing names directly
+AlumniSchema.set("toJSON", { virtuals: false });
+AlumniSchema.set("toObject", { virtuals: false });
 
 // Static method for Zod validation
 AlumniSchema.statics.validateData = async function (data: any) {
@@ -520,6 +540,14 @@ AlumniSchema.statics.safeValidate = async function (data: any) {
   const result = await AlumniZodSchema.safeParseAsync(data);
   return result;
 };
+
+// Pre-save hook to ensure consistency
+AlumniSchema.pre("save", async function (next) {
+  const alumni = this as IAlumni;
+
+  // You can add logic here to fetch names from IDs if needed
+  // For now, we assume names are provided during creation/update
+});
 
 // Create and export the model
 const Alumni =

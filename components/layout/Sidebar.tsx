@@ -79,6 +79,16 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
       ],
     },
     {
+      title: "Feedback Management",
+      items: [
+        {
+          label: "Feedbacks",
+          href: "/dashboard/feedbacks",
+          icon: MessageSquare,
+        },
+      ],
+    },
+    {
       title: "System Management",
       section: "content",
       items: [

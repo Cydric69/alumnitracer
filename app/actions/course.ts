@@ -1,44 +1,20 @@
+// app/actions/course.ts
 "use server";
 
 import { dbConnect } from "@/lib/dbConnect";
 import { Course } from "@/models/Course";
 import { revalidatePath } from "next/cache";
 import mongoose from "mongoose";
-import { z } from "zod";
 
-// Zod schema for form validation (client-side compatible)
-export const courseFormSchema = z.object({
-  courseName: z
-    .string()
-    .min(1, "Course name is required")
-    .max(200, "Course name is too long"),
-  campusId: z
-    .string()
-    .min(1, "Campus ID is required")
-    .max(50, "Campus ID is too long"),
-  campusName: z
-    .string()
-    .min(1, "Campus name is required")
-    .max(100, "Campus name is too long"),
-  departmentId: z
-    .string()
-    .min(1, "Department ID is required")
-    .max(50, "Department ID is too long"),
-  departmentName: z
-    .string()
-    .min(1, "Department name is required")
-    .max(100, "Department name is too long"),
-  courseAvailability: z
-    .enum(["Active", "Inactive", "Archived"])
-    .default("Active"),
-});
-
-export type CourseFormData = z.infer<typeof courseFormSchema>;
-
-// Helper function for Zod errors
-function formatZodError(error: z.ZodError<CourseFormData>): string {
-  return error.errors.map((err: z.ZodIssue) => err.message).join(", ");
-}
+// Type for course form data (matches your model but without courseId and timestamp)
+export type CourseFormData = {
+  courseName: string;
+  campusId: string;
+  campusName: string;
+  departmentId: string;
+  departmentName: string;
+  courseAvailability: "Active" | "Inactive" | "Archived";
+};
 
 // Helper function for Mongoose errors
 function formatMongooseError(error: mongoose.Error.ValidationError): string {
@@ -47,19 +23,78 @@ function formatMongooseError(error: mongoose.Error.ValidationError): string {
     .join(", ");
 }
 
+// Validate course data
+function validateCourseData(data: CourseFormData): {
+  valid: boolean;
+  errors?: string[];
+} {
+  const errors: string[] = [];
+
+  if (!data.courseName?.trim()) {
+    errors.push("Course name is required");
+  } else if (data.courseName.length > 200) {
+    errors.push("Course name is too long (max 200 characters)");
+  }
+
+  if (!data.campusId?.trim()) {
+    errors.push("Campus ID is required");
+  } else if (data.campusId.length > 50) {
+    errors.push("Campus ID is too long (max 50 characters)");
+  }
+
+  if (!data.campusName?.trim()) {
+    errors.push("Campus name is required");
+  } else if (data.campusName.length > 100) {
+    errors.push("Campus name is too long (max 100 characters)");
+  }
+
+  if (!data.departmentId?.trim()) {
+    errors.push("Department ID is required");
+  } else if (data.departmentId.length > 50) {
+    errors.push("Department ID is too long (max 50 characters)");
+  }
+
+  if (!data.departmentName?.trim()) {
+    errors.push("Department name is required");
+  } else if (data.departmentName.length > 100) {
+    errors.push("Department name is too long (max 100 characters)");
+  }
+
+  if (
+    !data.courseAvailability ||
+    !["Active", "Inactive", "Archived"].includes(data.courseAvailability)
+  ) {
+    errors.push(
+      "Course availability must be one of: Active, Inactive, Archived",
+    );
+  }
+
+  return {
+    valid: errors.length === 0,
+    errors: errors.length > 0 ? errors : undefined,
+  };
+}
+
 // Create a new course
 export async function createCourse(data: CourseFormData) {
   try {
     await dbConnect();
 
     // Validate input data
-    const validatedData = courseFormSchema.parse(data);
+    const validation = validateCourseData(data);
+    if (!validation.valid) {
+      return {
+        success: false,
+        message: "Validation failed",
+        error: validation.errors?.join(", ") || "Invalid data",
+      };
+    }
 
     // Check if course with same name already exists in this department
     const existingCourse = await Course.findOne({
-      courseName: validatedData.courseName,
-      departmentId: validatedData.departmentId,
-      campusId: validatedData.campusId,
+      courseName: data.courseName.trim(),
+      departmentId: data.departmentId,
+      campusId: data.campusId,
     });
 
     if (existingCourse) {
@@ -76,7 +111,12 @@ export async function createCourse(data: CourseFormData) {
     // Create new course with the generated ID
     const course = new Course({
       courseId,
-      ...validatedData,
+      courseName: data.courseName.trim(),
+      campusId: data.campusId,
+      campusName: data.campusName.trim(),
+      departmentId: data.departmentId,
+      departmentName: data.departmentName.trim(),
+      courseAvailability: data.courseAvailability,
     });
 
     const savedCourse = await course.save();
@@ -106,15 +146,6 @@ export async function createCourse(data: CourseFormData) {
     };
   } catch (error) {
     console.error("Error creating course:", error);
-
-    // Handle Zod validation errors
-    if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        message: "Validation failed",
-        error: formatZodError(error as z.ZodError<CourseFormData>),
-      };
-    }
 
     // Handle Mongoose validation errors
     if (error instanceof mongoose.Error.ValidationError) {
@@ -332,6 +363,33 @@ export async function updateCourse(id: string, data: Partial<CourseFormData>) {
   try {
     await dbConnect();
 
+    // Validate update data if provided
+    if (
+      data.courseName ||
+      data.campusId ||
+      data.campusName ||
+      data.departmentId ||
+      data.departmentName ||
+      data.courseAvailability
+    ) {
+      const validation = validateCourseData({
+        courseName: data.courseName || "",
+        campusId: data.campusId || "",
+        campusName: data.campusName || "",
+        departmentId: data.departmentId || "",
+        departmentName: data.departmentName || "",
+        courseAvailability: data.courseAvailability || "Active",
+      });
+
+      if (!validation.valid) {
+        return {
+          success: false,
+          message: "Validation failed",
+          error: validation.errors?.join(", ") || "Invalid data",
+        };
+      }
+    }
+
     // Check if updating name to an existing one in the same department
     if (data.courseName) {
       const currentCourse = await Course.findById(id)
@@ -340,7 +398,7 @@ export async function updateCourse(id: string, data: Partial<CourseFormData>) {
 
       if (currentCourse) {
         const existingCourse = await Course.findOne({
-          courseName: data.courseName,
+          courseName: data.courseName.trim(),
           campusId: data.campusId || currentCourse.campusId,
           departmentId: data.departmentId || currentCourse.departmentId,
           _id: { $ne: id },
@@ -356,11 +414,21 @@ export async function updateCourse(id: string, data: Partial<CourseFormData>) {
       }
     }
 
-    const updatedCourse = await Course.findByIdAndUpdate(
-      id,
-      { ...data },
-      { new: true, runValidators: true },
-    ).lean();
+    // Prepare update data
+    const updateData: any = {};
+    if (data.courseName) updateData.courseName = data.courseName.trim();
+    if (data.campusId) updateData.campusId = data.campusId;
+    if (data.campusName) updateData.campusName = data.campusName.trim();
+    if (data.departmentId) updateData.departmentId = data.departmentId;
+    if (data.departmentName)
+      updateData.departmentName = data.departmentName.trim();
+    if (data.courseAvailability)
+      updateData.courseAvailability = data.courseAvailability;
+
+    const updatedCourse = await Course.findByIdAndUpdate(id, updateData, {
+      new: true,
+      runValidators: true,
+    }).lean();
 
     if (!updatedCourse) {
       return {
@@ -395,15 +463,6 @@ export async function updateCourse(id: string, data: Partial<CourseFormData>) {
     };
   } catch (error) {
     console.error("Error updating course:", error);
-
-    // Handle Zod validation errors
-    if (error instanceof z.ZodError) {
-      return {
-        success: false,
-        message: "Validation failed",
-        error: formatZodError(error as z.ZodError<CourseFormData>),
-      };
-    }
 
     // Handle Mongoose validation errors
     if (error instanceof mongoose.Error.ValidationError) {
@@ -471,240 +530,6 @@ export async function deleteCourse(id: string) {
     return {
       success: false,
       message: "Failed to delete course",
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
-}
-
-// Get next course ID
-export async function getNextCourseId() {
-  try {
-    await dbConnect();
-    const nextId = await Course.getNextCourseId();
-    return {
-      success: true,
-      data: nextId,
-    };
-  } catch (error) {
-    console.error("Error getting next course ID:", error);
-    return {
-      success: false,
-      message: "Failed to get next course ID",
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
-}
-
-// Search courses
-export async function searchCourses(searchTerm: string) {
-  try {
-    await dbConnect();
-
-    const courses = await Course.find({
-      $or: [
-        { courseId: { $regex: searchTerm, $options: "i" } },
-        { courseName: { $regex: searchTerm, $options: "i" } },
-        { campusName: { $regex: searchTerm, $options: "i" } },
-        { departmentName: { $regex: searchTerm, $options: "i" } },
-      ],
-    })
-      .sort({ courseName: 1 })
-      .limit(20)
-      .lean();
-
-    const plainCourses = courses.map((course) => ({
-      _id: course._id.toString(),
-      id: course._id.toString(),
-      courseId: course.courseId,
-      courseName: course.courseName,
-      campusId: course.campusId,
-      campusName: course.campusName,
-      departmentId: course.departmentId,
-      departmentName: course.departmentName,
-      courseAvailability: course.courseAvailability,
-      timestamp: course.timestamp?.toISOString(),
-    }));
-
-    return {
-      success: true,
-      data: plainCourses,
-    };
-  } catch (error) {
-    console.error("Error searching courses:", error);
-    return {
-      success: false,
-      message: "Failed to search courses",
-      error: error instanceof Error ? error.message : "Unknown error",
-      data: [],
-    };
-  }
-}
-
-// Get course count by campus
-export async function getCourseCountByCampus() {
-  try {
-    await dbConnect();
-
-    const courseCounts = await Course.aggregate([
-      {
-        $group: {
-          _id: "$campusId",
-          campusName: { $first: "$campusName" },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $sort: { campusName: 1 },
-      },
-    ]);
-
-    const plainCounts = courseCounts.map((item) => ({
-      campusId: item._id,
-      campusName: item.campusName,
-      count: item.count,
-    }));
-
-    return {
-      success: true,
-      data: plainCounts,
-    };
-  } catch (error) {
-    console.error("Error getting course count by campus:", error);
-    return {
-      success: false,
-      message: "Failed to get course count by campus",
-      error: error instanceof Error ? error.message : "Unknown error",
-      data: [],
-    };
-  }
-}
-
-// Get course count by department
-export async function getCourseCountByDepartment() {
-  try {
-    await dbConnect();
-
-    const courseCounts = await Course.aggregate([
-      {
-        $group: {
-          _id: "$departmentId",
-          departmentName: { $first: "$departmentName" },
-          campusName: { $first: "$campusName" },
-          count: { $sum: 1 },
-        },
-      },
-      {
-        $sort: { departmentName: 1 },
-      },
-    ]);
-
-    const plainCounts = courseCounts.map((item) => ({
-      departmentId: item._id,
-      departmentName: item.departmentName,
-      campusName: item.campusName,
-      count: item.count,
-    }));
-
-    return {
-      success: true,
-      data: plainCounts,
-    };
-  } catch (error) {
-    console.error("Error getting course count by department:", error);
-    return {
-      success: false,
-      message: "Failed to get course count by department",
-      error: error instanceof Error ? error.message : "Unknown error",
-      data: [],
-    };
-  }
-}
-
-// Get active courses count
-export async function getActiveCoursesCount() {
-  try {
-    await dbConnect();
-
-    const activeCount = await Course.countDocuments({
-      courseAvailability: "Active",
-    });
-    const inactiveCount = await Course.countDocuments({
-      courseAvailability: "Inactive",
-    });
-    const archivedCount = await Course.countDocuments({
-      courseAvailability: "Archived",
-    });
-    const totalCount = await Course.countDocuments();
-
-    return {
-      success: true,
-      data: {
-        active: activeCount,
-        inactive: inactiveCount,
-        archived: archivedCount,
-        total: totalCount,
-      },
-    };
-  } catch (error) {
-    console.error("Error getting active courses count:", error);
-    return {
-      success: false,
-      message: "Failed to get course counts",
-      error: error instanceof Error ? error.message : "Unknown error",
-    };
-  }
-}
-
-// Update course availability
-export async function updateCourseAvailability(
-  id: string,
-  availability: "Active" | "Inactive" | "Archived",
-) {
-  try {
-    await dbConnect();
-
-    const updatedCourse = await Course.findByIdAndUpdate(
-      id,
-      { courseAvailability: availability },
-      { new: true },
-    ).lean();
-
-    if (!updatedCourse) {
-      return {
-        success: false,
-        message: "Course not found",
-        error: "NOT_FOUND",
-      };
-    }
-
-    const plainCourse = {
-      _id: updatedCourse._id.toString(),
-      id: updatedCourse._id.toString(),
-      courseId: updatedCourse.courseId,
-      courseName: updatedCourse.courseName,
-      campusId: updatedCourse.campusId,
-      campusName: updatedCourse.campusName,
-      departmentId: updatedCourse.departmentId,
-      departmentName: updatedCourse.departmentName,
-      courseAvailability: updatedCourse.courseAvailability,
-      timestamp: updatedCourse.timestamp?.toISOString(),
-    };
-
-    revalidatePath("/dashboard/courses");
-    revalidatePath(`/courses/${id}`);
-    revalidatePath(`/campuses/${updatedCourse.campusId}/courses`);
-    revalidatePath(`/departments/${updatedCourse.departmentId}/courses`);
-
-    return {
-      success: true,
-      message: `Course ${availability.toLowerCase()} successfully`,
-      data: plainCourse,
-    };
-  } catch (error) {
-    console.error("Error updating course availability:", error);
-    return {
-      success: false,
-      message: "Failed to update course availability",
       error: error instanceof Error ? error.message : "Unknown error",
     };
   }

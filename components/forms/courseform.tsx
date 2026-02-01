@@ -1,7 +1,7 @@
 // components/forms/courseform.tsx
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { toast } from "sonner";
 import {
   Dialog,
@@ -96,22 +96,24 @@ export default function CourseForm({
       setFilteredDepartments(filtered);
 
       // If current department is not in filtered list, clear it
+      const currentDepartmentId = formData?.departmentId || "";
       if (
-        formData.departmentId &&
-        !filtered.some((dept) => dept.departmentId === formData.departmentId)
+        currentDepartmentId &&
+        !filtered.some((dept) => dept.departmentId === currentDepartmentId)
       ) {
         handleClearDepartment();
       }
     } else {
       setFilteredDepartments(departments);
     }
-  }, [selectedCampusId, departments]);
+  }, [selectedCampusId, departments, formData?.departmentId]);
 
   // Update selected department when formData.departmentId changes
   useEffect(() => {
-    if (formData.departmentId && departments.length > 0) {
+    const currentDepartmentId = formData?.departmentId || "";
+    if (currentDepartmentId && departments.length > 0) {
       const dept = departments.find(
-        (d) => d.departmentId === formData.departmentId,
+        (d) => d.departmentId === currentDepartmentId,
       );
       if (dept) {
         setSelectedDepartment(dept);
@@ -123,7 +125,7 @@ export default function CourseForm({
     } else {
       setSelectedDepartment(null);
     }
-  }, [formData.departmentId, departments, selectedCampusId]);
+  }, [formData?.departmentId, departments, selectedCampusId]);
 
   const loadCampuses = async () => {
     try {
@@ -142,7 +144,10 @@ export default function CourseForm({
         toast.error(result.message || "Failed to load campuses");
       }
     } catch (error: any) {
-      toast.error("Failed to load campuses: " + error.message);
+      console.error("Failed to load campuses:", error);
+      toast.error(
+        "Failed to load campuses: " + (error.message || "Unknown error"),
+      );
     } finally {
       setLoadingCampuses(false);
     }
@@ -152,6 +157,7 @@ export default function CourseForm({
     try {
       setLoadingDepartments(true);
       const result = await getDepartmentsWithFullCampusDetails();
+      console.log("Departments result:", result);
 
       if (result.success && result.data) {
         const departmentData = result.data.map((dept: any) => ({
@@ -162,40 +168,56 @@ export default function CourseForm({
           campusName: dept.campusName,
           campusLocation: dept.campusLocation,
         }));
+        console.log("Processed departments:", departmentData);
         setDepartments(departmentData);
         setFilteredDepartments(departmentData);
       } else {
-        toast.error(result.message || "Failed to load departments");
+        const errorMsg = result.message || "Failed to load departments";
+        console.error("Department load error:", errorMsg);
+        toast.error(errorMsg);
+        setDepartments([]);
+        setFilteredDepartments([]);
       }
     } catch (error: any) {
-      toast.error("Failed to load departments: " + error.message);
+      console.error("Failed to load departments:", error);
+      toast.error(
+        "Failed to load departments: " + (error.message || "Unknown error"),
+      );
+      setDepartments([]);
+      setFilteredDepartments([]);
     } finally {
       setLoadingDepartments(false);
     }
   };
 
-  const handleClearDepartment = () => {
+  const handleClearDepartment = useCallback(() => {
     onInputChange("departmentId", "");
     onInputChange("departmentName", "");
     onInputChange("campusId", "");
     onInputChange("campusName", "");
     setSelectedDepartment(null);
-  };
+  }, [onInputChange]);
 
-  const handleDepartmentChange = (departmentId: string) => {
-    const selectedDept = departments.find(
-      (dept) => dept.departmentId === departmentId,
-    );
-    if (selectedDept) {
-      onInputChange("departmentId", departmentId);
-      onInputChange("departmentName", selectedDept.name);
-      onInputChange("campusId", selectedDept.campusId);
-      onInputChange("campusName", selectedDept.campusName);
-      setSelectedDepartment(selectedDept);
-    }
-  };
+  const handleDepartmentChange = useCallback(
+    (departmentId: string) => {
+      console.log("Department selected:", departmentId);
+      const selectedDept = departments.find(
+        (dept) => dept.departmentId === departmentId,
+      );
+      console.log("Selected dept:", selectedDept);
+      if (selectedDept) {
+        onInputChange("departmentId", departmentId);
+        onInputChange("departmentName", selectedDept.name);
+        onInputChange("campusId", selectedDept.campusId);
+        onInputChange("campusName", selectedDept.campusName);
+        setSelectedDepartment(selectedDept);
+      }
+    },
+    [departments, onInputChange],
+  );
 
   const handleSubmit = async () => {
+    console.log("Submitting form data:", formData);
     setIsSubmitting(true);
     try {
       await onSubmit();
@@ -204,16 +226,25 @@ export default function CourseForm({
     }
   };
 
-  const isFormValid = () => {
-    // Safely check if required fields exist and have non-empty values
-    return (
+  const isFormValid = useCallback(() => {
+    // Check if all required fields are filled
+    const isValid = Boolean(
       formData?.courseName?.trim() &&
       formData?.departmentId?.trim() &&
       formData?.departmentName?.trim() &&
       formData?.campusId?.trim() &&
-      formData?.campusName?.trim()
+      formData?.campusName?.trim(),
     );
-  };
+    console.log("Form validation:", {
+      courseName: formData?.courseName?.trim(),
+      departmentId: formData?.departmentId?.trim(),
+      departmentName: formData?.departmentName?.trim(),
+      campusId: formData?.campusId?.trim(),
+      campusName: formData?.campusName?.trim(),
+      isValid,
+    });
+    return isValid;
+  }, [formData]);
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -328,7 +359,9 @@ export default function CourseForm({
                   ))
                 ) : (
                   <div className="px-2 py-3 text-sm text-gray-500">
-                    No departments available
+                    {departments.length === 0
+                      ? "No departments available. Please create departments first."
+                      : "No departments match the selected campus filter."}
                   </div>
                 )}
               </SelectContent>
@@ -378,12 +411,11 @@ export default function CourseForm({
             )}
 
             {/* Warning if no departments */}
-            {!loadingDepartments && filteredDepartments.length === 0 && (
+            {!loadingDepartments && departments.length === 0 && (
               <div className="mt-2 p-3 bg-yellow-50 rounded-md border border-yellow-200">
                 <p className="text-sm text-yellow-700">
-                  {selectedCampusId !== "all"
-                    ? "No departments found in the selected campus. Please select a different campus or create departments first."
-                    : "No departments found. Please create departments first."}
+                  No departments found. Please create departments first before
+                  adding courses.
                 </p>
               </div>
             )}

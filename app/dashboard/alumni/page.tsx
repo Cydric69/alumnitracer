@@ -71,13 +71,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import {
-  getAlumni,
-  getAlumniCampuses,
-  getAlumniDepartments,
-  getAlumniYears,
-} from "../../actions/alumni.actions";
-import type { Alumni as AlumniType } from "@/types/alumni";
+import { AlumniResponse, getAlumni, getFormData } from "@/app/actions/alumni";
 
 // Filter options interfaces
 interface FilterOption {
@@ -88,11 +82,17 @@ interface FilterOption {
 // Campus filter option with campus info
 interface CampusFilterOption extends FilterOption {
   id?: string;
+  campusId?: string;
 }
 
 // Department filter option with campus info
 interface DepartmentFilterOption extends FilterOption {
-  campus?: string;
+  campusId?: string;
+}
+
+// Course filter option with department info
+interface CourseFilterOption extends FilterOption {
+  departmentId?: string;
 }
 
 export default function AlumniDataPage() {
@@ -101,12 +101,14 @@ export default function AlumniDataPage() {
   const [selectedDepartment, setSelectedDepartment] = useState<string>("all");
   const [selectedYear, setSelectedYear] = useState<string>("all");
   const [selectedStatus, setSelectedStatus] = useState<string>("all");
-  const [selectedAlumni, setSelectedAlumni] = useState<AlumniType | null>(null);
+  const [selectedAlumni, setSelectedAlumni] = useState<AlumniResponse | null>(
+    null,
+  );
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   // Data state
-  const [alumniData, setAlumniData] = useState<AlumniType[]>([]);
-  const [filteredAlumni, setFilteredAlumni] = useState<AlumniType[]>([]);
+  const [alumniData, setAlumniData] = useState<AlumniResponse[]>([]);
+  const [filteredAlumni, setFilteredAlumni] = useState<AlumniResponse[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [stats, setStats] = useState({
@@ -122,6 +124,9 @@ export default function AlumniDataPage() {
   ]);
   const [departments, setDepartments] = useState<DepartmentFilterOption[]>([
     { value: "all", label: "All Departments" },
+  ]);
+  const [courses, setCourses] = useState<CourseFilterOption[]>([
+    { value: "all", label: "All Courses" },
   ]);
   const [graduationYears, setGraduationYears] = useState<FilterOption[]>([
     { value: "all", label: "All Years" },
@@ -141,9 +146,14 @@ export default function AlumniDataPage() {
       setIsLoading(true);
       setError(null);
 
-      // Fetch alumni data
-      const data = await getAlumni();
+      // Fetch alumni data using the new action
+      const result = await getAlumni();
 
+      if (!result.success) {
+        throw new Error(result.message || "Failed to fetch alumni data");
+      }
+
+      const data = result.data || [];
       setAlumniData(data);
       setFilteredAlumni(data);
 
@@ -154,28 +164,35 @@ export default function AlumniDataPage() {
           alum.employmentStatus === "Self-Employed",
       ).length;
 
-      // Safe check for campus and department existence
-      const alumniWithValidData = data.filter(
-        (alum) =>
-          alum.campus &&
-          alum.campus.id &&
-          alum.department &&
-          alum.department.id,
-      );
+      // Get unique years from alumni data
+      const years = [...new Set(data.map((alum) => alum.yearGraduated))]
+        .filter((year) => year && year.trim() !== "")
+        .sort((a, b) => b.localeCompare(a)) // Sort descending
+        .map((year) => ({
+          value: year,
+          label: year,
+        }));
 
-      const uniqueCampuses = [
-        ...new Set(alumniWithValidData.map((alum) => alum.campus.id)),
-      ];
+      setGraduationYears([{ value: "all", label: "All Years" }, ...years]);
 
-      const uniqueDepartments = [
-        ...new Set(alumniWithValidData.map((alum) => alum.department.id)),
-      ];
+      // Get unique campuses and departments
+      const uniqueCampuses = new Map<string, string>();
+      const uniqueDepartments = new Map<string, string>();
+
+      data.forEach((alum) => {
+        if (alum.campus?.name && alum.campus?.id) {
+          uniqueCampuses.set(alum.campus.id, alum.campus.name);
+        }
+        if (alum.department?.name && alum.department?.id) {
+          uniqueDepartments.set(alum.department.id, alum.department.name);
+        }
+      });
 
       setStats({
         total: data.length,
         employed: employedCount,
-        campuses: uniqueCampuses.length,
-        departments: uniqueDepartments.length,
+        campuses: uniqueCampuses.size,
+        departments: uniqueDepartments.size,
       });
     } catch (err: any) {
       console.error("Error fetching alumni data:", err);
@@ -185,52 +202,66 @@ export default function AlumniDataPage() {
     }
   }, []);
 
-  // Fetch filter options
+  // Fetch filter options (campuses, departments, courses)
   const fetchFilterOptions = useCallback(async () => {
     try {
-      // Fetch campuses for filtering
-      const campusOptions = await getAlumniCampuses();
+      const result = await getFormData();
+
+      if (!result.success || !result.data) {
+        console.error("Failed to fetch form data:", result.message);
+        // Set default values if fetch fails
+        setCampuses([{ value: "all", label: "All Campuses" }]);
+        setDepartments([{ value: "all", label: "All Departments" }]);
+        setCourses([{ value: "all", label: "All Courses" }]);
+        return;
+      }
+
+      const {
+        campuses: campusData,
+        departments: departmentData,
+        courses: courseData,
+      } = result.data;
+
+      // Set campuses
       const campusList: CampusFilterOption[] = [
         { value: "all", label: "All Campuses" },
-        ...campusOptions.map((campus) => ({
-          value: campus.value,
-          label: campus.label,
-          id: campus.value,
+        ...(campusData || []).map((campus: any) => ({
+          value: campus.id,
+          label: campus.name,
+          campusId: campus.campusId,
         })),
       ];
       setCampuses(campusList);
 
-      // Fetch departments for filtering
-      const departmentOptions = await getAlumniDepartments();
+      // Set departments
       const departmentList: DepartmentFilterOption[] = [
         { value: "all", label: "All Departments" },
-        ...departmentOptions.map((dept) => ({
-          value: dept.value,
-          label: dept.label,
-          campus: dept.campus,
+        ...(departmentData || []).map((dept: any) => ({
+          value: dept.id,
+          label: dept.name,
+          campusId: dept.campusId,
         })),
       ];
       setDepartments(departmentList);
 
-      // Fetch graduation years for filtering
-      const yearOptions = await getAlumniYears();
-      const yearList: FilterOption[] = [
-        { value: "all", label: "All Years" },
-        ...yearOptions.map((year) => ({
-          value: year.value,
-          label: year.label,
+      // Set courses
+      const courseList: CourseFilterOption[] = [
+        { value: "all", label: "All Courses" },
+        ...(courseData || []).map((course: any) => ({
+          value: course.id,
+          label: course.name,
+          departmentId: course.departmentId,
         })),
       ];
-      setGraduationYears(yearList);
+      setCourses(courseList);
     } catch (err: any) {
       console.error("Error fetching filter options:", err);
       // Set default values if fetch fails
       setCampuses([{ value: "all", label: "All Campuses" }]);
       setDepartments([{ value: "all", label: "All Departments" }]);
-      setGraduationYears([{ value: "all", label: "All Years" }]);
+      setCourses([{ value: "all", label: "All Courses" }]);
     }
   }, []);
-
   // Initial data fetch
   useEffect(() => {
     fetchAlumniData();
@@ -243,12 +274,12 @@ export default function AlumniDataPage() {
   };
 
   // Function to get full name
-  const getFullName = (alumni: AlumniType): string => {
+  const getFullName = (alumni: AlumniResponse): string => {
     return `${alumni.firstName} ${alumni.lastName}`;
   };
 
   // Function to get alumni ID for display
-  const getDisplayId = (alumni: AlumniType): string => {
+  const getDisplayId = (alumni: AlumniResponse): string => {
     return alumni.studentId || `AL-${alumni.id.slice(-8)}`;
   };
 
@@ -256,28 +287,33 @@ export default function AlumniDataPage() {
   const getEmploymentStatusColor = (status: string) => {
     switch (status) {
       case "Employed":
-        return "bg-green-100 text-green-800";
+        return "bg-green-100 text-green-800 hover:bg-green-100";
       case "Self-Employed":
-        return "bg-blue-100 text-blue-800";
+        return "bg-blue-100 text-blue-800 hover:bg-blue-100";
       case "Further Studies":
-        return "bg-purple-100 text-purple-800";
+        return "bg-purple-100 text-purple-800 hover:bg-purple-100";
       case "Unemployed":
-        return "bg-yellow-100 text-yellow-800";
+        return "bg-yellow-100 text-yellow-800 hover:bg-yellow-100";
       case "Never Employed":
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 hover:bg-gray-100";
       default:
-        return "bg-gray-100 text-gray-800";
+        return "bg-gray-100 text-gray-800 hover:bg-gray-100";
     }
   };
 
   // Safe get campus name
-  const getCampusName = (alumni: AlumniType): string => {
+  const getCampusName = (alumni: AlumniResponse): string => {
     return alumni.campus?.name || "Unknown Campus";
   };
 
   // Safe get department name
-  const getDepartmentName = (alumni: AlumniType): string => {
+  const getDepartmentName = (alumni: AlumniResponse): string => {
     return alumni.department?.name || "Unknown Department";
+  };
+
+  // Safe get course name
+  const getCourseName = (alumni: AlumniResponse): string => {
+    return alumni.course?.name || "Unknown Course";
   };
 
   // Clear all filters
@@ -344,7 +380,7 @@ export default function AlumniDataPage() {
   ]);
 
   // Handle row click to show details
-  const handleRowClick = (alumni: AlumniType) => {
+  const handleRowClick = (alumni: AlumniResponse) => {
     setSelectedAlumni(alumni);
     setIsDialogOpen(true);
   };
@@ -1053,7 +1089,7 @@ export default function AlumniDataPage() {
                         <div className="md:col-span-2">
                           <p className="text-sm text-gray-500">Course</p>
                           <p className="font-medium">
-                            {selectedAlumni.course?.name || "N/A"}
+                            {getCourseName(selectedAlumni)}
                           </p>
                         </div>
                         <div className="md:col-span-2">

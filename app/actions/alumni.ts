@@ -3,11 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { dbConnect } from "@/lib/dbConnect";
 import Alumni, { AlumniZodSchema } from "@/models/Alumni";
-import Campus from "@/models/Campus";
-import Department from "@/models/Department";
-import Course from "@/models/Course";
-import mongoose, { Types } from "mongoose";
-
+// app/actions/alumni.ts - Update the AlumniFormData type
 export type AlumniFormData = {
   firstName: string;
   lastName: string;
@@ -21,12 +17,12 @@ export type AlumniFormData = {
   dateOfBirth?: string;
   placeOfBirth?: string;
   yearGraduated: string;
-  campusId?: string;
-  campusName?: string;
-  departmentId?: string;
-  departmentName?: string;
-  courseId?: string;
-  courseName?: string;
+  campusId: string; // Changed to string (required)
+  campusName: string; // Changed to string (required)
+  departmentId: string; // Changed to string (required)
+  departmentName: string; // Changed to string (required)
+  courseId: string; // Changed to string (required)
+  courseName: string; // Changed to string (required)
   degree: string;
   employmentStatus:
     | "Employed"
@@ -59,7 +55,6 @@ export type AlumniFormData = {
   firstJobReasons?: string[];
   isCurrentJobRelatedToDegree?: boolean;
   currentJobReasons?: string[];
-  employmentProof?: string;
   awardsRecognition?: string[];
   scholarshipsDuringEmployment?: string[];
   eligibility?: string[];
@@ -82,9 +77,9 @@ export type AlumniResponse = {
   yearGraduated: string;
   dateOfBirth?: string;
   placeOfBirth?: string;
-  campus: { id?: string; name: string };
-  department: { id?: string; name: string };
-  course: { id?: string; name: string };
+  campus: { id: string; name: string };
+  department: { id: string; name: string };
+  course: { id: string; name: string };
   degree: string;
   employmentStatus: string;
   employmentSector: string;
@@ -102,7 +97,6 @@ export type AlumniResponse = {
   firstJobReasons?: string[];
   isCurrentJobRelatedToDegree?: boolean;
   currentJobReasons?: string[];
-  employmentProof?: string;
   awardsRecognition?: string[];
   scholarshipsDuringEmployment?: string[];
   eligibility?: string[];
@@ -113,15 +107,7 @@ export type AlumniResponse = {
   updatedAt: string;
 };
 
-const toObjectId = (id: string | undefined): Types.ObjectId | undefined => {
-  if (!id || id.trim() === "") return undefined;
-  try {
-    return new Types.ObjectId(id.trim());
-  } catch {
-    return undefined;
-  }
-};
-
+// app/actions/alumni.ts - Update createAlumni function
 export async function createAlumni(data: AlumniFormData) {
   try {
     await dbConnect();
@@ -142,18 +128,9 @@ export async function createAlumni(data: AlumniFormData) {
 
     const validated = validation.data;
 
-    // Convert ObjectId → string to match AlumniFormData
-    const alumniInput: AlumniFormData = {
-      ...validated,
-      campusId: validated.campusId ? validated.campusId.toString() : undefined,
-      departmentId: validated.departmentId
-        ? validated.departmentId.toString()
-        : undefined,
-      courseId: validated.courseId ? validated.courseId.toString() : undefined,
-    };
-
+    // Check for duplicate email
     const existingEmail = await Alumni.findOne({
-      email: alumniInput.email.toLowerCase().trim(),
+      email: validated.email.toLowerCase().trim(),
     });
     if (existingEmail) {
       return {
@@ -163,9 +140,10 @@ export async function createAlumni(data: AlumniFormData) {
       };
     }
 
-    if (alumniInput.studentId) {
+    // Check for duplicate student ID if provided
+    if (validated.studentId) {
       const existingStudentId = await Alumni.findOne({
-        studentId: alumniInput.studentId.trim(),
+        studentId: validated.studentId.trim(),
       });
       if (existingStudentId) {
         return {
@@ -176,40 +154,8 @@ export async function createAlumni(data: AlumniFormData) {
       }
     }
 
-    const campusId = toObjectId(alumniInput.campusId);
-    const departmentId = toObjectId(alumniInput.departmentId);
-    const courseId = toObjectId(alumniInput.courseId);
-
-    let campusName = alumniInput.campusName || "";
-    let departmentName = alumniInput.departmentName || "";
-    let courseName = alumniInput.courseName || "";
-
-    if (campusId) {
-      const campus = await Campus.findById(campusId);
-      if (campus) campusName = campus.campusName || campusName;
-    }
-
-    if (departmentId) {
-      const department = await Department.findById(departmentId);
-      if (department) departmentName = department.name || departmentName;
-    }
-
-    if (courseId) {
-      const course = await Course.findById(courseId);
-      if (course) courseName = course.courseName || courseName;
-    }
-
-    const finalData = {
-      ...alumniInput,
-      campusId,
-      departmentId,
-      courseId,
-      campusName,
-      departmentName,
-      courseName,
-    };
-
-    const alumni = await Alumni.create(finalData);
+    // Create alumni with string IDs
+    const alumni = await Alumni.create(validated);
     if (!alumni) {
       return {
         success: false,
@@ -238,15 +184,15 @@ export async function createAlumni(data: AlumniFormData) {
         dateOfBirth: alumni.dateOfBirth,
         placeOfBirth: alumni.placeOfBirth,
         campus: {
-          id: alumni.campusId?.toString(),
+          id: alumni.campusId,
           name: alumni.campusName,
         },
         department: {
-          id: alumni.departmentId?.toString(),
+          id: alumni.departmentId,
           name: alumni.departmentName,
         },
         course: {
-          id: alumni.courseId?.toString(),
+          id: alumni.courseId,
           name: alumni.courseName,
         },
         degree: alumni.degree,
@@ -266,7 +212,6 @@ export async function createAlumni(data: AlumniFormData) {
         firstJobReasons: alumni.firstJobReasons || [],
         isCurrentJobRelatedToDegree: alumni.isCurrentJobRelatedToDegree,
         currentJobReasons: alumni.currentJobReasons || [],
-        employmentProof: alumni.employmentProof,
         awardsRecognition: alumni.awardsRecognition || [],
         scholarshipsDuringEmployment: alumni.scholarshipsDuringEmployment || [],
         eligibility: alumni.eligibility || [],
@@ -286,10 +231,6 @@ export async function createAlumni(data: AlumniFormData) {
     };
   }
 }
-
-// ─────────────────────────────────────────────────────────────
-// Remaining functions (getAlumni, updateAlumni, etc.) unchanged
-// ─────────────────────────────────────────────────────────────
 
 export async function getAlumni() {
   try {
@@ -311,12 +252,9 @@ export async function getAlumni() {
         yearGraduated: alum.yearGraduated,
         dateOfBirth: alum.dateOfBirth,
         placeOfBirth: alum.placeOfBirth,
-        campus: { id: alum.campusId?.toString(), name: alum.campusName },
-        department: {
-          id: alum.departmentId?.toString(),
-          name: alum.departmentName,
-        },
-        course: { id: alum.courseId?.toString(), name: alum.courseName },
+        campus: { id: alum.campusId, name: alum.campusName },
+        department: { id: alum.departmentId, name: alum.departmentName },
+        course: { id: alum.courseId, name: alum.courseName },
         degree: alum.degree,
         employmentStatus: alum.employmentStatus,
         employmentSector: alum.employmentSector,
@@ -334,7 +272,6 @@ export async function getAlumni() {
         firstJobReasons: alum.firstJobReasons || [],
         isCurrentJobRelatedToDegree: alum.isCurrentJobRelatedToDegree,
         currentJobReasons: alum.currentJobReasons || [],
-        employmentProof: alum.employmentProof,
         awardsRecognition: alum.awardsRecognition || [],
         scholarshipsDuringEmployment: alum.scholarshipsDuringEmployment || [],
         eligibility: alum.eligibility || [],
@@ -393,28 +330,8 @@ export async function updateAlumni(id: string, data: Partial<AlumniFormData>) {
         };
       }
     }
-    const campusId = data.campusId ? toObjectId(data.campusId) : undefined;
-    const departmentId = data.departmentId
-      ? toObjectId(data.departmentId)
-      : undefined;
-    const courseId = data.courseId ? toObjectId(data.courseId) : undefined;
-    const updateData: any = { ...data };
-    if (campusId !== undefined) updateData.campusId = campusId;
-    if (departmentId !== undefined) updateData.departmentId = departmentId;
-    if (courseId !== undefined) updateData.courseId = courseId;
-    if (campusId) {
-      const campus = await Campus.findById(campusId);
-      if (campus) updateData.campusName = campus.campusName;
-    }
-    if (departmentId) {
-      const department = await Department.findById(departmentId);
-      if (department) updateData.departmentName = department.name;
-    }
-    if (courseId) {
-      const course = await Course.findById(courseId);
-      if (course) updateData.courseName = course.courseName;
-    }
-    const alumni = await Alumni.findByIdAndUpdate(id, updateData, {
+
+    const alumni = await Alumni.findByIdAndUpdate(id, data, {
       new: true,
       runValidators: true,
     });
@@ -444,15 +361,15 @@ export async function updateAlumni(id: string, data: Partial<AlumniFormData>) {
         dateOfBirth: alumni.dateOfBirth,
         placeOfBirth: alumni.placeOfBirth,
         campus: {
-          id: alumni.campusId?.toString(),
+          id: alumni.campusId,
           name: alumni.campusName,
         },
         department: {
-          id: alumni.departmentId?.toString(),
+          id: alumni.departmentId,
           name: alumni.departmentName,
         },
         course: {
-          id: alumni.courseId?.toString(),
+          id: alumni.courseId,
           name: alumni.courseName,
         },
         degree: alumni.degree,
@@ -472,7 +389,6 @@ export async function updateAlumni(id: string, data: Partial<AlumniFormData>) {
         firstJobReasons: alumni.firstJobReasons || [],
         isCurrentJobRelatedToDegree: alumni.isCurrentJobRelatedToDegree,
         currentJobReasons: alumni.currentJobReasons || [],
-        employmentProof: alumni.employmentProof,
         awardsRecognition: alumni.awardsRecognition || [],
         scholarshipsDuringEmployment: alumni.scholarshipsDuringEmployment || [],
         eligibility: alumni.eligibility || [],
@@ -553,15 +469,15 @@ export async function getAlumniById(id: string) {
         dateOfBirth: alumni.dateOfBirth,
         placeOfBirth: alumni.placeOfBirth,
         campus: {
-          id: alumni.campusId?.toString(),
+          id: alumni.campusId,
           name: alumni.campusName,
         },
         department: {
-          id: alumni.departmentId?.toString(),
+          id: alumni.departmentId,
           name: alumni.departmentName,
         },
         course: {
-          id: alumni.courseId?.toString(),
+          id: alumni.courseId,
           name: alumni.courseName,
         },
         degree: alumni.degree,
@@ -581,7 +497,6 @@ export async function getAlumniById(id: string) {
         firstJobReasons: alumni.firstJobReasons || [],
         isCurrentJobRelatedToDegree: alumni.isCurrentJobRelatedToDegree,
         currentJobReasons: alumni.currentJobReasons || [],
-        employmentProof: alumni.employmentProof,
         awardsRecognition: alumni.awardsRecognition || [],
         scholarshipsDuringEmployment: alumni.scholarshipsDuringEmployment || [],
         eligibility: alumni.eligibility || [],
@@ -670,15 +585,15 @@ export async function searchAlumni(query: string) {
         facebookAccount: alum.facebookAccount,
         yearGraduated: alum.yearGraduated,
         campus: {
-          id: alum.campusId?.toString(),
+          id: alum.campusId,
           name: alum.campusName,
         },
         department: {
-          id: alum.departmentId?.toString(),
+          id: alum.departmentId,
           name: alum.departmentName,
         },
         course: {
-          id: alum.courseId?.toString(),
+          id: alum.courseId,
           name: alum.courseName,
         },
         degree: alum.degree,
@@ -699,51 +614,8 @@ export async function searchAlumni(query: string) {
   }
 }
 
-// Get form data (campuses, departments, courses)
-export async function getFormData() {
-  try {
-    await dbConnect();
-    const [campuses, departments, courses] = await Promise.all([
-      Campus.find().sort({ campusName: 1 }).lean(),
-      Department.find().sort({ name: 1 }).lean(),
-      Course.find().sort({ courseName: 1 }).lean(),
-    ]);
-    return {
-      success: true,
-      data: {
-        campuses: campuses.map((campus: any) => ({
-          id: campus._id.toString(),
-          campusId: campus.campusId || "",
-          name: campus.campusName || "Unknown Campus",
-        })),
-        departments: departments.map((dept: any) => ({
-          id: dept._id.toString(),
-          departmentId: dept.departmentId || "",
-          name: dept.name || "Unknown Department",
-          campusId: dept.campusId || "",
-        })),
-        courses: courses.map((course: any) => ({
-          id: course._id.toString(),
-          courseId: course.courseId || "",
-          name: course.courseName || "Unknown Course",
-          departmentId: course.departmentId || "",
-        })),
-      },
-    };
-  } catch (error: any) {
-    console.error("Error fetching form data:", error);
-    return {
-      success: false,
-      message: "Failed to fetch form data",
-      error: error.message || "Unknown error",
-      data: {
-        campuses: [],
-        departments: [],
-        courses: [],
-      },
-    };
-  }
-}
+// Remove getFormData function since we're using hardcoded data
+// The campuses, departments, and courses are now provided by types/academic.ts
 
 // Bulk delete alumni
 export async function bulkDeleteAlumni(ids: string[]) {

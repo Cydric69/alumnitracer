@@ -1,47 +1,88 @@
-// models/Campus.ts
-import mongoose, { Document, Schema } from "mongoose";
+import mongoose, { Schema, Document, Model, models } from "mongoose";
+import { Counter } from "./Counter";
 
-export interface ICampus extends Document {
-  name: string;
-  description: string;
-  address: string;
-  createdAt: Date;
-  updatedAt: Date;
+export interface ICampus {
+  campusId: string;
+  campusName: string;
+  location?: string;
+  description?: string;
+  createdBy?: string;
+  updatedBy?: string;
+  createdAt?: Date;
+  updatedAt?: Date;
 }
 
-const CampusSchema = new Schema<ICampus>(
+export interface ICampusDocument extends ICampus, Document {
+  _id: mongoose.Types.ObjectId;
+}
+
+const CampusSchema = new Schema<ICampusDocument>(
   {
-    name: {
+    campusId: {
       type: String,
-      required: [true, "Campus name is required"],
-      trim: true,
+      required: true,
       unique: true,
-      minlength: [2, "Campus name must be at least 2 characters"],
-      maxlength: [200, "Campus name cannot exceed 200 characters"],
+      index: true,
+    },
+    campusName: {
+      type: String,
+      required: true,
+      trim: true,
+      maxlength: 100,
+    },
+    location: {
+      type: String,
+      trim: true,
+      maxlength: 200,
     },
     description: {
       type: String,
-      required: [true, "Campus description is required"],
       trim: true,
-      minlength: [10, "Description must be at least 10 characters"],
-      maxlength: [1000, "Description cannot exceed 1000 characters"],
+      maxlength: 500,
     },
-    address: {
+    createdBy: {
       type: String,
-      required: [true, "Campus address is required"],
       trim: true,
-      maxlength: [500, "Address cannot exceed 500 characters"],
+    },
+    updatedBy: {
+      type: String,
+      trim: true,
     },
   },
   {
-    timestamps: true,
-    collection: "campuses",
-  }
+    timestamps: true, // uses createdAt & updatedAt automatically
+  },
 );
 
-// Create index for better query performance
-CampusSchema.index({ name: 1 });
+CampusSchema.pre("save", async function () {
+  if (this.isNew) {
+    const counter = await Counter.findByIdAndUpdate(
+      { _id: "campusId" },
+      { $inc: { sequenceValue: 1 } },
+      { new: true, upsert: true },
+    );
+    this.campusId = counter.sequenceValue.toString().padStart(3, "0");
+  }
+});
 
-// Prevent model recompilation in development
-export default mongoose.models.Campus ||
-  mongoose.model<ICampus>("Campus", CampusSchema);
+CampusSchema.statics.getNextCampusId = async function (): Promise<string> {
+  const counter = await Counter.findByIdAndUpdate(
+    { _id: "campusId" },
+    { $inc: { sequenceValue: 1 } },
+    { new: true, upsert: true },
+  );
+  return counter.sequenceValue.toString().padStart(3, "0");
+};
+
+CampusSchema.index({ campusId: 1 }, { unique: true });
+CampusSchema.index({ campusName: 1 });
+
+interface CampusModel extends Model<ICampusDocument> {
+  getNextCampusId(): Promise<string>;
+}
+
+export const Campus: CampusModel =
+  (models.Campus as CampusModel) ||
+  mongoose.model<ICampusDocument, CampusModel>("Campus", CampusSchema);
+
+export default Campus;

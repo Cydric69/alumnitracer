@@ -12,13 +12,10 @@ import {
   Trash2,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import { AlumniInput } from "@/types/alumni";
-import {
-  createAlumni,
-  getCampuses,
-  getDepartments,
-  getCourses,
-} from "@/app/actions/alumni.actions";
+import { createAlumni, AlumniFormData } from "@/app/actions/alumni";
+import { getCampuses } from "@/app/actions/campus";
+import { getDepartmentsWithFullCampusDetails } from "@/app/actions/department";
+import { getCoursesByDepartmentId } from "@/app/actions/course";
 
 interface SurveyModalProps {
   isOpen: boolean;
@@ -40,26 +37,33 @@ type SurveyStep =
   | "review";
 
 interface Campus {
+  _id: string;
   id: string;
-  name: string;
+  campusId: string;
+  campusName: string;
+  location?: string;
+  description?: string;
 }
 
 interface Department {
+  _id: string;
   id: string;
+  departmentId: string;
   name: string;
-  campus: {
-    id: string;
-    name: string;
-  };
+  campusId: string;
+  campusName: string;
+  campusLocation?: string;
 }
 
 interface Course {
+  _id: string;
   id: string;
+  courseId: string;
   name: string;
-  department: {
-    id: string;
-    name: string;
-  };
+  departmentId: string;
+  departmentName: string;
+  campusId: string;
+  campusName: string;
 }
 
 interface FormData {
@@ -80,9 +84,12 @@ interface FormData {
   // Academic Information
   studentId?: string;
   yearGraduated: string;
-  campus: string;
-  department: string;
-  course: string;
+  campusId: string;
+  campusName: string;
+  departmentId: string;
+  departmentName: string;
+  courseId: string;
+  courseName: string;
   degree: string;
 
   // Employment Information
@@ -188,9 +195,12 @@ export default function SurveyModal({
     address: "",
     studentId: "",
     yearGraduated: "",
-    campus: "",
-    department: "",
-    course: "",
+    campusId: "",
+    campusName: "",
+    departmentId: "",
+    departmentName: "",
+    courseId: "",
+    courseName: "",
     degree: "",
     employmentStatus: "",
     employmentSector: "",
@@ -218,8 +228,13 @@ export default function SurveyModal({
 
   const [campuses, setCampuses] = useState<Campus[]>([]);
   const [departments, setDepartments] = useState<Department[]>([]);
+  const [filteredDepartments, setFilteredDepartments] = useState<Department[]>(
+    [],
+  );
   const [courses, setCourses] = useState<Course[]>([]);
   const [loading, setLoading] = useState(false);
+  const [loadingDepartments, setLoadingDepartments] = useState(false);
+  const [loadingCampuses, setLoadingCampuses] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
@@ -246,6 +261,7 @@ export default function SurveyModal({
   useEffect(() => {
     if (isOpen) {
       fetchCampuses();
+      fetchDepartments();
       resetForm();
       setError(null);
       setSuccess(false);
@@ -255,49 +271,109 @@ export default function SurveyModal({
   }, [isOpen]);
 
   useEffect(() => {
-    if (formData.campus) {
-      fetchDepartments(formData.campus);
+    // Filter departments when campus is selected
+    if (formData.campusId) {
+      const filtered = departments.filter(
+        (dept) => dept.campusId === formData.campusId,
+      );
+      setFilteredDepartments(filtered);
+
+      // If current department is not in filtered list, clear it
+      if (
+        formData.departmentId &&
+        !filtered.some((dept) => dept.departmentId === formData.departmentId)
+      ) {
+        handleInputChange("departmentId", "");
+        handleInputChange("departmentName", "");
+        handleInputChange("courseId", "");
+        handleInputChange("courseName", "");
+      }
     } else {
-      setDepartments([]);
-      setCourses([]);
-      setFormData((prev) => ({ ...prev, department: "", course: "" }));
+      setFilteredDepartments(departments);
     }
-  }, [formData.campus]);
+  }, [formData.campusId, departments]);
 
   useEffect(() => {
-    if (formData.department) {
-      fetchCourses(formData.department);
+    if (formData.departmentId) {
+      fetchCourses(formData.departmentId);
     } else {
       setCourses([]);
-      setFormData((prev) => ({ ...prev, course: "" }));
+      setFormData((prev) => ({
+        ...prev,
+        courseId: "",
+        courseName: "",
+      }));
     }
-  }, [formData.department]);
+  }, [formData.departmentId]);
 
   const fetchCampuses = async () => {
     try {
-      setLoading(true);
-      const campusesData = await getCampuses();
-      setCampuses(campusesData);
+      setLoadingCampuses(true);
+      const result = await getCampuses();
+      if (result.success && result.data) {
+        const campusData = result.data.map((campus: any) => ({
+          _id: campus._id || campus.id,
+          id: campus._id || campus.id,
+          campusId: campus.campusId,
+          campusName: campus.campusName,
+          location: campus.location,
+          description: campus.description,
+        }));
+        setCampuses(campusData);
+      } else {
+        setError(result.message || "Failed to load campuses");
+      }
     } catch (err: any) {
       setError(err.message || "Failed to load campuses");
     } finally {
-      setLoading(false);
+      setLoadingCampuses(false);
     }
   };
 
-  const fetchDepartments = async (campusId: string) => {
+  const fetchDepartments = async () => {
     try {
-      const departmentsData = await getDepartments(campusId);
-      setDepartments(departmentsData);
+      setLoadingDepartments(true);
+      const result = await getDepartmentsWithFullCampusDetails();
+      if (result.success && result.data) {
+        const departmentData = result.data.map((dept: any) => ({
+          _id: dept._id || dept.id,
+          id: dept._id || dept.id,
+          departmentId: dept.departmentId,
+          name: dept.name,
+          campusId: dept.campusId,
+          campusName: dept.campusName,
+          campusLocation: dept.campusLocation,
+        }));
+        setDepartments(departmentData);
+        setFilteredDepartments(departmentData);
+      } else {
+        setError(result.message || "Failed to load departments");
+      }
     } catch (err: any) {
       setError(err.message || "Failed to load departments");
+    } finally {
+      setLoadingDepartments(false);
     }
   };
 
   const fetchCourses = async (departmentId: string) => {
     try {
-      const coursesData = await getCourses(departmentId);
-      setCourses(coursesData);
+      const result = await getCoursesByDepartmentId(departmentId);
+      if (result.success && result.data) {
+        const courseData = result.data.map((course: any) => ({
+          _id: course._id || course.id,
+          id: course._id || course.id,
+          courseId: course.courseId,
+          name: course.name || course.courseName,
+          departmentId: course.departmentId,
+          departmentName: course.departmentName,
+          campusId: course.campusId,
+          campusName: course.campusName,
+        }));
+        setCourses(courseData);
+      } else {
+        setError(result.message || "Failed to load courses");
+      }
     } catch (err: any) {
       setError(err.message || "Failed to load courses");
     }
@@ -317,9 +393,12 @@ export default function SurveyModal({
       address: "",
       studentId: "",
       yearGraduated: "",
-      campus: "",
-      department: "",
-      course: "",
+      campusId: "",
+      campusName: "",
+      departmentId: "",
+      departmentName: "",
+      courseId: "",
+      courseName: "",
       degree: "",
       employmentStatus: "",
       employmentSector: "",
@@ -347,10 +426,47 @@ export default function SurveyModal({
   };
 
   const handleInputChange = (field: keyof FormData, value: any) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    // Handle campus selection - update both ID and name
+    if (field === "campusId") {
+      const selectedCampus = campuses.find((c) => c.campusId === value);
+      setFormData((prev) => ({
+        ...prev,
+        campusId: value,
+        campusName: selectedCampus?.campusName || "",
+        departmentId: "", // Reset department when campus changes
+        departmentName: "",
+        courseId: "", // Reset course when campus changes
+        courseName: "",
+      }));
+    }
+    // Handle department selection - update both ID and name
+    else if (field === "departmentId") {
+      const selectedDept = departments.find((d) => d.departmentId === value);
+      setFormData((prev) => ({
+        ...prev,
+        departmentId: value,
+        departmentName: selectedDept?.name || "",
+        courseId: "", // Reset course when department changes
+        courseName: "",
+      }));
+    }
+    // Handle course selection - update both ID and name
+    else if (field === "courseId") {
+      const selectedCourse = courses.find((c) => c.courseId === value);
+      setFormData((prev) => ({
+        ...prev,
+        courseId: value,
+        courseName: selectedCourse?.name || "",
+      }));
+    }
+    // Handle other fields normally
+    else {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    }
+
     // Clear step errors when user starts typing
     setStepErrors((prev) => {
       const newErrors = { ...prev };
@@ -479,18 +595,18 @@ export default function SurveyModal({
           isValid = false;
         }
 
-        if (!formData.campus) {
-          errors.campus = "Campus is required";
+        if (!formData.campusId) {
+          errors.campusId = "Campus is required";
           isValid = false;
         }
 
-        if (!formData.department) {
-          errors.department = "Department is required";
+        if (!formData.departmentId) {
+          errors.departmentId = "Department is required";
           isValid = false;
         }
 
-        if (!formData.course) {
-          errors.course = "Course is required";
+        if (!formData.courseId) {
+          errors.courseId = "Course is required";
           isValid = false;
         }
 
@@ -649,37 +765,60 @@ export default function SurveyModal({
       setSubmitting(true);
       setError(null);
 
-      // Convert FormData to AlumniInput
-      const alumniData: AlumniInput = {
+      // Convert FormData to AlumniFormData (matching the server action)
+      const alumniData: AlumniFormData = {
         // Personal Information
         firstName: formData.firstName,
         lastName: formData.lastName,
-        gender: formData.gender as any,
-        civilStatus: formData.civilStatus as any,
-        dateOfBirth: formData.dateOfBirth || undefined,
-        placeOfBirth: formData.placeOfBirth || undefined,
-
-        // Contact Information
+        gender: formData.gender as "Male" | "Female" | "Other",
+        civilStatus: formData.civilStatus as
+          | "Single"
+          | "Married"
+          | "Widowed"
+          | "Separated",
         email: formData.email,
         phoneNumber: formData.phoneNumber,
-        facebookAccount: formData.facebookAccount || undefined,
         address: formData.address,
+        facebookAccount: formData.facebookAccount || undefined,
+        dateOfBirth: formData.dateOfBirth || undefined,
+        placeOfBirth: formData.placeOfBirth || undefined,
+        studentId: formData.studentId || undefined,
 
         // Academic Information
-        studentId: formData.studentId || undefined,
         yearGraduated: formData.yearGraduated,
-        campus: formData.campus,
-        department: formData.department,
-        course: formData.course,
+        campusId: formData.campusId,
+        campusName: formData.campusName,
+        departmentId: formData.departmentId,
+        departmentName: formData.departmentName,
+        courseId: formData.courseId,
+        courseName: formData.courseName,
         degree: formData.degree,
 
         // Employment Information
-        employmentStatus: formData.employmentStatus as any,
-        employmentSector: formData.employmentSector as any,
-        presentEmploymentStatus: formData.presentEmploymentStatus as any,
-        locationOfEmployment: formData.locationOfEmployment as any,
+        employmentStatus: formData.employmentStatus as
+          | "Employed"
+          | "Self-Employed"
+          | "Unemployed"
+          | "Never Employed"
+          | "Further Studies",
+        employmentSector: formData.employmentSector as
+          | "Government"
+          | "Private"
+          | "Entrepreneurial"
+          | "Freelance"
+          | "N/A",
+        presentEmploymentStatus: formData.presentEmploymentStatus as
+          | "Regular"
+          | "Probationary"
+          | "Casual"
+          | "Others"
+          | "N/A",
+        locationOfEmployment: formData.locationOfEmployment as
+          | "Local"
+          | "Abroad"
+          | "N/A",
 
-        // Job Details
+        // Optional Job Details
         currentPosition: formData.currentPosition || undefined,
         employer: formData.employer || undefined,
         companyAddress: formData.companyAddress || undefined,
@@ -688,11 +827,11 @@ export default function SurveyModal({
         boardExamPassed: formData.boardExamPassed || undefined,
         yearPassedBoardExam: formData.yearPassedBoardExam || undefined,
         dateEmploymentAfterBoardExam:
-          formData.dateEmploymentAfterBoardExam as any,
+          formData.dateEmploymentAfterBoardExam || undefined,
 
         // Job Search Information
-        jobInformationSource: formData.jobInformationSource as any,
-        firstJobDuration: formData.firstJobDuration as any,
+        jobInformationSource: formData.jobInformationSource || undefined,
+        firstJobDuration: formData.firstJobDuration || undefined,
 
         // Job Relationship Questions
         isFirstJobRelatedToDegree: formData.isFirstJobRelatedToDegree,
@@ -703,9 +842,6 @@ export default function SurveyModal({
         currentJobReasons: formData.currentJobReasons.filter(
           (r) => r.trim() !== "",
         ),
-
-        // File Upload (you can add file handling separately)
-        employmentProof: undefined,
 
         // Awards & Scholarships
         awardsRecognition: formData.awardsRecognition.filter(
@@ -721,14 +857,18 @@ export default function SurveyModal({
         suggestions: formData.suggestions || undefined,
       };
 
-      await createAlumni(alumniData);
+      const result = await createAlumni(alumniData);
 
-      setSuccess(true);
-      setTimeout(() => {
-        onClose();
-        if (onSuccess) onSuccess();
-        resetForm();
-      }, 2000);
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => {
+          onClose();
+          if (onSuccess) onSuccess();
+          resetForm();
+        }, 2000);
+      } else {
+        setError(result.message || "Failed to submit survey");
+      }
     } catch (err: any) {
       setError(err.message || "Failed to submit survey. Please try again.");
     } finally {
@@ -1049,22 +1189,32 @@ export default function SurveyModal({
                   Campus *
                 </label>
                 <select
-                  value={formData.campus}
-                  onChange={(e) => handleInputChange("campus", e.target.value)}
+                  value={formData.campusId}
+                  onChange={(e) =>
+                    handleInputChange("campusId", e.target.value)
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   required
-                  disabled={loading}
+                  disabled={loadingCampuses}
                 >
                   <option value="">Select Campus</option>
                   {campuses.map((campus) => (
-                    <option key={campus.id} value={campus.id}>
-                      {campus.name}
+                    <option key={campus.id} value={campus.campusId}>
+                      {campus.campusName}
                     </option>
                   ))}
                 </select>
-                {stepErrors.campus && (
+                {loadingCampuses && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span className="text-xs text-gray-500">
+                      Loading campuses...
+                    </span>
+                  </div>
+                )}
+                {stepErrors.campusId && (
                   <p className="mt-1 text-sm text-red-600">
-                    {stepErrors.campus}
+                    {stepErrors.campusId}
                   </p>
                 )}
               </div>
@@ -1074,24 +1224,44 @@ export default function SurveyModal({
                   Department *
                 </label>
                 <select
-                  value={formData.department}
+                  value={formData.departmentId}
                   onChange={(e) =>
-                    handleInputChange("department", e.target.value)
+                    handleInputChange("departmentId", e.target.value)
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   required
-                  disabled={!formData.campus || departments.length === 0}
+                  disabled={
+                    !formData.campusId ||
+                    loadingDepartments ||
+                    filteredDepartments.length === 0
+                  }
                 >
                   <option value="">Select Department</option>
-                  {departments.map((dept) => (
-                    <option key={dept.id} value={dept.id}>
-                      {dept.name}
+                  {filteredDepartments.map((dept) => (
+                    <option key={dept.id} value={dept.departmentId}>
+                      {dept.name} ({dept.campusName})
                     </option>
                   ))}
                 </select>
-                {stepErrors.department && (
+                {loadingDepartments && (
+                  <div className="flex items-center gap-2 mt-1">
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                    <span className="text-xs text-gray-500">
+                      Loading departments...
+                    </span>
+                  </div>
+                )}
+                {!loadingDepartments &&
+                  filteredDepartments.length === 0 &&
+                  formData.campusId && (
+                    <p className="mt-1 text-sm text-yellow-600">
+                      No departments found in selected campus. Please select a
+                      different campus.
+                    </p>
+                  )}
+                {stepErrors.departmentId && (
                   <p className="mt-1 text-sm text-red-600">
-                    {stepErrors.department}
+                    {stepErrors.departmentId}
                   </p>
                 )}
               </div>
@@ -1101,22 +1271,34 @@ export default function SurveyModal({
                   Course *
                 </label>
                 <select
-                  value={formData.course}
-                  onChange={(e) => handleInputChange("course", e.target.value)}
+                  value={formData.courseId}
+                  onChange={(e) =>
+                    handleInputChange("courseId", e.target.value)
+                  }
                   className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-1 focus:ring-green-600 focus:border-green-600 font-serif"
                   required
-                  disabled={!formData.department || courses.length === 0}
+                  disabled={!formData.departmentId || courses.length === 0}
                 >
                   <option value="">Select Course</option>
                   {courses.map((course) => (
-                    <option key={course.id} value={course.id}>
+                    <option key={course.id} value={course.courseId}>
                       {course.name}
                     </option>
                   ))}
                 </select>
-                {stepErrors.course && (
+                {!formData.departmentId ? (
+                  <p className="mt-1 text-sm text-gray-500">
+                    Please select a department first
+                  </p>
+                ) : courses.length === 0 ? (
+                  <p className="mt-1 text-sm text-yellow-600">
+                    No courses found in selected department. Please select a
+                    different department.
+                  </p>
+                ) : null}
+                {stepErrors.courseId && (
                   <p className="mt-1 text-sm text-red-600">
-                    {stepErrors.course}
+                    {stepErrors.courseId}
                   </p>
                 )}
               </div>
@@ -1940,6 +2122,18 @@ export default function SurveyModal({
                   <div className="font-medium font-serif">
                     {formData.degree}
                   </div>
+                  <div className="text-gray-600">Campus:</div>
+                  <div className="font-medium font-serif">
+                    {formData.campusName}
+                  </div>
+                  <div className="text-gray-600">Department:</div>
+                  <div className="font-medium font-serif">
+                    {formData.departmentName}
+                  </div>
+                  <div className="text-gray-600">Course:</div>
+                  <div className="font-medium font-serif">
+                    {formData.courseName}
+                  </div>
                   {formData.studentId && (
                     <>
                       <div className="text-gray-600">Student ID:</div>
@@ -1969,6 +2163,14 @@ export default function SurveyModal({
                       <div className="text-gray-600">Position:</div>
                       <div className="font-medium font-serif">
                         {formData.currentPosition}
+                      </div>
+                    </>
+                  )}
+                  {formData.employer && (
+                    <>
+                      <div className="text-gray-600">Employer:</div>
+                      <div className="font-medium font-serif">
+                        {formData.employer}
                       </div>
                     </>
                   )}

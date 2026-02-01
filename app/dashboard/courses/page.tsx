@@ -57,15 +57,30 @@ import {
 // Import form component
 import CourseForm from "@/components/forms/courseform";
 
-// Import server actions
+// Import server actions from the new course.ts file
 import {
   getCourses,
   createCourse,
   updateCourse,
   deleteCourse,
-} from "@/app/actions/course.actions";
-import { Course, CourseInput } from "@/types/course";
+  CourseFormData,
+} from "@/app/actions/course";
 import { Skeleton } from "@/components/ui/skeleton";
+
+// Define a Course type that matches the new action response
+interface Course {
+  id: string;
+  courseId: string;
+  courseName: string;
+  campusId: string;
+  campusName: string;
+  departmentId: string;
+  departmentName: string;
+  courseAvailability: "Active" | "Inactive" | "Archived";
+  timestamp?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 
 export default function CoursesPage() {
   // State management
@@ -76,9 +91,13 @@ export default function CoursesPage() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
   const [currentCourse, setCurrentCourse] = useState<Course | null>(null);
-  const [formData, setFormData] = useState<CourseInput>({
-    name: "",
-    department: "",
+  const [formData, setFormData] = useState<CourseFormData>({
+    courseName: "",
+    campusId: "",
+    campusName: "",
+    departmentId: "",
+    departmentName: "",
+    courseAvailability: "Active",
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -90,10 +109,17 @@ export default function CoursesPage() {
   const fetchCourses = async () => {
     try {
       setLoading(true);
-      const data = await getCourses();
-      setCourses(data);
+      const result = await getCourses();
+
+      if (result.success && result.data) {
+        setCourses(result.data);
+      } else {
+        toast.error(result.message || "Failed to load courses");
+        setCourses([]);
+      }
     } catch (error: any) {
       toast.error("Failed to load courses: " + error.message);
+      setCourses([]);
     } finally {
       setLoading(false);
     }
@@ -106,26 +132,36 @@ export default function CoursesPage() {
     const query = searchQuery.toLowerCase();
     return courses.filter(
       (course) =>
-        course.name.toLowerCase().includes(query) ||
-        course.department.name.toLowerCase().includes(query) ||
-        course.department.campus.name.toLowerCase().includes(query)
+        course.courseName.toLowerCase().includes(query) ||
+        course.departmentName.toLowerCase().includes(query) ||
+        course.campusName.toLowerCase().includes(query),
     );
   }, [courses, searchQuery]);
 
   // Calculate stats
   const stats = useMemo(() => {
-    const campuses = new Set(
-      courses.map((course) => course.department.campus.id)
-    );
-    const departments = new Set(courses.map((course) => course.department.id));
+    const campuses = new Set(courses.map((course) => course.campusId));
+    const departments = new Set(courses.map((course) => course.departmentId));
+
+    // Count active courses
+    const activeCourses = courses.filter(
+      (course) => course.courseAvailability === "Active",
+    ).length;
 
     return {
       totalCourses: courses.length,
+      activeCourses: activeCourses,
       totalCampuses: campuses.size,
       totalDepartments: departments.size,
       lastUpdated:
         courses.length > 0
-          ? new Date(courses[0].updatedAt).toLocaleDateString()
+          ? courses.reduce((latest, course) => {
+              const courseDate = course.timestamp
+                ? new Date(course.timestamp)
+                : new Date(0);
+              const latestDate = new Date(latest);
+              return courseDate > latestDate ? course.timestamp! : latest;
+            }, courses[0].timestamp || "")
           : "N/A",
     };
   }, [courses]);
@@ -133,13 +169,17 @@ export default function CoursesPage() {
   // Form handlers
   const resetForm = () => {
     setFormData({
-      name: "",
-      department: "",
+      courseName: "",
+      campusId: "",
+      campusName: "",
+      departmentId: "",
+      departmentName: "",
+      courseAvailability: "Active",
     });
     setCurrentCourse(null);
   };
 
-  const handleInputChange = (field: keyof CourseInput, value: string) => {
+  const handleInputChange = (field: keyof CourseFormData, value: string) => {
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -154,8 +194,12 @@ export default function CoursesPage() {
   const handleEditCourse = (course: Course) => {
     setCurrentCourse(course);
     setFormData({
-      name: course.name,
-      department: course.department.id,
+      courseName: course.courseName,
+      campusId: course.campusId,
+      campusName: course.campusName,
+      departmentId: course.departmentId,
+      departmentName: course.departmentName,
+      courseAvailability: course.courseAvailability,
     });
     setIsEditDialogOpen(true);
   };
@@ -169,11 +213,16 @@ export default function CoursesPage() {
   const handleSubmitAdd = async () => {
     setIsSubmitting(true);
     try {
-      const newCourse = await createCourse(formData);
-      setCourses((prev) => [newCourse, ...prev]);
-      setIsAddDialogOpen(false);
-      resetForm();
-      toast.success("Course added successfully!");
+      const result = await createCourse(formData);
+
+      if (result.success && result.data) {
+        setCourses((prev) => [result.data!, ...prev]);
+        setIsAddDialogOpen(false);
+        resetForm();
+        toast.success(result.message || "Course added successfully!");
+      } else {
+        toast.error(result.message || "Failed to add course");
+      }
     } catch (error: any) {
       toast.error("Failed to add course: " + error.message);
     } finally {
@@ -186,15 +235,20 @@ export default function CoursesPage() {
 
     setIsSubmitting(true);
     try {
-      const updatedCourse = await updateCourse(currentCourse.id, formData);
-      setCourses((prev) =>
-        prev.map((course) =>
-          course.id === currentCourse.id ? updatedCourse : course
-        )
-      );
-      setIsEditDialogOpen(false);
-      resetForm();
-      toast.success("Course updated successfully!");
+      const result = await updateCourse(currentCourse.id, formData);
+
+      if (result.success && result.data) {
+        setCourses((prev) =>
+          prev.map((course) =>
+            course.id === currentCourse.id ? result.data! : course,
+          ),
+        );
+        setIsEditDialogOpen(false);
+        resetForm();
+        toast.success(result.message || "Course updated successfully!");
+      } else {
+        toast.error(result.message || "Failed to update course");
+      }
     } catch (error: any) {
       toast.error("Failed to update course: " + error.message);
     } finally {
@@ -207,18 +261,29 @@ export default function CoursesPage() {
 
     setIsSubmitting(true);
     try {
-      await deleteCourse(currentCourse.id);
-      setCourses((prev) =>
-        prev.filter((course) => course.id !== currentCourse.id)
-      );
-      setIsDeleteDialogOpen(false);
-      setCurrentCourse(null);
-      toast.success("Course deleted successfully!");
+      const result = await deleteCourse(currentCourse.id);
+
+      if (result.success) {
+        setCourses((prev) =>
+          prev.filter((course) => course.id !== currentCourse.id),
+        );
+        setIsDeleteDialogOpen(false);
+        setCurrentCourse(null);
+        toast.success(result.message || "Course deleted successfully!");
+      } else {
+        toast.error(result.message || "Failed to delete course");
+      }
     } catch (error: any) {
       toast.error("Failed to delete course: " + error.message);
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  // Format date for display
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "N/A";
+    return new Date(dateString).toLocaleDateString();
   };
 
   // Loading skeleton
@@ -318,10 +383,27 @@ export default function CoursesPage() {
         <Card className="transition-all hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-xs font-medium sm:text-sm">
-              Total Campuses
+              Active Courses
             </CardTitle>
             <div className="rounded-full bg-green-100 p-2">
-              <Building className="h-4 w-4 text-green-600" />
+              <BookOpen className="h-4 w-4 text-green-600" />
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="text-xl font-bold sm:text-2xl">
+              {stats.activeCourses}
+            </div>
+            <p className="text-xs text-muted-foreground">Currently active</p>
+          </CardContent>
+        </Card>
+
+        <Card className="transition-all hover:shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-xs font-medium sm:text-sm">
+              Total Campuses
+            </CardTitle>
+            <div className="rounded-full bg-purple-100 p-2">
+              <Building className="h-4 w-4 text-purple-600" />
             </div>
           </CardHeader>
           <CardContent>
@@ -329,23 +411,6 @@ export default function CoursesPage() {
               {stats.totalCampuses}
             </div>
             <p className="text-xs text-muted-foreground">Active campuses</p>
-          </CardContent>
-        </Card>
-
-        <Card className="transition-all hover:shadow-md">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-xs font-medium sm:text-sm">
-              Total Departments
-            </CardTitle>
-            <div className="rounded-full bg-purple-100 p-2">
-              <Users className="h-4 w-4 text-purple-600" />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className="text-xl font-bold sm:text-2xl">
-              {stats.totalDepartments}
-            </div>
-            <p className="text-xs text-muted-foreground">Active departments</p>
           </CardContent>
         </Card>
 
@@ -360,7 +425,9 @@ export default function CoursesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-xl font-bold sm:text-2xl">
-              {stats.lastUpdated}
+              {stats.lastUpdated !== "N/A"
+                ? formatDate(stats.lastUpdated)
+                : "N/A"}
             </div>
             <p className="text-xs text-muted-foreground">Most recent update</p>
           </CardContent>
@@ -464,6 +531,7 @@ export default function CoursesPage() {
                     <TableHead className="font-semibold">Course Name</TableHead>
                     <TableHead className="font-semibold">Department</TableHead>
                     <TableHead className="font-semibold">Campus</TableHead>
+                    <TableHead className="font-semibold">Status</TableHead>
                     <TableHead className="w-[120px] text-right font-semibold">
                       Actions
                     </TableHead>
@@ -481,9 +549,9 @@ export default function CoursesPage() {
                             <BookOpen className="h-5 w-5 text-blue-600" />
                           </div>
                           <div>
-                            <p className="font-medium">{course.name}</p>
+                            <p className="font-medium">{course.courseName}</p>
                             <p className="text-xs text-muted-foreground">
-                              ID: {course.id.slice(-8)}
+                              ID: {course.courseId}
                             </p>
                           </div>
                         </div>
@@ -492,7 +560,7 @@ export default function CoursesPage() {
                         <div className="flex items-center gap-2">
                           <Users className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">
-                            {course.department.name}
+                            {course.departmentName}
                           </span>
                         </div>
                       </TableCell>
@@ -500,9 +568,29 @@ export default function CoursesPage() {
                         <div className="flex items-center gap-2">
                           <Building className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">
-                            {course.department.campus.name}
+                            {course.campusName}
                           </span>
                         </div>
+                      </TableCell>
+                      <TableCell className="py-4">
+                        <Badge
+                          variant={
+                            course.courseAvailability === "Active"
+                              ? "default"
+                              : course.courseAvailability === "Inactive"
+                                ? "secondary"
+                                : "outline"
+                          }
+                          className={
+                            course.courseAvailability === "Active"
+                              ? "bg-green-100 text-green-800 hover:bg-green-100"
+                              : course.courseAvailability === "Inactive"
+                                ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+                                : "bg-gray-100 text-gray-800 hover:bg-gray-100"
+                          }
+                        >
+                          {course.courseAvailability}
+                        </Badge>
                       </TableCell>
                       <TableCell className="py-4">
                         <div className="flex items-center justify-end gap-1">
@@ -636,20 +724,37 @@ export default function CoursesPage() {
                     <BookOpen className="h-6 w-6 text-destructive" />
                   </div>
                   <div className="flex-1 space-y-1">
-                    <h4 className="font-semibold">{currentCourse.name}</h4>
+                    <h4 className="font-semibold">
+                      {currentCourse.courseName}
+                    </h4>
                     <p className="text-sm text-muted-foreground">
-                      Department: {currentCourse.department.name}
+                      Department: {currentCourse.departmentName}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      Campus: {currentCourse.department.campus.name}
+                      Campus: {currentCourse.campusName}
                     </p>
-                    <div className="flex items-center gap-4 pt-2 text-xs text-muted-foreground">
-                      <span>
-                        Created:{" "}
-                        {new Date(currentCourse.createdAt).toLocaleDateString()}
+                    <div className="flex items-center gap-2 pt-2">
+                      <Badge
+                        variant={
+                          currentCourse.courseAvailability === "Active"
+                            ? "default"
+                            : currentCourse.courseAvailability === "Inactive"
+                              ? "secondary"
+                              : "outline"
+                        }
+                        className={
+                          currentCourse.courseAvailability === "Active"
+                            ? "bg-green-100 text-green-800 hover:bg-green-100"
+                            : currentCourse.courseAvailability === "Inactive"
+                              ? "bg-yellow-100 text-yellow-800 hover:bg-yellow-100"
+                              : "bg-gray-100 text-gray-800 hover:bg-gray-100"
+                        }
+                      >
+                        {currentCourse.courseAvailability}
+                      </Badge>
+                      <span className="text-xs text-muted-foreground">
+                        ID: {currentCourse.courseId}
                       </span>
-                      <span>•</span>
-                      <span>ID: {currentCourse.id.slice(-8)}</span>
                     </div>
                   </div>
                 </div>

@@ -56,15 +56,30 @@ import {
 // Import form component
 import CampusForm from "@/components/forms/campusform";
 
-// Import server actions
+// Import server actions - UPDATED IMPORT
 import {
   getCampuses,
   createCampus,
   updateCampus,
   deleteCampus,
-} from "@/app/actions/campus.actions";
-import { Campus, CampusFormData } from "@/types/campus";
-import { Skeleton } from "@/components/ui/skeleton";
+  searchCampuses,
+} from "@/app/actions/campus"; // Changed from campus.actions
+import { CampusFormData } from "@/app/actions/campus"; // Import from the same file
+
+// Update the Campus interface to match the database model
+interface Campus {
+  id: string;
+  name: string;
+  description: string;
+  address: string;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+// Define Skeleton component at the top level
+const Skeleton = ({ className }: { className: string }) => (
+  <div className={`animate-pulse rounded-md bg-muted ${className}`} />
+);
 
 export default function CampusesPage() {
   // State management
@@ -77,9 +92,11 @@ export default function CampusesPage() {
   const [currentCampus, setCurrentCampus] = useState<Campus | null>(null);
   const [expandedCampus, setExpandedCampus] = useState<string | null>(null);
   const [formData, setFormData] = useState<CampusFormData>({
-    name: "",
+    campusName: "", // Updated field name
     description: "",
-    address: "",
+    location: "", // Updated field name
+    createdBy: "", // Added field
+    updatedBy: "", // Added field
   });
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -88,13 +105,49 @@ export default function CampusesPage() {
     fetchCampuses();
   }, []);
 
+  // Helper function to map database campus to frontend Campus interface
+  const mapDbCampusToFrontend = (dbCampus: any): Campus => {
+    return {
+      id: dbCampus._id || dbCampus.id,
+      name: dbCampus.campusName,
+      description: dbCampus.description || "",
+      address: dbCampus.location || "",
+      createdAt: dbCampus.createdAt ? new Date(dbCampus.createdAt) : new Date(),
+      updatedAt: dbCampus.updatedAt ? new Date(dbCampus.updatedAt) : new Date(),
+    };
+  };
+
+  // Helper function to map frontend CampusFormData to database CampusFormData
+  const mapToDbFormData = (frontendData: {
+    name: string;
+    description: string;
+    address: string;
+  }): CampusFormData => {
+    return {
+      campusName: frontendData.name,
+      description: frontendData.description,
+      location: frontendData.address,
+      createdBy: "user@example.com", // You should get this from session/auth
+      updatedBy: "user@example.com", // You should get this from session/auth
+    };
+  };
+
   const fetchCampuses = async () => {
     try {
       setLoading(true);
-      const data = await getCampuses();
-      setCampuses(data);
+      const result = await getCampuses();
+
+      if (result.success && result.data) {
+        // Map database campuses to frontend interface
+        const mappedCampuses = result.data.map(mapDbCampusToFrontend);
+        setCampuses(mappedCampuses);
+      } else {
+        toast.error(result.message || "Failed to load campuses");
+        setCampuses([]);
+      }
     } catch (error: any) {
       toast.error("Failed to load campuses: " + error.message);
+      setCampuses([]);
     } finally {
       setLoading(false);
     }
@@ -109,7 +162,7 @@ export default function CampusesPage() {
       (campus) =>
         campus.name.toLowerCase().includes(query) ||
         campus.description.toLowerCase().includes(query) ||
-        campus.address.toLowerCase().includes(query)
+        campus.address.toLowerCase().includes(query),
     );
   }, [campuses, searchQuery]);
 
@@ -119,14 +172,14 @@ export default function CampusesPage() {
       campuses.map((c) => {
         const parts = c.address.split(", ");
         return parts.length > 1 ? parts[1] : "Unknown";
-      })
+      }),
     );
 
     const provinces = new Set(
       campuses.map((c) => {
         const parts = c.address.split(", ");
         return parts.length > 2 ? parts[2] : "Unknown";
-      })
+      }),
     );
 
     return {
@@ -143,9 +196,11 @@ export default function CampusesPage() {
   // Form handlers
   const resetForm = () => {
     setFormData({
-      name: "",
+      campusName: "",
       description: "",
-      address: "",
+      location: "",
+      createdBy: "",
+      updatedBy: "",
     });
     setCurrentCampus(null);
   };
@@ -165,9 +220,11 @@ export default function CampusesPage() {
   const handleEditCampus = (campus: Campus) => {
     setCurrentCampus(campus);
     setFormData({
-      name: campus.name,
+      campusName: campus.name,
       description: campus.description,
-      address: campus.address,
+      location: campus.address,
+      createdBy: "user@example.com", // Update with actual user
+      updatedBy: "user@example.com", // Update with actual user
     });
     setIsEditDialogOpen(true);
   };
@@ -179,7 +236,7 @@ export default function CampusesPage() {
 
   const toggleCampusExpansion = (
     campusId: string,
-    event?: React.MouseEvent
+    event?: React.MouseEvent,
   ) => {
     if (event) {
       event.stopPropagation();
@@ -187,15 +244,21 @@ export default function CampusesPage() {
     setExpandedCampus((prev) => (prev === campusId ? null : campusId));
   };
 
-  // Submit handlers
+  // Submit handlers - UPDATED TO USE NEW SERVER ACTIONS
   const handleSubmitAdd = async () => {
     setIsSubmitting(true);
     try {
-      const newCampus = await createCampus(formData);
-      setCampuses((prev) => [newCampus, ...prev]);
-      setIsAddDialogOpen(false);
-      resetForm();
-      toast.success("Campus added successfully!");
+      const result = await createCampus(formData);
+
+      if (result.success && result.data) {
+        const newCampus = mapDbCampusToFrontend(result.data);
+        setCampuses((prev) => [newCampus, ...prev]);
+        setIsAddDialogOpen(false);
+        resetForm();
+        toast.success("Campus added successfully!");
+      } else {
+        toast.error(result.message || "Failed to add campus");
+      }
     } catch (error: any) {
       toast.error("Failed to add campus: " + error.message);
     } finally {
@@ -208,15 +271,21 @@ export default function CampusesPage() {
 
     setIsSubmitting(true);
     try {
-      const updatedCampus = await updateCampus(currentCampus.id, formData);
-      setCampuses((prev) =>
-        prev.map((campus) =>
-          campus.id === currentCampus.id ? updatedCampus : campus
-        )
-      );
-      setIsEditDialogOpen(false);
-      resetForm();
-      toast.success("Campus updated successfully!");
+      const result = await updateCampus(currentCampus.id, formData);
+
+      if (result.success && result.data) {
+        const updatedCampus = mapDbCampusToFrontend(result.data);
+        setCampuses((prev) =>
+          prev.map((campus) =>
+            campus.id === currentCampus.id ? updatedCampus : campus,
+          ),
+        );
+        setIsEditDialogOpen(false);
+        resetForm();
+        toast.success("Campus updated successfully!");
+      } else {
+        toast.error(result.message || "Failed to update campus");
+      }
     } catch (error: any) {
       toast.error("Failed to update campus: " + error.message);
     } finally {
@@ -229,13 +298,18 @@ export default function CampusesPage() {
 
     setIsSubmitting(true);
     try {
-      await deleteCampus(currentCampus.id);
-      setCampuses((prev) =>
-        prev.filter((campus) => campus.id !== currentCampus.id)
-      );
-      setIsDeleteDialogOpen(false);
-      setCurrentCampus(null);
-      toast.success("Campus deleted successfully!");
+      const result = await deleteCampus(currentCampus.id);
+
+      if (result.success) {
+        setCampuses((prev) =>
+          prev.filter((campus) => campus.id !== currentCampus.id),
+        );
+        setIsDeleteDialogOpen(false);
+        setCurrentCampus(null);
+        toast.success("Campus deleted successfully!");
+      } else {
+        toast.error(result.message || "Failed to delete campus");
+      }
     } catch (error: any) {
       toast.error("Failed to delete campus: " + error.message);
     } finally {
@@ -243,7 +317,31 @@ export default function CampusesPage() {
     }
   };
 
-  // Loading skeleton
+  // Handle search
+  const handleSearch = async () => {
+    if (!searchQuery.trim()) {
+      fetchCampuses();
+      return;
+    }
+
+    try {
+      setLoading(true);
+      const result = await searchCampuses(searchQuery);
+
+      if (result.success && result.data) {
+        const mappedCampuses = result.data.map(mapDbCampusToFrontend);
+        setCampuses(mappedCampuses);
+      } else {
+        toast.error(result.message || "Search failed");
+      }
+    } catch (error: any) {
+      toast.error("Search failed: " + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Loading skeleton (same as before)
   if (loading && campuses.length === 0) {
     return (
       <div className="space-y-4 md:space-y-6">
@@ -409,10 +507,18 @@ export default function CampusesPage() {
                 className="pl-9 text-sm sm:text-base transition-all focus:ring-2 focus:ring-primary"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    handleSearch();
+                  }
+                }}
               />
               {searchQuery && (
                 <button
-                  onClick={() => setSearchQuery("")}
+                  onClick={() => {
+                    setSearchQuery("");
+                    fetchCampuses();
+                  }}
                   className="absolute right-3 top-1/2 -translate-y-1/2 transition-opacity hover:opacity-70"
                 >
                   <X className="h-4 w-4 text-muted-foreground" />
@@ -429,7 +535,10 @@ export default function CampusesPage() {
                     <Button
                       variant="ghost"
                       size="sm"
-                      onClick={() => setSearchQuery("")}
+                      onClick={() => {
+                        setSearchQuery("");
+                        fetchCampuses();
+                      }}
                       className="h-6 px-2 text-xs transition-all hover:bg-muted"
                     >
                       Clear
@@ -656,7 +765,7 @@ export default function CampusesPage() {
                                       <Calendar className="h-4 w-4 text-muted-foreground" />
                                       <span className="text-sm font-medium">
                                         {new Date(
-                                          campus.createdAt
+                                          campus.createdAt,
                                         ).toLocaleDateString("en-US", {
                                           year: "numeric",
                                           month: "long",
@@ -674,7 +783,7 @@ export default function CampusesPage() {
                                       <Calendar className="h-4 w-4 text-muted-foreground" />
                                       <span className="text-sm font-medium">
                                         {new Date(
-                                          campus.updatedAt
+                                          campus.updatedAt,
                                         ).toLocaleDateString("en-US", {
                                           year: "numeric",
                                           month: "long",
@@ -781,35 +890,119 @@ export default function CampusesPage() {
       </Card>
 
       {/* Form Dialogs */}
-      <CampusForm
-        open={isAddDialogOpen}
-        onOpenChange={(open) => {
-          setIsAddDialogOpen(open);
-          if (!open) resetForm();
-        }}
-        formData={formData}
-        onInputChange={handleInputChange}
-        onSubmit={handleSubmitAdd}
-        title="Add New Campus"
-        description="Create a new university campus. All fields are required."
-        submitText="Create Campus"
-      />
+      {/* Note: You'll need to update your CampusForm component to handle the new field names */}
+      {/* For now, using a basic dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Add New Campus</DialogTitle>
+            <DialogDescription>
+              Create a new university campus. All fields are required.
+            </DialogDescription>
+          </DialogHeader>
 
-      <CampusForm
-        open={isEditDialogOpen}
-        onOpenChange={(open) => {
-          setIsEditDialogOpen(open);
-          if (!open) resetForm();
-        }}
-        formData={formData}
-        onInputChange={handleInputChange}
-        onSubmit={handleSubmitEdit}
-        title="Edit Campus"
-        description="Update campus information. All fields are required."
-        submitText="Update Campus"
-      />
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Campus Name</label>
+              <Input
+                value={formData.campusName}
+                onChange={(e) =>
+                  handleInputChange("campusName", e.target.value)
+                }
+                placeholder="Enter campus name"
+              />
+            </div>
 
-      {/* Delete Dialog */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <Input
+                value={formData.description}
+                onChange={(e) =>
+                  handleInputChange("description", e.target.value)
+                }
+                placeholder="Enter description"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Location</label>
+              <Input
+                value={formData.location}
+                onChange={(e) => handleInputChange("location", e.target.value)}
+                placeholder="Enter location/address"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSubmitAdd} disabled={isSubmitting}>
+              {isSubmitting ? "Creating..." : "Create Campus"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog (similar structure) */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Edit Campus</DialogTitle>
+            <DialogDescription>
+              Update campus information. All fields are required.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Campus Name</label>
+              <Input
+                value={formData.campusName}
+                onChange={(e) =>
+                  handleInputChange("campusName", e.target.value)
+                }
+                placeholder="Enter campus name"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Description</label>
+              <Input
+                value={formData.description}
+                onChange={(e) =>
+                  handleInputChange("description", e.target.value)
+                }
+                placeholder="Enter description"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Location</label>
+              <Input
+                value={formData.location}
+                onChange={(e) => handleInputChange("location", e.target.value)}
+                placeholder="Enter location/address"
+              />
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => setIsEditDialogOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleSubmitEdit} disabled={isSubmitting}>
+              {isSubmitting ? "Updating..." : "Update Campus"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Delete Dialog (same as before) */}
       <Dialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
         <DialogContent className="animate-in fade-in-90 zoom-in-95 sm:max-w-[500px]">
           <DialogHeader>

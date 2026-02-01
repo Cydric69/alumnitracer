@@ -1,5 +1,6 @@
+// components/landing/AcademicStep.tsx (updated)
 "use client";
-
+import React from "react";
 import { AlertCircle } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -10,15 +11,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Campus, Department, Course } from "@/types/academic";
 
 interface AcademicStepProps {
   formData: any;
   handleInputChange: (field: string, value: any) => void;
   fieldErrors: Record<string, string>;
   stepErrors: Record<string, string>;
-  campuses: any[];
-  departments: any[];
-  courses: any[];
+  campuses: Campus[];
+  departments: Department[];
+  courses: Course[];
   loading: boolean;
 }
 
@@ -35,12 +37,17 @@ export default function AcademicStep({
   const hasStepError = !!stepErrors.academic;
 
   const selectedCampus = campuses.find((c) => c.id === formData.campus);
-  const campusCustomId = selectedCampus?.campusId || "";
-
   const selectedDepartment = departments.find(
     (d) => d.id === formData.department,
   );
-  const departmentCustomId = selectedDepartment?.departmentId || "";
+  const selectedCourse = courses.find((c) => c.id === formData.course);
+
+  // When course is selected, auto-fill the degree
+  React.useEffect(() => {
+    if (selectedCourse && selectedCourse.degree && !formData.degree) {
+      handleInputChange("degree", selectedCourse.degree);
+    }
+  }, [selectedCourse, formData.degree, handleInputChange]);
 
   return (
     <div className="space-y-6">
@@ -117,7 +124,13 @@ export default function AcademicStep({
           </Label>
           <Select
             value={formData.campus}
-            onValueChange={(value) => handleInputChange("campus", value)}
+            onValueChange={(value) => {
+              handleInputChange("campus", value);
+              // Reset dependent fields
+              handleInputChange("department", "");
+              handleInputChange("course", "");
+              handleInputChange("degree", "");
+            }}
             disabled={loading}
           >
             <SelectTrigger className="px-3 py-2 text-base font-serif">
@@ -148,13 +161,18 @@ export default function AcademicStep({
           </Label>
           <Select
             value={formData.department}
-            onValueChange={(value) => handleInputChange("department", value)}
-            disabled={!campusCustomId || departments.length === 0}
+            onValueChange={(value) => {
+              handleInputChange("department", value);
+              // Reset dependent fields
+              handleInputChange("course", "");
+              handleInputChange("degree", "");
+            }}
+            disabled={!formData.campus || departments.length === 0}
           >
             <SelectTrigger className="px-3 py-2 text-base font-serif">
               <SelectValue
                 placeholder={
-                  !campusCustomId
+                  !formData.campus
                     ? "Please select a campus first"
                     : departments.length === 0
                       ? "No departments found"
@@ -188,12 +206,12 @@ export default function AcademicStep({
           <Select
             value={formData.course}
             onValueChange={(value) => handleInputChange("course", value)}
-            disabled={!departmentCustomId || courses.length === 0}
+            disabled={!formData.department || courses.length === 0}
           >
             <SelectTrigger className="px-3 py-2 text-base font-serif">
               <SelectValue
                 placeholder={
-                  !departmentCustomId
+                  !formData.department
                     ? "Please select a department first"
                     : courses.length === 0
                       ? "No courses found"
@@ -231,12 +249,18 @@ export default function AcademicStep({
             className="px-3 py-2 text-base uppercase font-serif"
             placeholder="BACHELOR OF SCIENCE IN COMPUTER SCIENCE"
             required
+            readOnly={!!selectedCourse} // Make read-only if course is selected
           />
           {fieldErrors.degree && (
             <div className="flex items-start mt-1.5">
               <AlertCircle className="h-3 w-3 text-red-500 mt-0.5 mr-1 flex-shrink-0" />
               <p className="text-xs text-red-600">{fieldErrors.degree}</p>
             </div>
+          )}
+          {selectedCourse && (
+            <p className="text-xs text-gray-500 mt-1">
+              Degree auto-filled based on selected course
+            </p>
           )}
         </div>
       </div>

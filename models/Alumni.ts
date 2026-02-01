@@ -1,4 +1,5 @@
-import mongoose, { Document, Schema, Types } from "mongoose";
+// models/Alumni.ts
+import mongoose, { Document, Schema } from "mongoose";
 import { z } from "zod";
 
 export const AlumniZodSchema = z.object({
@@ -50,74 +51,41 @@ export const AlumniZodSchema = z.object({
     .optional(),
   yearGraduated: z.string().regex(/^\d{4}$/),
 
+  // Changed from ObjectId to string
   campusId: z
-    .union([
-      z.instanceof(Types.ObjectId),
-      z.string().transform((v, ctx) => {
-        if (!v?.trim()) return undefined;
-        try {
-          return new Types.ObjectId(v.trim());
-        } catch {
-          ctx.addIssue({ code: "custom", message: "Invalid campusId" });
-          return z.NEVER;
-        }
-      }),
-      z.undefined(),
-    ])
-    .optional(),
-
+    .string()
+    .min(1)
+    .max(50)
+    .transform((v) => v.trim()),
   campusName: z
     .string()
     .min(2)
     .max(200)
-    .transform((v) => v.trim())
-    .optional(),
+    .transform((v) => v.trim()),
 
+  // Changed from ObjectId to string
   departmentId: z
-    .union([
-      z.instanceof(Types.ObjectId),
-      z.string().transform((v, ctx) => {
-        if (!v?.trim()) return undefined;
-        try {
-          return new Types.ObjectId(v.trim());
-        } catch {
-          ctx.addIssue({ code: "custom", message: "Invalid departmentId" });
-          return z.NEVER;
-        }
-      }),
-      z.undefined(),
-    ])
-    .optional(),
-
+    .string()
+    .min(1)
+    .max(50)
+    .transform((v) => v.trim()),
   departmentName: z
     .string()
     .min(2)
     .max(200)
-    .transform((v) => v.trim())
-    .optional(),
+    .transform((v) => v.trim()),
 
+  // Changed from ObjectId to string
   courseId: z
-    .union([
-      z.instanceof(Types.ObjectId),
-      z.string().transform((v, ctx) => {
-        if (!v?.trim()) return undefined;
-        try {
-          return new Types.ObjectId(v.trim());
-        } catch {
-          ctx.addIssue({ code: "custom", message: "Invalid courseId" });
-          return z.NEVER;
-        }
-      }),
-      z.undefined(),
-    ])
-    .optional(),
-
+    .string()
+    .min(1)
+    .max(50)
+    .transform((v) => v.trim()),
   courseName: z
     .string()
     .min(2)
     .max(200)
-    .transform((v) => v.trim())
-    .optional(),
+    .transform((v) => v.trim()),
 
   degree: z
     .string()
@@ -253,12 +221,13 @@ const AlumniSchema = new Schema<IAlumni>(
     studentId: { type: String, sparse: true, unique: true },
     yearGraduated: { type: String, required: true },
 
-    campusId: { type: Schema.Types.ObjectId, ref: "Campus" },
-    campusName: { type: String },
-    departmentId: { type: Schema.Types.ObjectId, ref: "Department" },
-    departmentName: { type: String },
-    courseId: { type: Schema.Types.ObjectId, ref: "Course" },
-    courseName: { type: String },
+    // Changed from Schema.Types.ObjectId to String
+    campusId: { type: String, required: true },
+    campusName: { type: String, required: true },
+    departmentId: { type: String, required: true },
+    departmentName: { type: String, required: true },
+    courseId: { type: String, required: true },
+    courseName: { type: String, required: true },
 
     degree: { type: String, required: true },
 
@@ -295,11 +264,6 @@ const AlumniSchema = new Schema<IAlumni>(
     timestamps: true,
   },
 );
-
-AlumniSchema.index({ email: 1 }, { unique: true });
-AlumniSchema.index({ campusId: 1 });
-AlumniSchema.index({ departmentId: 1 });
-AlumniSchema.index({ courseId: 1 });
 
 const Alumni =
   mongoose.models.Alumni || mongoose.model<IAlumni>("Alumni", AlumniSchema);

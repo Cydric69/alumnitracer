@@ -12,9 +12,6 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { AlumniFormData } from "@/app/actions/alumni";
 import { createAlumni } from "@/app/actions/alumni";
-import { getCampuses } from "@/app/actions/campus";
-import { getDepartmentsByCampusId } from "@/app/actions/department";
-import { getCoursesByDepartmentId } from "@/app/actions/course";
 import {
   regions,
   provinces,
@@ -48,9 +45,6 @@ import ReviewStep from "@/components/landing/ReviewStep";
 // Import types
 import {
   SurveyStep,
-  Campus,
-  Department,
-  Course,
   Region,
   Province,
   City,
@@ -58,6 +52,15 @@ import {
   FormData,
   jobReasonsOptions,
 } from "@/types/landing";
+import {
+  campusesData,
+  getAllCampuses,
+  getDepartmentsByCampusId,
+  getCoursesByDepartmentId,
+  Campus,
+  Department,
+  Course,
+} from "@/types/academic";
 
 // Steps configuration
 const steps: { id: SurveyStep; label: string; description: string }[] = [
@@ -204,13 +207,13 @@ export default function InformationFormPage() {
   }, [formData.campus]);
 
   useEffect(() => {
-    if (formData.department) {
-      fetchCourses(formData.department);
+    if (formData.campus && formData.department) {
+      fetchCourses(formData.campus, formData.department);
     } else {
       setCourses([]);
       setFormData((prev) => ({ ...prev, course: "" }));
     }
-  }, [formData.department]);
+  }, [formData.campus, formData.department]);
 
   useEffect(() => {
     if (formData.currentRegion) {
@@ -332,12 +335,8 @@ export default function InformationFormPage() {
   const fetchCampuses = async () => {
     try {
       setLoading(true);
-      const result = await getCampuses();
-      if (result.success) {
-        setCampuses(result.data);
-      } else {
-        setError(result.message || "Failed to load campuses");
-      }
+      const campuses = getAllCampuses();
+      setCampuses(campuses);
     } catch (err: any) {
       setError(err.message || "Failed to load campuses");
     } finally {
@@ -345,42 +344,24 @@ export default function InformationFormPage() {
     }
   };
 
-  const fetchDepartments = async (campusMongoId: string) => {
+  const fetchDepartments = async (campusId: string) => {
     try {
-      const selectedCampus = campuses.find((c) => c.id === campusMongoId);
-      if (!selectedCampus) {
-        setDepartments([]);
-        return;
-      }
-      const campusCustomId = selectedCampus.campusId;
-      const result = await getDepartmentsByCampusId(campusCustomId);
-      if (result.success) {
-        setDepartments(result.data);
-      } else {
-        setError(result.message || "Failed to load departments");
-        setDepartments([]);
-      }
+      const departments = getDepartmentsByCampusId(campusId);
+      setDepartments(departments);
     } catch (err: any) {
       setError(err.message || "Failed to load departments");
       setDepartments([]);
     }
   };
 
-  const fetchCourses = async (departmentMongoId: string) => {
+  const fetchCourses = async (campusId: string, departmentId: string) => {
     try {
-      const selectedDepartment = departments.find(
-        (d) => d.id === departmentMongoId,
-      );
-      if (!selectedDepartment) {
-        setCourses([]);
-        return;
-      }
-      const departmentCustomId = selectedDepartment.departmentId;
-      const result = await getCoursesByDepartmentId(departmentCustomId);
-      if (result.success) {
-        setCourses(result.data);
+      const departments = getDepartmentsByCampusId(campusId);
+      const department = departments.find((d) => d.id === departmentId);
+
+      if (department) {
+        setCourses(department.courses);
       } else {
-        setError(result.message || "Failed to load courses");
         setCourses([]);
       }
     } catch (err: any) {
@@ -684,7 +665,8 @@ export default function InformationFormPage() {
         break;
     }
 
-    if (!isValid) {
+    if (Object.keys(newFieldErrors).length > 0) {
+      isValid = false;
       setStepErrors((prev) => ({
         ...prev,
         [currentStep]: "Required fields missing",
@@ -823,19 +805,17 @@ export default function InformationFormPage() {
             .toUpperCase()
         : undefined;
 
+      // Get selected academic data from hardcoded structure
       const selectedCampus = campuses.find((c) => c.id === formData.campus);
       const selectedDepartment = departments.find(
         (d) => d.id === formData.department,
       );
       const selectedCourse = courses.find((c) => c.id === formData.course);
 
-      const campusId = selectedCampus?.campusId || undefined;
-      const campusName = selectedCampus?.campusName || "";
-      const departmentId = selectedDepartment?.departmentId || undefined;
-      const departmentName = selectedDepartment?.name || "";
-      const courseId = selectedCourse?.courseId || undefined;
-      const courseName = selectedCourse?.courseName || "";
+      // Use the course's degree if available, otherwise use the manually entered degree
+      const finalDegree = selectedCourse?.degree || formData.degree;
 
+      // Update the handleSubmit function in page.tsx
       const alumniData: AlumniFormData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -853,13 +833,16 @@ export default function InformationFormPage() {
         studentId: formData.studentId || undefined,
         facebookAccount: formData.facebookAccount || undefined,
         yearGraduated: formData.yearGraduated,
-        campusId,
-        campusName,
-        departmentId,
-        departmentName,
-        courseId,
-        courseName,
-        degree: formData.degree,
+
+        // All these fields are now REQUIRED strings
+        campusId: selectedCampus?.campusId || formData.campus, // Use campus ID
+        campusName: selectedCampus?.campusName || "",
+        departmentId: selectedDepartment?.departmentId || formData.department, // Use department ID
+        departmentName: selectedDepartment?.name || "",
+        courseId: selectedCourse?.courseId || formData.course, // Use course ID
+        courseName: selectedCourse?.courseName || "",
+
+        degree: finalDegree,
         employmentStatus: formData.employmentStatus as any,
         employmentSector: formData.employmentSector as any,
         presentEmploymentStatus: formData.presentEmploymentStatus as any,

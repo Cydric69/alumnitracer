@@ -71,7 +71,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlumniResponse, getAlumni, getFormData } from "@/app/actions/alumni";
+import { AlumniResponse, getAlumni } from "@/app/actions/alumni";
+import { getAllCampuses } from "@/types/academic";
 
 // Filter options interfaces
 interface FilterOption {
@@ -125,9 +126,6 @@ export default function AlumniDataPage() {
   const [departments, setDepartments] = useState<DepartmentFilterOption[]>([
     { value: "all", label: "All Departments" },
   ]);
-  const [courses, setCourses] = useState<CourseFilterOption[]>([
-    { value: "all", label: "All Courses" },
-  ]);
   const [graduationYears, setGraduationYears] = useState<FilterOption[]>([
     { value: "all", label: "All Years" },
   ]);
@@ -164,6 +162,44 @@ export default function AlumniDataPage() {
           alum.employmentStatus === "Self-Employed",
       ).length;
 
+      // Get unique campuses from alumni data
+      const uniqueCampuses = new Map<string, string>();
+
+      // Get unique departments from alumni data
+      const uniqueDepartments = new Map<string, string>();
+
+      // Process alumni to extract unique campuses and departments
+      data.forEach((alum) => {
+        if (alum.campus && alum.campus.id && alum.campus.name) {
+          uniqueCampuses.set(alum.campus.id, alum.campus.name);
+        }
+        if (alum.department && alum.department.id && alum.department.name) {
+          uniqueDepartments.set(alum.department.id, alum.department.name);
+        }
+      });
+
+      // Set campus filter options from alumni data
+      const campusOptions: CampusFilterOption[] = [
+        { value: "all", label: "All Campuses" },
+        ...Array.from(uniqueCampuses.entries()).map(([id, name]) => ({
+          value: id,
+          label: name,
+          campusId: id,
+        })),
+      ];
+      setCampuses(campusOptions);
+
+      // Set department filter options from alumni data
+      const departmentOptions: DepartmentFilterOption[] = [
+        { value: "all", label: "All Departments" },
+        ...Array.from(uniqueDepartments.entries()).map(([id, name]) => ({
+          value: id,
+          label: name,
+          campusId: id, // We can't easily determine campus from department here
+        })),
+      ];
+      setDepartments(departmentOptions);
+
       // Get unique years from alumni data
       const years = [...new Set(data.map((alum) => alum.yearGraduated))]
         .filter((year) => year && year.trim() !== "")
@@ -175,24 +211,15 @@ export default function AlumniDataPage() {
 
       setGraduationYears([{ value: "all", label: "All Years" }, ...years]);
 
-      // Get unique campuses and departments
-      const uniqueCampuses = new Map<string, string>();
-      const uniqueDepartments = new Map<string, string>();
-
-      data.forEach((alum) => {
-        if (alum.campus?.name && alum.campus?.id) {
-          uniqueCampuses.set(alum.campus.id, alum.campus.name);
-        }
-        if (alum.department?.name && alum.department?.id) {
-          uniqueDepartments.set(alum.department.id, alum.department.name);
-        }
-      });
+      // Calculate statistics
+      const uniqueCampusCount = Array.from(uniqueCampuses.keys()).length;
+      const uniqueDepartmentCount = Array.from(uniqueDepartments.keys()).length;
 
       setStats({
         total: data.length,
         employed: employedCount,
-        campuses: uniqueCampuses.size,
-        departments: uniqueDepartments.size,
+        campuses: uniqueCampusCount,
+        departments: uniqueDepartmentCount,
       });
     } catch (err: any) {
       console.error("Error fetching alumni data:", err);
@@ -201,72 +228,6 @@ export default function AlumniDataPage() {
       setIsLoading(false);
     }
   }, []);
-
-  // Fetch filter options (campuses, departments, courses)
-  const fetchFilterOptions = useCallback(async () => {
-    try {
-      const result = await getFormData();
-
-      if (!result.success || !result.data) {
-        console.error("Failed to fetch form data:", result.message);
-        // Set default values if fetch fails
-        setCampuses([{ value: "all", label: "All Campuses" }]);
-        setDepartments([{ value: "all", label: "All Departments" }]);
-        setCourses([{ value: "all", label: "All Courses" }]);
-        return;
-      }
-
-      const {
-        campuses: campusData,
-        departments: departmentData,
-        courses: courseData,
-      } = result.data;
-
-      // Set campuses
-      const campusList: CampusFilterOption[] = [
-        { value: "all", label: "All Campuses" },
-        ...(campusData || []).map((campus: any) => ({
-          value: campus.id,
-          label: campus.name,
-          campusId: campus.campusId,
-        })),
-      ];
-      setCampuses(campusList);
-
-      // Set departments
-      const departmentList: DepartmentFilterOption[] = [
-        { value: "all", label: "All Departments" },
-        ...(departmentData || []).map((dept: any) => ({
-          value: dept.id,
-          label: dept.name,
-          campusId: dept.campusId,
-        })),
-      ];
-      setDepartments(departmentList);
-
-      // Set courses
-      const courseList: CourseFilterOption[] = [
-        { value: "all", label: "All Courses" },
-        ...(courseData || []).map((course: any) => ({
-          value: course.id,
-          label: course.name,
-          departmentId: course.departmentId,
-        })),
-      ];
-      setCourses(courseList);
-    } catch (err: any) {
-      console.error("Error fetching filter options:", err);
-      // Set default values if fetch fails
-      setCampuses([{ value: "all", label: "All Campuses" }]);
-      setDepartments([{ value: "all", label: "All Departments" }]);
-      setCourses([{ value: "all", label: "All Courses" }]);
-    }
-  }, []);
-  // Initial data fetch
-  useEffect(() => {
-    fetchAlumniData();
-    fetchFilterOptions();
-  }, [fetchAlumniData, fetchFilterOptions]);
 
   // Function to get initials from name
   const getInitials = (firstName: string, lastName: string): string => {
@@ -345,11 +306,20 @@ export default function AlumniDataPage() {
         alumni.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (alumni.studentId &&
           alumni.studentId.toLowerCase().includes(searchQuery.toLowerCase())) ||
-        alumni.id.toLowerCase().includes(searchQuery.toLowerCase());
+        alumni.id.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        getCampusName(alumni)
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        getDepartmentName(alumni)
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()) ||
+        getCourseName(alumni).toLowerCase().includes(searchQuery.toLowerCase());
 
+      // Filter by campus (using campus ID)
       const matchesCampus =
         selectedCampus === "all" || alumni.campus?.id === selectedCampus;
 
+      // Filter by department (using department ID)
       const matchesDepartment =
         selectedDepartment === "all" ||
         alumni.department?.id === selectedDepartment;
@@ -388,8 +358,12 @@ export default function AlumniDataPage() {
   // Handle refresh
   const handleRefresh = () => {
     fetchAlumniData();
-    fetchFilterOptions();
   };
+
+  // Initial data fetch
+  useEffect(() => {
+    fetchAlumniData();
+  }, [fetchAlumniData]);
 
   // Loading state
   if (isLoading && alumniData.length === 0) {
@@ -525,7 +499,7 @@ export default function AlumniDataPage() {
             <div className="relative w-full">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <Input
-                placeholder="Search by name, email, student ID, or alumni ID..."
+                placeholder="Search by name, email, student ID, campus, or department..."
                 className="pl-9"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}

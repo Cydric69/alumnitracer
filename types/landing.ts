@@ -1,3 +1,6 @@
+// types/landing.ts
+import { Campus, Department, Course } from "./academic";
+
 export type SurveyStep =
   | "personal"
   | "contact"
@@ -11,32 +14,7 @@ export type SurveyStep =
   | "preferences"
   | "review";
 
-export interface Campus {
-  id: string; // MongoDB _id
-  campusId: string; // Custom campus ID like "001"
-  campusName: string;
-  location?: string;
-  description?: string;
-}
-
-export interface Department {
-  id: string; // MongoDB _id
-  departmentId: string; // Custom department ID like "D001"
-  name: string;
-  campusId: string; // Custom campus ID
-  campusName: string;
-}
-
-export interface Course {
-  id: string; // MongoDB _id
-  courseId: string; // Custom course ID like "C001"
-  courseName: string;
-  campusId: string; // Custom campus ID
-  campusName: string;
-  departmentId: string; // Custom department ID
-  departmentName: string;
-  courseAvailability?: string;
-}
+// Remove the old Campus, Department, Course interfaces since we're importing them
 
 export interface Region {
   id: string;
@@ -97,9 +75,9 @@ export interface FormData {
   // Academic Information
   studentId?: string;
   yearGraduated: string;
-  campus: string;
-  department: string;
-  course: string;
+  campus: string; // campus id
+  department: string; // department id
+  course: string; // course id
   degree: string;
 
   // Employment Information
@@ -192,3 +170,5 @@ export const jobReasonsOptions = [
   { id: "flexibility", label: "Work Flexibility", value: "Work Flexibility" },
   { id: "passion", label: "Personal Passion", value: "Personal Passion" },
 ];
+
+export type { Campus, Department, Course };

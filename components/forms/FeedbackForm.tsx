@@ -513,8 +513,8 @@ export default function FeedbackForm({
             disabled={isSubmitting}
             className={`px-6 py-3 rounded-md font-medium ${
               isSubmitting
-                ? "bg-blue-400 cursor-not-allowed"
-                : "bg-blue-600 hover:bg-blue-700"
+                ? "bg-gree-600 cursor-not-allowed"
+                : "bg-green-800 hover:bg-green-700"
             } text-white transition-colors`}
           >
             {isSubmitting ? "Submitting..." : "Submit Feedback"}

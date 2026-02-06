@@ -89,27 +89,6 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
       ],
     },
     {
-      title: "System Management",
-      section: "content",
-      items: [
-        {
-          label: "Courses",
-          href: "/dashboard/courses",
-          icon: Bookmark,
-        },
-        {
-          label: "Departments",
-          href: "/dashboard/departments",
-          icon: Building,
-        },
-        {
-          label: "Campuses",
-          href: "/dashboard/campuses",
-          icon: MapPin,
-        },
-      ],
-    },
-    {
       title: "Content Management",
       items: [
         {

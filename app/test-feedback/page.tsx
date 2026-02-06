@@ -1,100 +1,160 @@
-// app/feedback-test/page.tsx
+// app/test-feedback/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import FeedbackForm from "@/components/forms/FeedbackForm";
-import { Toaster, toast } from "sonner";
+import { Toaster } from "sonner";
 
 // Shadcn UI Components
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
-import { Badge } from "@/components/ui/badge";
-import { AlertCircle, FileText } from "lucide-react";
+import { Card, CardContent } from "@/components/ui/card";
+import { AlertCircle, CheckCircle, Home } from "lucide-react";
 
 export default function FeedbackTestPage() {
-  const [showForm, setShowForm] = useState(true);
+  const router = useRouter();
+  const [submissionSuccess, setSubmissionSuccess] = useState(false);
+  const [countdown, setCountdown] = useState(3);
 
   const handleFormSuccess = () => {
-    // Form success handled by toast in FeedbackForm component
+    setSubmissionSuccess(true);
+    setCountdown(3);
   };
 
-  const handleToggleForm = () => {
-    setShowForm(!showForm);
-    toast.info(`Form ${showForm ? "hidden" : "shown"}`, {
-      description: `Feedback form is now ${showForm ? "hidden" : "visible"}`,
-    });
+  const handleGoToHome = () => {
+    router.push("/");
   };
+
+  // Countdown timer effect
+  useEffect(() => {
+    if (submissionSuccess && countdown > 0) {
+      const timer = setTimeout(() => {
+        setCountdown(countdown - 1);
+      }, 1000);
+      return () => clearTimeout(timer);
+    } else if (submissionSuccess && countdown === 0) {
+      router.push("/");
+    }
+  }, [submissionSuccess, countdown, router]);
 
   return (
-    <div className="min-h-screen bg-white py-8 px-4 sm:px-6 lg:px-8 font-['Graphik']">
-      {" "}
-      {/* Added font-['Graphik'] here */}
+    <div className="min-h-screen bg-white py-8 px-4 sm:px-6 lg:px-8">
       <Toaster position="top-right" expand={false} richColors closeButton />
+
       <div className="max-w-5xl mx-auto">
-        {/* Header - Minimal */}
-        <div className="text-center mb-10 text-left pl-20">
-          <h1 className="text-3xl font-bold tracking-tight text-green-900 mb-2">
-            Feedback Form Test
+        {/* Header - Left Aligned */}
+        <div className="pl-20 mb-5">
+          <h1 className="text-5xl text-green-800 font-black tracking-tight text-gray-900 mb-3 font-graphik">
+            Alumni Feedback & Survey
           </h1>
-          <p className="text-gray-700">
-            Submit your feedback using the form below
+          <div className="w-20 h-1 bg-gray-800 mb-4"></div>
+          <p className="text-gray-700 text-lg max-w-3xl leading-relaxed font-medium font-graphik">
+            Share your valuable insights and experiences to help us improve the
+            CHMSU Alumni Registry System and better serve our graduates across
+            all campuses. Your feedback is essential in shaping the future of
+            our alumni community.
           </p>
         </div>
 
-        {/* Main Form Card - Centered and Larger */}
-        <div className="max-w-4xl mx-auto bg-transparent">
-          <Card className="shadow-none border-none bg-transparent">
-            <CardContent className="pt-6">
-              {showForm ? (
-                <div className="px-1">
-                  <FeedbackForm onSuccess={handleFormSuccess} />
+        {/* Success Dialog - Using Card without shadow and rounded border */}
+        {submissionSuccess && (
+          <Card className="border border-gray-300 bg-white rounded-none">
+            <CardContent className="p-8">
+              <div className="text-center">
+                <div className="inline-flex items-center justify-center w-20 h-20 bg-gray-100 mb-6">
+                  <CheckCircle className="w-12 h-12 text-gray-700" />
                 </div>
-              ) : (
-                <div className="text-center py-12">
-                  <div className="text-gray-400 mb-6">
-                    <svg
-                      className="w-20 h-20 mx-auto"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={1.5}
-                        d="M9 12h3.75M9 15h3.75M9 18h3.75m3 .75H18a2.25 2.25 0 002.25-2.25V6.108c0-1.135-.845-2.098-1.976-2.192a48.424 48.424 0 00-1.123-.08m-5.801 0c-.065.21-.1.433-.1.664 0 .414.336.75.75.75h4.5a.75.75 0 00.75-.75 2.25 2.25 0 00-.1-.664m-5.8 0A2.251 2.251 0 0113.5 2.25H15c1.012 0 1.867.668 2.15 1.586m-5.8 0c-.376.023-.75.05-1.124.08C9.095 4.01 8.25 4.973 8.25 6.108V8.25m0 0H4.875c-.621 0-1.125.504-1.125 1.125v11.25c0 .621.504 1.125 1.125 1.125h9.75c.621 0 1.125-.504 1.125-1.125V9.375c0-.621-.504-1.125-1.125-1.125H8.25z"
-                      />
-                    </svg>
+                <h2 className="text-2xl font-bold text-gray-900 mb-4">
+                  Thank You for Your Feedback!
+                </h2>
+                <p className="text-gray-700 mb-6 max-w-2xl mx-auto leading-relaxed">
+                  Your valuable feedback has been successfully submitted. We
+                  truly appreciate you taking the time to share your thoughts
+                  and experiences. Your input helps us continuously improve our
+                  services for all CHMSU alumni.
+                </p>
+                <div className="bg-gray-50 p-4 mb-8 max-w-xl mx-auto border border-gray-200">
+                  <div className="flex items-center justify-center gap-3">
+                    <div className="h-5 w-5 bg-gray-300 animate-pulse rounded-full" />
+                    <p className="text-gray-700 font-medium">
+                      Returning to homepage in {countdown} second
+                      {countdown !== 1 ? "s" : ""}...
+                    </p>
                   </div>
-                  <h3 className="text-xl font-semibold text-gray-800 mb-3">
-                    Form is Currently Hidden
-                  </h3>
-                  <p className="text-gray-600 mb-6 max-w-md mx-auto">
-                    Click the button below to show the feedback form
-                  </p>
+                </div>
+                <div className="flex justify-center">
                   <Button
-                    onClick={() => {
-                      setShowForm(true);
-                      toast.info("Form enabled", {
-                        description: "Feedback form is now visible",
-                      });
-                    }}
-                    className="px-8 bg-green-800 hover:bg-green-900 text-white"
+                    onClick={handleGoToHome}
+                    className="bg-green-800 hover:bg-green-900 text-white px-8 py-3 text-base"
                   >
-                    Show Feedback Form
+                    <Home className="mr-2 h-5 w-5" />
+                    Return to Home
                   </Button>
                 </div>
-              )}
+              </div>
             </CardContent>
           </Card>
-        </div>
+        )}
+
+        {/* Main Form Card - Without shadow and rounded border */}
+        {!submissionSuccess && (
+          <div className="max-w-4xl mx-auto">
+            <Card className="border border-gray-300 bg-white rounded-none">
+              <CardContent className="pt-6">
+                <>
+                  <div className="mb-6 p-4 bg-gray-50 border border-gray-200">
+                    <div className="flex items-start gap-3">
+                      <AlertCircle className="w-5 h-5 text-gray-700 mt-0.5 flex-shrink-0" />
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          Important Information About This Form
+                        </p>
+                        <p className="text-sm text-gray-700 mt-1">
+                          This feedback form allows you to share your experience
+                          with the CHMSU Alumni Registry System. Please be
+                          honest and specific in your responses. All feedback is
+                          confidential and will be used solely for improvement
+                          purposes.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="px-1">
+                    <FeedbackForm onSuccess={handleFormSuccess} />
+                  </div>
+                </>
+              </CardContent>
+            </Card>
+
+            {/* Additional Information - Using Card without shadow and rounded border */}
+            <Card className="mt-8 border border-gray-300 bg-white rounded-none">
+              <CardContent className="p-6">
+                <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                  Why Your Feedback Matters
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <ul className="text-gray-700 space-y-2 list-disc pl-5">
+                      <li>Helps us identify areas for improvement</li>
+                      <li>Guides future development of alumni features</li>
+                      <li>Ensures the system meets alumni needs</li>
+                      <li>Contributes to better user experience</li>
+                    </ul>
+                  </div>
+                  <div className="space-y-2">
+                    <ul className="text-gray-700 space-y-2 list-disc pl-5">
+                      <li>Provides insights for resource allocation</li>
+                      <li>Helps prioritize feature requests</li>
+                      <li>Improves communication with alumni</li>
+                      <li>Enhances overall satisfaction</li>
+                    </ul>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
     </div>
   );

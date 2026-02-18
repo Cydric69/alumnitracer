@@ -1,3 +1,4 @@
+// app/information-form/page.tsx
 "use client";
 
 import React, { useState, useEffect, JSX } from "react";
@@ -8,10 +9,13 @@ import {
   Check,
   AlertCircle,
   Loader2,
+  CheckCircle,
+  ArrowRight,
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AlumniFormData } from "@/app/actions/alumni";
 import { createAlumni } from "@/app/actions/alumni";
+import SuccessDialog from "@/components/landing/SuccessDialog";
 import {
   regions,
   provinces,
@@ -752,8 +756,14 @@ export default function InformationFormPage() {
     return { isValid: missing.length === 0, missingFields: missing };
   };
 
+  // In the handleSubmit function, update the success handling:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Only allow submission from review step
+    if (currentStep !== "review") {
+      return;
+    }
 
     const { isValid, missingFields } = isFormComplete();
 
@@ -815,7 +825,6 @@ export default function InformationFormPage() {
       // Use the course's degree if available, otherwise use the manually entered degree
       const finalDegree = selectedCourse?.degree || formData.degree;
 
-      // Update the handleSubmit function in page.tsx
       const alumniData: AlumniFormData = {
         firstName: formData.firstName,
         lastName: formData.lastName,
@@ -835,11 +844,11 @@ export default function InformationFormPage() {
         yearGraduated: formData.yearGraduated,
 
         // All these fields are now REQUIRED strings
-        campusId: selectedCampus?.campusId || formData.campus, // Use campus ID
+        campusId: selectedCampus?.campusId || formData.campus,
         campusName: selectedCampus?.campusName || "",
-        departmentId: selectedDepartment?.departmentId || formData.department, // Use department ID
+        departmentId: selectedDepartment?.departmentId || formData.department,
         departmentName: selectedDepartment?.name || "",
-        courseId: selectedCourse?.courseId || formData.course, // Use course ID
+        courseId: selectedCourse?.courseId || formData.course,
         courseName: selectedCourse?.courseName || "",
 
         degree: finalDegree,
@@ -873,8 +882,9 @@ export default function InformationFormPage() {
 
       if (result.success) {
         setSuccess(true);
+        // Auto-redirect to feedback survey after 3 seconds
         setTimeout(() => {
-          router.push("/");
+          router.push("/test-feedback");
           resetForm();
         }, 3000);
       } else {
@@ -903,7 +913,6 @@ export default function InformationFormPage() {
       setSubmitting(false);
     }
   };
-
   const renderStep = () => {
     switch (currentStep) {
       case "personal":
@@ -1027,6 +1036,9 @@ export default function InformationFormPage() {
             departments={departments}
             courses={courses}
             formatDateNatural={formatDateNatural}
+            submitting={submitting}
+            error={error}
+            success={success}
           />
         );
       default:
@@ -1038,94 +1050,103 @@ export default function InformationFormPage() {
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
   const hasStepError = !!stepErrors[currentStep];
 
+  // app/information-form/page.tsx - Update the return statement
   return (
     <main className="min-h-screen bg-white p-4 md:p-6 font-serif">
       <div className="max-w-6xl mx-auto">
         <Header />
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          <div className="lg:col-span-12">
-            <div className="bg-white border-none">
-              <div className="px-6 py-4 bg-gray-50 border-b border-gray-300">
-                <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
-                  <div>
-                    <h2 className="text-2xl font-bold font-['Times_New_Roman'] text-green-800">
-                      Alumni Information Form
-                    </h2>
-                    <p className="text-gray-600 mt-1 text-base">
-                      Step {currentStepIndex + 1} of {steps.length}:{" "}
-                      {steps[currentStepIndex]?.description}
-                    </p>
+
+        {/* Success Dialog - Shows when submission is successful */}
+        {success ? (
+          <SuccessDialog
+            autoRedirectTime={3}
+            onGoToFeedback={() => {
+              router.push("/test-feedback");
+              resetForm();
+            }}
+            onReturnHome={() => {
+              router.push("/");
+              resetForm();
+            }}
+          />
+        ) : (
+          // Regular form content when not in success state
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
+            <div className="lg:col-span-12">
+              <div className="bg-white border-none">
+                <div className="px-6 py-4 bg-gray-50 border-b border-gray-300">
+                  <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-3">
+                    <div>
+                      <h2 className="text-2xl font-bold font-['Times_New_Roman'] text-green-800">
+                        Alumni Information Form
+                      </h2>
+                      <p className="text-gray-600 mt-1 text-base">
+                        Step {currentStepIndex + 1} of {steps.length}:{" "}
+                        {steps[currentStepIndex]?.description}
+                      </p>
+                    </div>
+                    <div className="text-right text-xs">
+                      <p className="text-gray-500">No registration required</p>
+                      <p className="text-gray-500">
+                        All information is confidential
+                      </p>
+                    </div>
                   </div>
-                  <div className="text-right text-xs">
-                    <p className="text-gray-500">No registration required</p>
-                    <p className="text-gray-500">
-                      All information is confidential
-                    </p>
+                  <StepProgress
+                    currentStep={currentStep}
+                    steps={steps}
+                    stepErrors={stepErrors}
+                  />
+                </div>
+
+                <form
+                  onSubmit={handleSubmit}
+                  className="min-h-[calc(100vh-300px)]"
+                >
+                  <div className="px-6 py-6">
+                    <AnimatePresence mode="wait">
+                      <motion.div
+                        key={currentStep}
+                        initial={{ opacity: 0, x: 20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: -20 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {renderStep()}
+                      </motion.div>
+                    </AnimatePresence>
                   </div>
-                </div>
-                <StepProgress
-                  currentStep={currentStep}
-                  steps={steps}
-                  stepErrors={stepErrors}
-                />
-              </div>
 
-              <form onSubmit={handleSubmit}>
-                <div className="px-6 py-6 min-h-[50vh]">
-                  <AnimatePresence mode="wait">
-                    <motion.div
-                      key={currentStep}
-                      initial={{ opacity: 0, x: 20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: -20 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      {renderStep()}
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
+                  {/* Navigation buttons - No submit button here */}
+                  <div className="px-6 py-4 bg-gray-50 border-t border-gray-300">
+                    <div className="flex justify-between items-center">
+                      <Button
+                        type="button"
+                        onClick={prevStep}
+                        disabled={currentStepIndex === 0}
+                        variant="outline"
+                        size="lg"
+                      >
+                        <ChevronLeft className="h-4 w-4 mr-2" />
+                        Previous
+                      </Button>
 
-                <div className="px-6 py-4 bg-gray-50 border-t border-gray-300">
-                  <div className="flex flex-col md:flex-row justify-between items-center gap-3">
-                    <Button
-                      type="button"
-                      onClick={prevStep}
-                      disabled={currentStepIndex === 0}
-                      variant="outline"
-                    >
-                      <ChevronLeft className="h-4 w-4 mr-2" />
-                      Previous
-                    </Button>
-
-                    <div className="text-center max-w-md">
-                      {error && (
-                        <div className="bg-red-50 p-3 rounded text-red-700 text-sm">
-                          {error}
-                        </div>
-                      )}
-                      {success && (
-                        <div className="bg-green-50 p-3 rounded text-green-700 text-sm">
-                          Submitted successfully! Redirecting...
-                        </div>
+                      {/* Only show Next button if not on review step */}
+                      {currentStep !== "review" && (
+                        <Button type="button" onClick={nextStep} size="lg">
+                          Next
+                          <ChevronRight className="h-4 w-4 ml-2" />
+                        </Button>
                       )}
                     </div>
-
-                    {currentStepIndex === steps.length - 1 ? (
-                      <Button type="submit" disabled={submitting}>
-                        {submitting ? "Submitting..." : "Submit"}
-                      </Button>
-                    ) : (
-                      <Button type="button" onClick={nextStep}>
-                        Next <ChevronRight className="h-4 w-4 ml-2" />
-                      </Button>
-                    )}
                   </div>
-                </div>
-              </form>
+                </form>
+              </div>
+              <InformationNote />
             </div>
-            <InformationNote />
           </div>
-        </div>
+        )}
+
         <Footer />
       </div>
     </main>

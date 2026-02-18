@@ -33,10 +33,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Brain,
-  Trophy,
   Briefcase,
   TrendingUp,
-  Award,
   Cpu,
   Sparkles,
 } from "lucide-react";
@@ -674,7 +672,7 @@ export default function AlumniDataPage() {
                 <Card className="border border-gray-200">
                   <CardHeader className="pb-2">
                     <CardTitle className="text-sm font-medium flex items-center gap-2">
-                      <Trophy className="h-4 w-4 text-amber-600" />
+                      <Brain className="h-4 w-4 text-amber-600" />
                       Awards & Recognition
                     </CardTitle>
                   </CardHeader>
@@ -1310,46 +1308,40 @@ export default function AlumniDataPage() {
         </CardContent>
       </Card>
 
-      {/* Enhanced Alumni Details Dialog */}
+      {/* Enhanced Alumni Details Dialog - FIXED VERSION (No duplicate X button) */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 border border-gray-200 font-sans">
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-hidden p-0 border border-gray-200 font-sans flex flex-col">
           {selectedAlumni && (
-            <div className="flex flex-col h-full">
-              {/* Dialog Header */}
-              <div className="p-6 border-b">
-                <div className="flex items-start justify-between">
-                  <div className="flex items-center gap-4">
-                    <Avatar className="h-16 w-16 border">
-                      <AvatarFallback className="bg-gray-100 text-gray-700 text-xl">
-                        {getInitials(
-                          selectedAlumni.firstName,
-                          selectedAlumni.lastName,
-                        )}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div>
-                      <DialogTitle className="text-2xl font-bold text-gray-900">
-                        {getFullName(selectedAlumni)}
-                      </DialogTitle>
-                      <DialogDescription className="text-gray-600 mt-1">
-                        {getDepartmentName(selectedAlumni)}
-                      </DialogDescription>
-                    </div>
+            <>
+              {/* Dialog Header - Fixed at top (no X button here) */}
+              <div className="p-6 border-b flex-shrink-0">
+                <div className="flex items-start gap-4">
+                  <Avatar className="h-16 w-16 border">
+                    <AvatarFallback className="bg-gray-100 text-gray-700 text-xl">
+                      {getInitials(
+                        selectedAlumni.firstName,
+                        selectedAlumni.lastName,
+                      )}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <DialogTitle className="text-2xl font-bold text-gray-900">
+                      {getFullName(selectedAlumni)}
+                    </DialogTitle>
+                    <DialogDescription className="text-gray-600 mt-1">
+                      {getDepartmentName(selectedAlumni)}
+                    </DialogDescription>
                   </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="text-gray-600 hover:bg-gray-100"
-                    onClick={() => setIsDialogOpen(false)}
-                  >
-                    <X className="h-5 w-5" />
-                  </Button>
                 </div>
               </div>
 
-              {/* Tabs */}
-              <Tabs defaultValue="overview" className="flex-1 flex flex-col">
-                <div className="border-b border-gray-200">
+              {/* Tabs Container - Takes remaining height and handles scrolling */}
+              <Tabs
+                defaultValue="overview"
+                className="flex-1 flex flex-col min-h-0"
+              >
+                {/* Tabs Header - Fixed */}
+                <div className="border-b border-gray-200 flex-shrink-0">
                   <TabsList className="grid w-full grid-cols-4 h-12 rounded-none bg-transparent p-0">
                     <TabsTrigger
                       value="overview"
@@ -1378,8 +1370,8 @@ export default function AlumniDataPage() {
                   </TabsList>
                 </div>
 
+                {/* Scrollable Content Area */}
                 <div className="flex-1 overflow-y-auto p-6">
-                  {/* Overview Tab */}
                   <TabsContent value="overview" className="mt-0 space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       {/* Personal Info Card */}
@@ -1505,7 +1497,6 @@ export default function AlumniDataPage() {
                     </Card>
                   </TabsContent>
 
-                  {/* Academic Tab */}
                   <TabsContent value="academic" className="mt-0">
                     <Card className="border border-gray-200">
                       <CardHeader className="pb-3">
@@ -1566,7 +1557,6 @@ export default function AlumniDataPage() {
                     </Card>
                   </TabsContent>
 
-                  {/* Employment Tab */}
                   <TabsContent value="employment" className="mt-0">
                     <Card className="border border-gray-200">
                       <CardHeader className="pb-3">
@@ -1641,7 +1631,6 @@ export default function AlumniDataPage() {
                     </Card>
                   </TabsContent>
 
-                  {/* Contact Tab */}
                   <TabsContent value="contact" className="mt-0">
                     <Card className="border border-gray-200">
                       <CardHeader className="pb-3">
@@ -1690,8 +1679,8 @@ export default function AlumniDataPage() {
                   </TabsContent>
                 </div>
 
-                {/* Dialog Footer */}
-                <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between">
+                {/* Dialog Footer - Fixed at bottom */}
+                <div className="border-t border-gray-200 px-6 py-4 flex items-center justify-between flex-shrink-0">
                   <div className="text-xs text-gray-500">
                     <p>
                       Member since{" "}
@@ -1716,7 +1705,7 @@ export default function AlumniDataPage() {
                   </div>
                 </div>
               </Tabs>
-            </div>
+            </>
           )}
         </DialogContent>
       </Dialog>

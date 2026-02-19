@@ -1,4 +1,3 @@
-// app/login/page.tsx (updated useEffect)
 "use client";
 
 import { useState, useEffect } from "react";
@@ -100,12 +99,12 @@ export default function LoginPage() {
         router.refresh();
       } else {
         setError(
-          result.message || "Login failed. Please check your credentials."
+          result.message || "Login failed. Please check your credentials.",
         );
       }
     } catch (err) {
       setError(
-        "An error occurred while connecting to the server. Please try again."
+        "An error occurred while connecting to the server. Please try again.",
       );
       console.error("Login error:", err);
     } finally {

@@ -1,4 +1,3 @@
-// app/information-form/page.tsx
 "use client";
 
 import React, { useState, useEffect, JSX } from "react";
@@ -215,7 +214,7 @@ export default function InformationFormPage() {
       fetchCourses(formData.campus, formData.department);
     } else {
       setCourses([]);
-      setFormData((prev) => ({ ...prev, course: "" }));
+      setFormData((prev) => ({ ...prev, course: "", degree: "" }));
     }
   }, [formData.campus, formData.department]);
 
@@ -360,14 +359,11 @@ export default function InformationFormPage() {
 
   const fetchCourses = async (campusId: string, departmentId: string) => {
     try {
-      const departments = getDepartmentsByCampusId(campusId);
-      const department = departments.find((d) => d.id === departmentId);
+      const courses = getCoursesByDepartmentId(departmentId);
+      setCourses(courses);
 
-      if (department) {
-        setCourses(department.courses);
-      } else {
-        setCourses([]);
-      }
+      // Reset course and degree when department changes
+      setFormData((prev) => ({ ...prev, course: "", degree: "" }));
     } catch (err: any) {
       setError(err.message || "Failed to load courses");
       setCourses([]);
@@ -524,10 +520,20 @@ export default function InformationFormPage() {
       setDateOfBirth(undefined);
     }
 
-    setFormData((prev) => ({
-      ...prev,
-      [field]: value,
-    }));
+    // Handle course selection - automatically set degree from selected course
+    if (field === "course") {
+      const selectedCourse = courses.find((c) => c.id === value);
+      setFormData((prev) => ({
+        ...prev,
+        course: value,
+        degree: selectedCourse?.degree || prev.degree,
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [field]: value,
+      }));
+    }
 
     setFieldErrors((prev) => {
       const newErrors = { ...prev };
@@ -756,7 +762,6 @@ export default function InformationFormPage() {
     return { isValid: missing.length === 0, missingFields: missing };
   };
 
-  // In the handleSubmit function, update the success handling:
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -913,6 +918,7 @@ export default function InformationFormPage() {
       setSubmitting(false);
     }
   };
+
   const renderStep = () => {
     switch (currentStep) {
       case "personal":
@@ -1050,7 +1056,6 @@ export default function InformationFormPage() {
   const progress = ((currentStepIndex + 1) / steps.length) * 100;
   const hasStepError = !!stepErrors[currentStep];
 
-  // app/information-form/page.tsx - Update the return statement
   return (
     <main className="min-h-screen bg-white p-4 md:p-6 font-serif">
       <div className="max-w-6xl mx-auto">

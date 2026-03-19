@@ -424,19 +424,6 @@ export default function HomePage() {
                   </li>
                 </ul>
               </div>
-
-              <div className="text-center">
-                <Link
-                  href="/information-form"
-                  className="inline-block bg-green-800 text-white px-10 py-5 font-bold hover:bg-green-900 transition-colors text-xl w-full md:w-auto"
-                >
-                  SUBMIT YOUR ALUMNI INFORMATION NOW
-                </Link>
-                <p className="text-sm text-gray-600 mt-3">
-                  No registration required • Takes only 3-5 minutes • All
-                  information is confidential
-                </p>
-              </div>
             </article>
 
             {/* Events & Announcements Section */}
@@ -776,7 +763,6 @@ export default function HomePage() {
               </ol>
               <Link
                 href="/information-form"
-                target="_blank"
                 className="inline-block w-full bg-green-800 text-white py-4 font-bold hover:bg-green-900 transition-colors text-center text-lg"
               >
                 SUBMIT INFORMATION
@@ -900,16 +886,6 @@ export default function HomePage() {
             Binalbagan, your information helps us create meaningful connections
             and organize memorable anniversary celebrations.
           </p>
-          <Link
-            href="/information-form"
-            className="inline-block bg-green-800 text-white px-10 py-4 text-xl font-bold hover:bg-green-900 transition-colors"
-          >
-            SUBMIT YOUR ALUMNI INFORMATION
-          </Link>
-          <p className="text-sm text-gray-600 mt-4">
-            No registration required • Takes only 3-5 minutes • All information
-            is confidential
-          </p>
         </div>
 
         {/* Footer Section */}
@@ -924,7 +900,6 @@ export default function HomePage() {
           <div className="mt-4 flex flex-wrap justify-center gap-4 md:gap-6">
             <Link
               href="/information-form"
-              target="_blank"
               className="hover:text-black transition-colors font-medium"
             >
               Submit Information

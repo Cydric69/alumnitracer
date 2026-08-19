@@ -621,7 +621,7 @@ export default function FeedbacksPage() {
   const closeEssayDialog = useCallback((questionNumber: number) => {
     setEssayDialogStates((prev) => ({
       ...prev,
-      [`q${questionNumber}`]: {
+      [`q${questionNumber}` as keyof typeof prev]: {
         ...prev[`q${questionNumber}` as keyof typeof prev],
         isOpen: false,
       },
@@ -823,7 +823,11 @@ export default function FeedbacksPage() {
               answer: `${getRatingLabel(parseInt(rating))} (${rating}/5)`,
               count,
               percentage: (count / totalResponses) * 100,
-              trend: idx === 0 ? "up" : idx === 1 ? "stable" : "down",
+              trend: (idx === 0
+                ? "up"
+                : idx === 1
+                  ? "stable"
+                  : "down") as TrendType,
             }),
           );
 
@@ -869,7 +873,11 @@ export default function FeedbacksPage() {
             answer: value,
             count,
             percentage: (count / totalResponses) * 100,
-            trend: idx === 0 ? "up" : idx === 1 ? "stable" : "down",
+            trend: (idx === 0
+              ? "up"
+              : idx === 1
+                ? "stable"
+                : "down") as TrendType,
           }),
         );
 
@@ -914,7 +922,11 @@ export default function FeedbacksPage() {
             answer: skill,
             count,
             percentage: (count / totalResponses) * 100,
-            trend: idx === 0 ? "up" : idx === 1 ? "stable" : "down",
+            trend: (idx === 0
+              ? "up"
+              : idx === 1
+                ? "stable"
+                : "down") as TrendType,
           }),
         );
 
@@ -994,13 +1006,13 @@ export default function FeedbacksPage() {
             answer: "Yes",
             count: yesCount,
             percentage: (yesCount / totalResponses) * 100,
-            trend: yesCount > noCount ? "up" : "down",
+            trend: (yesCount > noCount ? "up" : "down") as TrendType,
           },
           {
             answer: "No",
             count: noCount,
             percentage: (noCount / totalResponses) * 100,
-            trend: yesCount > noCount ? "down" : "up",
+            trend: (yesCount > noCount ? "down" : "up") as TrendType,
           },
         ].sort((a, b) => b.count - a.count),
         insights: [
@@ -1794,7 +1806,7 @@ export default function FeedbacksPage() {
                           Rating Distribution
                         </h3>
                         <div className="space-y-3">
-                          {Object.entries(question.distribution)
+                          {Object.entries(question.distribution || {})
                             .sort(([a], [b]) => parseInt(b) - parseInt(a))
                             .map(([rating, count]) => (
                               <div

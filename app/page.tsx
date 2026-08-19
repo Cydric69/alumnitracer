@@ -45,7 +45,7 @@ interface Announcement {
 export default function HomePage() {
   const router = useRouter();
   const pathname = usePathname();
-  const [isCheckingAuth, setIsCheckingAuth] = useState(true);
+  // isCheckingAuth state removed — no longer blocking render
   const [showCampuses, setShowCampuses] = useState(false);
   const [showPrograms, setShowPrograms] = useState(false);
   const [latestEvents, setLatestEvents] = useState<Event[]>([]);
@@ -61,21 +61,19 @@ export default function HomePage() {
   const [showAllAnnouncements, setShowAllAnnouncements] = useState(false);
 
   useEffect(() => {
+    // Silent background check — page renders immediately for unauthenticated
+    // visitors. Logged-in users are quietly redirected to /dashboard.
+    // The 401 when not logged in is expected and harmless.
     const checkAuth = async () => {
       try {
         const response = await fetch("/api/auth/verify", {
-          method: "GET",
           credentials: "include",
         });
-
         if (response.ok) {
           router.replace("/dashboard");
-          return;
         }
-      } catch (error) {
-        console.log("User not authenticated");
-      } finally {
-        setIsCheckingAuth(false);
+      } catch {
+        // Network error — stay on landing page
       }
     };
 
@@ -87,14 +85,12 @@ export default function HomePage() {
     try {
       setLoading(true);
 
-      // Get active events and announcements (limit to 5 each)
       const [eventsData, announcementsData, statsData] = await Promise.all([
         getEvents({ status: "active" }),
         getAnnouncements({ status: "active" }),
         getEventsAnnouncementsStats(),
       ]);
 
-      // Sort by date (newest first) and take latest
       const sortedEvents = eventsData
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 5);
@@ -133,17 +129,7 @@ export default function HomePage() {
     return pathname?.startsWith(href);
   };
 
-  if (isCheckingAuth) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-white">
-        <div className="text-center space-y-4">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-slate-900 mx-auto"></div>
-          <p className="text-slate-600">Loading...</p>
-        </div>
-      </div>
-    );
-  }
-
+  // Removed isCheckingAuth loading gate — page renders immediately
   return (
     <main className="min-h-screen bg-white p-4 md:p-6 font-serif">
       {/* Newspaper Masthead with Navigation */}
@@ -153,9 +139,8 @@ export default function HomePage() {
             CHMSU Alumni Registry
           </h1>
 
-          {/* Navigation Bar - Clean & Minimalistic */}
+          {/* Navigation Bar */}
           <div className="flex flex-col md:flex-row justify-between items-center text-sm uppercase tracking-widest border-t border-b border-black py-3 gap-4 md:gap-0">
-            {/* Navigation Links - Clean Design */}
             <nav className="flex items-center gap-6 md:gap-8">
               <Link
                 href="/"
@@ -200,7 +185,6 @@ export default function HomePage() {
               </Link>
             </nav>
 
-            {/* Date Display */}
             <div className="text-gray-700">
               <span className="text-xs md:text-sm">
                 {new Date()
@@ -218,9 +202,8 @@ export default function HomePage() {
 
         {/* Main Newspaper Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-          {/* Left Column - Featured Story - Full Width */}
+          {/* Left Column */}
           <div className="lg:col-span-8 space-y-8">
-            {/* Main Feature - Now full width */}
             <article className="border-b-2 border-black pb-8">
               <div className="mb-4">
                 <span className="bg-green-800 text-white px-3 py-1 text-sm uppercase tracking-widest">
@@ -332,66 +315,27 @@ export default function HomePage() {
                 {showPrograms && (
                   <div className="border border-gray-300 border-t-0 p-4 bg-white">
                     <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
-                        <div className="font-bold">BSIT</div>
-                        <div className="text-xs text-gray-600">
-                          Information Technology
+                      {[
+                        ["BSIT", "Information Technology"],
+                        ["BSED", "Secondary Education"],
+                        ["BEED", "Elementary Education"],
+                        ["BA", "Business Administration"],
+                        ["BSFI", "Finance"],
+                        ["BSCRIM", "Criminology"],
+                        ["BSIS", "Information Systems"],
+                        ["BSIE", "Industrial Engineering"],
+                        ["BSE", "Science Education"],
+                        ["POLSCI", "Political Science"],
+                        ["BSPSYCH", "Psychology"],
+                      ].map(([code, label]) => (
+                        <div
+                          key={code}
+                          className="p-2 border border-gray-300 bg-gray-50 text-center"
+                        >
+                          <div className="font-bold">{code}</div>
+                          <div className="text-xs text-gray-600">{label}</div>
                         </div>
-                      </div>
-                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
-                        <div className="font-bold">BSED</div>
-                        <div className="text-xs text-gray-600">
-                          Secondary Education
-                        </div>
-                      </div>
-                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
-                        <div className="font-bold">BEED</div>
-                        <div className="text-xs text-gray-600">
-                          Elementary Education
-                        </div>
-                      </div>
-                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
-                        <div className="font-bold">BA</div>
-                        <div className="text-xs text-gray-600">
-                          Business Administration
-                        </div>
-                      </div>
-                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
-                        <div className="font-bold">BSFI</div>
-                        <div className="text-xs text-gray-600">Finance</div>
-                      </div>
-                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
-                        <div className="font-bold">BSCRIM</div>
-                        <div className="text-xs text-gray-600">Criminology</div>
-                      </div>
-                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
-                        <div className="font-bold">BSIS</div>
-                        <div className="text-xs text-gray-600">
-                          Information Systems
-                        </div>
-                      </div>
-                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
-                        <div className="font-bold">BSIE</div>
-                        <div className="text-xs text-gray-600">
-                          Industrial Engineering
-                        </div>
-                      </div>
-                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
-                        <div className="font-bold">BSE</div>
-                        <div className="text-xs text-gray-600">
-                          Science Education
-                        </div>
-                      </div>
-                      <div className="p-2 border border-gray-300 bg-gray-50 text-center">
-                        <div className="font-bold">POLSCI</div>
-                        <div className="text-xs text-gray-600">
-                          Political Science
-                        </div>
-                      </div>
-                      <div className="p-2 border border-gray-300 bg-gray-50 text-center col-span-2 md:col-span-1">
-                        <div className="font-bold">BSPSYCH</div>
-                        <div className="text-xs text-gray-600">Psychology</div>
-                      </div>
+                      ))}
                     </div>
                     <p className="text-sm text-gray-600 mt-4">
                       Plus all other degree programs offered across CHMSU
@@ -428,9 +372,8 @@ export default function HomePage() {
 
             {/* Events & Announcements Section */}
             <div id="events-announcements-section" className="space-y-8">
-              {/* Secondary Stories Grid */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                {/* Latest Events Section */}
+                {/* Latest Events */}
                 <article className="border-b border-gray-300 pb-6">
                   <div className="flex items-center gap-2 mb-3">
                     <Calendar className="h-5 w-5 text-green-800" />
@@ -461,7 +404,7 @@ export default function HomePage() {
                       {(showAllEvents
                         ? latestEvents
                         : latestEvents.slice(0, 3)
-                      ).map((event, index) => {
+                      ).map((event) => {
                         const isPast = new Date(event.date) < new Date();
                         return (
                           <div
@@ -519,7 +462,7 @@ export default function HomePage() {
                   </div>
                 </article>
 
-                {/* Latest Announcements Section */}
+                {/* Latest Announcements */}
                 <article className="border-b border-gray-300 pb-6">
                   <div className="flex items-center gap-2 mb-3">
                     <Bell className="h-5 w-5 text-green-800" />
@@ -608,7 +551,7 @@ export default function HomePage() {
                 </article>
               </div>
 
-              {/* All Events Section (For More Details) */}
+              {/* All Events */}
               <div
                 id="all-events-section"
                 className="border-t border-gray-300 pt-6"
@@ -629,7 +572,9 @@ export default function HomePage() {
                   <div className="flex items-center justify-center py-12">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-800"></div>
                   </div>
-                ) : latestEvents.length === 0 ? (
+                ) : latestEvents.filter(
+                    (event) => new Date(event.date) >= new Date(),
+                  ).length === 0 ? (
                   <div className="text-center py-8 bg-gray-50 rounded-lg">
                     <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
                     <h4 className="text-lg font-semibold text-gray-900 mb-2">
@@ -677,7 +622,7 @@ export default function HomePage() {
                 )}
               </div>
 
-              {/* All Announcements Section (For More Details) */}
+              {/* All Announcements */}
               <div
                 id="all-announcements-section"
                 className="border-t border-gray-300 pt-6"
@@ -744,9 +689,8 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right Column - Sidebar & Additional Content */}
+          {/* Right Column - Sidebar */}
           <div className="lg:col-span-4 space-y-8">
-            {/* Information Registry Callout */}
             <div className="bg-gray-50 p-6 border-2 border-green-800">
               <h3 className="text-2xl font-bold font-['Times_New_Roman'] mb-4 border-b border-green-800 pb-2">
                 ALUMNI REGISTRY
@@ -773,7 +717,6 @@ export default function HomePage() {
               </p>
             </div>
 
-            {/* Information Required Section */}
             <div className="border-t-4 border-black pt-6">
               <h3 className="text-2xl font-bold font-['Times_New_Roman'] mb-4">
                 INFORMATION WE COLLECT
@@ -806,7 +749,6 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* Data Privacy Section */}
             <div className="bg-gray-50 p-6 border border-gray-300">
               <h3 className="text-xl font-bold font-['Times_New_Roman'] mb-4 border-b border-gray-400 pb-2">
                 DATA PRIVACY
@@ -837,7 +779,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Bottom Section - Important Information */}
+        {/* Bottom Section */}
         <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8 border-t-4 border-black pt-8">
           <article>
             <h3 className="text-2xl font-bold font-['Times_New_Roman'] mb-3">
@@ -876,7 +818,7 @@ export default function HomePage() {
           </article>
         </div>
 
-        {/* Call to Action Section */}
+        {/* Call to Action */}
         <div className="mt-12 bg-gray-50 border-4 border-green-800 p-8 text-center">
           <h2 className="text-3xl font-bold font-['Times_New_Roman'] mb-4">
             Help Us Build a Complete Alumni Network
@@ -888,7 +830,7 @@ export default function HomePage() {
           </p>
         </div>
 
-        {/* Footer Section */}
+        {/* Footer */}
         <footer className="mt-12 pt-6 border-t-4 border-black text-center text-sm text-gray-600">
           <p className="font-bold">
             CHMSU ALUMNI RELATIONS OFFICE • CONNECTING GRADUATES SINCE 1946

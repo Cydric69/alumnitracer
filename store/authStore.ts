@@ -42,21 +42,23 @@ export const useAuthStore = create<AuthState>()(
           const result = await authService.login(email, password);
 
           if (result.success && result.user && result.token) {
-            set({
-              user: result.user as User,
-              token: result.token,
-              isAuthenticated: true,
-              isLoading: false,
-              error: null,
-            });
-
-            // Also set cookie via API
+            // Set cookie FIRST — middleware depends on it before any
+            // navigation happens after state update
             await fetch("/api/auth/set-cookie", {
               method: "POST",
               headers: {
                 "Content-Type": "application/json",
               },
               body: JSON.stringify({ token: result.token }),
+            });
+
+            // Cookie is confirmed set — now update auth state
+            set({
+              user: result.user as User,
+              token: result.token,
+              isAuthenticated: true,
+              isLoading: false,
+              error: null,
             });
           } else {
             set({
@@ -82,13 +84,11 @@ export const useAuthStore = create<AuthState>()(
 
       logout: async () => {
         try {
-          // Clear server cookie
           await fetch("/api/auth/logout", { method: "POST" });
         } catch (error) {
           console.error("Logout error:", error);
         }
 
-        // Clear local state
         set({
           user: null,
           token: null,
@@ -97,7 +97,6 @@ export const useAuthStore = create<AuthState>()(
           error: null,
         });
 
-        // Clear localStorage
         localStorage.removeItem("auth-storage");
       },
 
@@ -113,7 +112,13 @@ export const useAuthStore = create<AuthState>()(
         }
 
         if (authService.isTokenExpired(token)) {
-          get().logout();
+          // Clear state synchronously — let the caller handle redirect.
+          // Do NOT call the async logout() here (fire-and-forget is unsafe).
+          set({
+            user: null,
+            token: null,
+            isAuthenticated: false,
+          });
           return false;
         }
 
@@ -144,6 +149,6 @@ export const useAuthStore = create<AuthState>()(
         user: state.user,
         token: state.token,
       }),
-    }
-  )
+    },
+  ),
 );

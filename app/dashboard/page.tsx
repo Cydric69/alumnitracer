@@ -346,7 +346,7 @@ export default function AlumniDataPage() {
    */
   const campuses: FilterOption[] = useMemo(() => {
     const uniqueCampuses = Array.from(
-      new Set(alumniData.map((alumni) => alumni.campus))
+      new Set(alumniData.map((alumni) => alumni.campus)),
     );
     return [
       { value: "all", label: "All Campuses" },
@@ -359,7 +359,7 @@ export default function AlumniDataPage() {
    */
   const colleges: FilterOption[] = useMemo(() => {
     const uniqueColleges = Array.from(
-      new Set(alumniData.map((alumni) => alumni.college))
+      new Set(alumniData.map((alumni) => alumni.college)),
     );
     return [
       { value: "all", label: "All Colleges" },
@@ -372,7 +372,7 @@ export default function AlumniDataPage() {
    */
   const graduationYears: FilterOption[] = useMemo(() => {
     const uniqueYears = Array.from(
-      new Set(alumniData.map((alumni) => alumni.yearOfGraduation))
+      new Set(alumniData.map((alumni) => alumni.yearOfGraduation)),
     ).sort((a, b) => parseInt(b) - parseInt(a)); // Sort descending
     return [
       { value: "all", label: "All Years" },
@@ -385,7 +385,7 @@ export default function AlumniDataPage() {
    */
   const employmentStatuses: FilterOption[] = useMemo(() => {
     const uniqueStatuses = Array.from(
-      new Set(alumniData.map((alumni) => alumni.presentEmploymentStatus))
+      new Set(alumniData.map((alumni) => alumni.presentEmploymentStatus)),
     );
     return [
       { value: "all", label: "All Status" },
@@ -407,18 +407,18 @@ export default function AlumniDataPage() {
     // Calculate basic counts
     const totalAlumni = alumniData.length;
     const employedAlumni = alumniData.filter(
-      (alumni) => alumni.presentEmploymentStatus === "Employed"
+      (alumni) => alumni.presentEmploymentStatus === "Employed",
     ).length;
     const selfEmployedAlumni = alumniData.filter(
-      (alumni) => alumni.presentEmploymentStatus === "Self-Employed"
+      (alumni) => alumni.presentEmploymentStatus === "Self-Employed",
     ).length;
 
     // Calculate gender distribution
     const maleCount = alumniData.filter(
-      (alumni) => alumni.gender === "Male"
+      (alumni) => alumni.gender === "Male",
     ).length;
     const femaleCount = alumniData.filter(
-      (alumni) => alumni.gender === "Female"
+      (alumni) => alumni.gender === "Female",
     ).length;
 
     // Calculate unique counts
@@ -431,7 +431,7 @@ export default function AlumniDataPage() {
     const employmentRate =
       totalAlumni > 0
         ? Math.round(
-            ((employedAlumni + selfEmployedAlumni) / totalAlumni) * 100
+            ((employedAlumni + selfEmployedAlumni) / totalAlumni) * 100,
           )
         : 0;
 
@@ -445,35 +445,47 @@ export default function AlumniDataPage() {
         : 0;
 
     // Find top employment sector
-    const sectorCounts = alumniData.reduce((acc, alumni) => {
-      acc[alumni.employmentSector] = (acc[alumni.employmentSector] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const sectorCounts = alumniData.reduce(
+      (acc, alumni) => {
+        acc[alumni.employmentSector] = (acc[alumni.employmentSector] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     const topEmploymentSector =
       Object.entries(sectorCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
 
     // Find top campus by alumni count
-    const campusCounts = alumniData.reduce((acc, alumni) => {
-      acc[alumni.campus] = (acc[alumni.campus] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const campusCounts = alumniData.reduce(
+      (acc, alumni) => {
+        acc[alumni.campus] = (acc[alumni.campus] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     const topCampus =
       Object.entries(campusCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "N/A";
 
     // Calculate employment by location distribution
-    const employmentByLocation = alumniData.reduce((acc, alumni) => {
-      acc[alumni.locationOfEmployment] =
-        (acc[alumni.locationOfEmployment] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const employmentByLocation = alumniData.reduce(
+      (acc, alumni) => {
+        acc[alumni.locationOfEmployment] =
+          (acc[alumni.locationOfEmployment] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     // Calculate graduation year distribution
-    const graduationYearDistribution = alumniData.reduce((acc, alumni) => {
-      acc[alumni.yearOfGraduation] = (acc[alumni.yearOfGraduation] || 0) + 1;
-      return acc;
-    }, {} as Record<string, number>);
+    const graduationYearDistribution = alumniData.reduce(
+      (acc, alumni) => {
+        acc[alumni.yearOfGraduation] = (acc[alumni.yearOfGraduation] || 0) + 1;
+        return acc;
+      },
+      {} as Record<string, number>,
+    );
 
     return {
       totalAlumni,
@@ -662,7 +674,7 @@ export default function AlumniDataPage() {
                 <span>
                   {Math.round(
                     (analyticsStats.maleCount / analyticsStats.totalAlumni) *
-                      100
+                      100,
                   )}
                   %
                 </span>
@@ -774,10 +786,13 @@ export default function AlumniDataPage() {
             </p>
             <div className="mt-2 space-y-1">
               {Object.entries(
-                alumniData.reduce((acc, alumni) => {
-                  acc[alumni.college] = (acc[alumni.college] || 0) + 1;
-                  return acc;
-                }, {} as Record<string, number>)
+                alumniData.reduce(
+                  (acc, alumni) => {
+                    acc[alumni.college] = (acc[alumni.college] || 0) + 1;
+                    return acc;
+                  },
+                  {} as Record<string, number>,
+                ),
               )
                 .sort((a, b) => b[1] - a[1])
                 .slice(0, 2)
@@ -870,11 +885,14 @@ export default function AlumniDataPage() {
           <CardContent>
             <div className="space-y-3">
               {Object.entries(
-                alumniData.reduce((acc, alumni) => {
-                  acc[alumni.presentEmploymentStatus] =
-                    (acc[alumni.presentEmploymentStatus] || 0) + 1;
-                  return acc;
-                }, {} as Record<string, number>)
+                alumniData.reduce(
+                  (acc, alumni) => {
+                    acc[alumni.presentEmploymentStatus] =
+                      (acc[alumni.presentEmploymentStatus] || 0) + 1;
+                    return acc;
+                  },
+                  {} as Record<string, number>,
+                ),
               ).map(([status, count]) => (
                 <div key={status} className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
@@ -883,8 +901,8 @@ export default function AlumniDataPage() {
                         status === "Employed"
                           ? "bg-green-500"
                           : status === "Self-Employed"
-                          ? "bg-blue-500"
-                          : "bg-gray-500"
+                            ? "bg-blue-500"
+                            : "bg-gray-500"
                       }`}
                     ></div>
                     <span className="text-sm">{status}</span>
@@ -1044,7 +1062,7 @@ export default function AlumniDataPage() {
                       <Badge variant="secondary" className="gap-1">
                         {
                           employmentStatuses.find(
-                            (s) => s.value === selectedStatus
+                            (s) => s.value === selectedStatus,
                           )?.label
                         }
                         <button
@@ -1200,9 +1218,9 @@ export default function AlumniDataPage() {
                               alumni.presentEmploymentStatus === "Employed"
                                 ? "bg-green-100 text-green-800 hover:bg-green-200"
                                 : alumni.presentEmploymentStatus ===
-                                  "Self-Employed"
-                                ? "bg-blue-100 text-blue-800 hover:bg-blue-200"
-                                : "bg-gray-100 text-gray-800 hover:bg-gray-200"
+                                    "Self-Employed"
+                                  ? "bg-blue-100 text-blue-800 hover:bg-blue-200"
+                                  : "bg-gray-100 text-gray-800 hover:bg-gray-200"
                             }
                           >
                             {alumni.presentEmploymentStatus}
@@ -1331,9 +1349,9 @@ export default function AlumniDataPage() {
                         selectedAlumni.presentEmploymentStatus === "Employed"
                           ? "bg-green-100 text-green-800"
                           : selectedAlumni.presentEmploymentStatus ===
-                            "Self-Employed"
-                          ? "bg-blue-100 text-blue-800"
-                          : "bg-gray-100 text-gray-800"
+                              "Self-Employed"
+                            ? "bg-blue-100 text-blue-800"
+                            : "bg-gray-100 text-gray-800"
                       }
                     >
                       {selectedAlumni.presentEmploymentStatus}
@@ -1495,7 +1513,7 @@ export default function AlumniDataPage() {
                               </p>
                             </div>
                             <Badge variant="outline" className="bg-white">
-                              {selectedAlumni.yearOfGraduation - 2}-
+                              {parseInt(selectedAlumni.yearOfGraduation) - 2}-
                               {selectedAlumni.yearOfGraduation}
                             </Badge>
                           </div>

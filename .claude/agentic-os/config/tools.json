@@ -1,0 +1,14 @@
+{
+  "schema_version": 1,
+  "auto_approved": [
+    "Read", "Glob", "Grep", "Edit", "Write", "NotebookEdit", "TodoWrite", "Task",
+    "bash:ls", "bash:cat", "bash:head", "bash:tail", "bash:grep", "bash:rg", "bash:find",
+    "bash:sed", "bash:awk", "bash:wc", "bash:diff", "bash:git status", "bash:git diff",
+    "bash:git log", "bash:git show", "bash:git add", "bash:git commit", "bash:git branch",
+    "bash:npm test", "bash:npm run", "bash:pnpm", "bash:yarn", "bash:pytest", "bash:python -m pytest",
+    "bash:go test", "bash:cargo test", "bash:make", "bash:ruff", "bash:eslint", "bash:prettier",
+    "bash:tsc", "bash:mypy", "bash:black"
+  ],
+  "note": "Auto-approval covers ordinary engineering work. Every command is still evaluated by guards.json; guards win over this list.",
+  "never_auto_approved": ["bash:curl-to-shell", "bash:sudo", "bash:ssh", "bash:docker system prune"]
+}

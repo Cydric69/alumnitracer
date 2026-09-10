@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "depths": {
+    "1": ["UNDERSTAND", "GREEN", "VERIFY", "COMPLETE"],
+    "2": ["UNDERSTAND", "PLAN", "RED", "GREEN", "VERIFY", "COMPLETE"],
+    "3": ["UNDERSTAND", "SPECIFY", "PLAN", "RED", "GREEN", "REFACTOR", "VERIFY", "REVIEW", "REPAIR", "REVERIFY", "COMPLETE"],
+    "4": ["UNDERSTAND", "SPECIFY", "PLAN", "RED", "GREEN", "REFACTOR", "VERIFY", "REVIEW", "REPAIR", "REVERIFY", "AUDIT", "COMPLETE"],
+    "5": ["UNDERSTAND", "SPECIFY", "PLAN", "RED", "GREEN", "REFACTOR", "VERIFY", "REVIEW", "REPAIR", "REVERIFY", "AUDIT", "COMPLETE"]
+  },
+  "agents_by_depth": {
+    "1": ["builder"],
+    "2": ["builder", "tester"],
+    "3": ["analyst", "builder", "tester", "repairer", "reviewer"],
+    "4": ["orchestrator", "analyst", "researcher", "builder", "tester", "repairer", "reviewer"],
+    "5": ["orchestrator", "analyst", "researcher", "builder", "design-critic", "tester", "repairer", "reviewer"]
+  },
+  "max_repair_attempts": 3,
+  "skill_budget_by_depth": {"1": 2, "2": 4, "3": 6, "4": 8, "5": 10},
+  "delegation_threshold_level": 2
+}

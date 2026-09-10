@@ -1,0 +1,6 @@
+#!/usr/bin/env bash
+# Agentic OS runtime CLI.
+set -euo pipefail
+HERE="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+export AOS_HOME="$HERE"
+exec python3 "$HERE/runtime/cli.py" "$@"

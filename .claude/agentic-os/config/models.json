@@ -1,0 +1,15 @@
+{
+  "schema_version": 1,
+  "tiers": {
+    "FAST":     {"candidates": ["claude-haiku-4-5-20251001", "haiku"], "max_level": 2},
+    "BALANCED": {"candidates": ["claude-sonnet-5", "sonnet"], "max_level": 3},
+    "DEEP":     {"candidates": ["claude-opus-5", "opus"], "max_level": 5}
+  },
+  "level_to_tier": {"1": "FAST", "2": "FAST", "3": "BALANCED", "4": "DEEP", "5": "DEEP"},
+  "risk_floor_tier": {"normal": null, "elevated": "BALANCED", "high": "DEEP", "critical": "DEEP"},
+  "agent_preferred_tier": {
+    "orchestrator": "DEEP", "analyst": "BALANCED", "researcher": "BALANCED",
+    "builder": "BALANCED", "design-critic": "BALANCED", "tester": "BALANCED",
+    "repairer": "BALANCED", "reviewer": "DEEP", "router": "FAST"
+  }
+}

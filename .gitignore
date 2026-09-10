@@ -39,3 +39,17 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Contractor review receipts (local run artifacts)
+.claude/receipts/
+
+# Agentic OS local runtime state (sqlite dbs, event log) — per-machine, not source
+.claude/agentic-os/state/
+
+# Installer backups
+*.aos-backup
+
+# Stale nested clone of this same repo (has its own .git and .env.local).
+# Pending deletion; ignored so its credentials can never be committed.
+/alumnitracer/
+CLAUDE.md.aos-backup

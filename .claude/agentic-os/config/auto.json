@@ -1,0 +1,31 @@
+{
+  "schema_version": 1,
+  "enabled": true,
+  "min_prompt_chars": 12,
+  "skip_prefixes": [
+    "/",
+    "!",
+    "#"
+  ],
+  "quiet_below_level": 2,
+  "inline_skill_budget_chars": 10000,
+  "max_inlined_skills": 4,
+  "note": "Controls the UserPromptSubmit/PreToolUse automation. quiet_below_level: prompts below this level get a one-line note. enforce_delegation_from_level: at or above this level, the first direct file edit of a turn is intercepted and the builder agent is named instead (enforce_mode: ask | deny | off). Set enabled=false to go back to calling `aos plan` by hand.",
+  "enforce_delegation_from_level": 4,
+  "enforce_mode": "ask",
+  "classify_char_cap": 600,
+  "inline_budget_by_depth": {
+    "1": 0,
+    "2": 8000,
+    "3": 16000,
+    "4": 22000,
+    "5": 26000
+  },
+  "max_inlined_by_depth": {
+    "1": 0,
+    "2": 3,
+    "3": 5,
+    "4": 7,
+    "5": 8
+  }
+}

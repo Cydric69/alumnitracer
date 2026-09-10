@@ -32,7 +32,9 @@
 #
 HEAVY_PATHS=(
   '^(proxy|middleware)\.(ts|js)$'   'request gate — the only thing standing in front of /dashboard'
+  '^app/middleware\.(ts|js)$'       'the current (non-executing) gate file — still auth logic'
   '^lib/auth/'                      'auth surface — token verification and the admin check'
+  '^(hooks/useAuth|store/authStore)' 'client-side auth state'
   '^app/api/auth/'                  'auth routes — login, logout, session, password reset'
   '^services/authService\.ts$'      'auth surface — credentials, lockout, reset tokens'
   '^app/actions/'                   'server actions — every mutation authorizes here'

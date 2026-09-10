@@ -190,7 +190,7 @@ conflict.
 <!-- AGENTIC-OS:BEGIN -->
 # Agentic OS
 
-Installed at `.claude/agentic-os` (`/Users/christian/alumnitracer/.claude/agentic-os`), version `1.7.0`.
+Installed at `.claude/agentic-os`, version `1.7.0`.
 These are global invariants. Role behaviour lives in the agents, specialised knowledge in
 the skills, orchestration in the runtime, policy in the config. Do not restate them here.
 
@@ -202,9 +202,9 @@ which agents to delegate to, the model tier, and the routed skills themselves. F
 block - it is the plan for the turn. Treat its depth as a floor: raise it if you see risk it
 missed, never lower a risk-driven floor.
 
-You can run `python3 /Users/christian/alumnitracer/.claude/agentic-os/bin/aos plan "<the task>"` by hand for a sub-task, a
+You can run `python3 .claude/agentic-os/bin/aos plan "<the task>"` by hand for a sub-task, a
 mid-turn re-plan, or a task whose real shape differs from the prompt - but nothing requires
-it. Automatic injection is configured in `/Users/christian/alumnitracer/.claude/agentic-os/config/auto.json`.
+it. Automatic injection is configured in `.claude/agentic-os/config/auto.json`.
 
 Level 1 work (rename, typo, one-line change, copy edit) is done directly. Do not delegate
 it — the delegation costs more than it returns.
@@ -247,7 +247,7 @@ delegation — artifacts, not transcripts.
 
 ## Skills
 
-51 skills live in `/Users/christian/alumnitracer/.claude/agentic-os/skills`. They are *installed*, not loaded: the router picks
+51 skills live in `.claude/agentic-os/skills`. They are *installed*, not loaded: the router picks
 the minimum sufficient set per task. Read the files it names; do not read the whole library.
 <!-- AGENTIC-OS:END -->
 

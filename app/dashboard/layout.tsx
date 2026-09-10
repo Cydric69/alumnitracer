@@ -14,7 +14,10 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <TopNav toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
+      <TopNav
+        sidebarOpen={sidebarOpen}
+        toggleSidebar={() => setSidebarOpen(!sidebarOpen)}
+      />
       <div className="flex">
         <Sidebar isOpen={sidebarOpen} setIsOpen={setSidebarOpen} />
         <main className="flex-1 p-4 lg:p-6 transition-all duration-200 lg:ml-64">

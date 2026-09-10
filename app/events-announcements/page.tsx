@@ -198,11 +198,16 @@ export default function EventsAnnouncementsPage() {
           {/* Navigation Bar - Clean & Minimalistic - SAME AS HOME PAGE */}
           <div className="flex flex-col md:flex-row justify-between items-center text-sm uppercase tracking-widest border-t border-b border-black py-3 gap-4 md:gap-0">
             {/* Navigation Links - Clean Design */}
-            <nav className="flex items-center gap-6 md:gap-8">
+            <nav
+              aria-label="Primary"
+              className="flex items-center gap-6 md:gap-8"
+            >
               <Link
                 href="/"
+                aria-current={isActive("/") ? "page" : undefined}
                 className={`
                   transition-all duration-200 font-medium
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2
                   ${
                     isActive("/")
                       ? "text-black font-bold border-b-2 border-black pb-1"
@@ -215,8 +220,12 @@ export default function EventsAnnouncementsPage() {
 
               <Link
                 href="/events-announcements"
+                aria-current={
+                  isActive("/events-announcements") ? "page" : undefined
+                }
                 className={`
                   transition-all duration-200 font-medium
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black focus-visible:ring-offset-2
                   ${
                     isActive("/events-announcements")
                       ? "text-black font-bold border-b-2 border-black pb-1"
@@ -229,8 +238,10 @@ export default function EventsAnnouncementsPage() {
 
               <Link
                 href="/login"
+                aria-current={isActive("/login") ? "page" : undefined}
                 className={`
                   transition-all duration-200 font-medium
+                  focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-800 focus-visible:ring-offset-2
                   ${
                     isActive("/login")
                       ? "text-gray-800 font-bold border-b-2 border-gray-800 pb-1"

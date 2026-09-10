@@ -19,9 +19,10 @@ import {
 
 interface TopNavProps {
   toggleSidebar: () => void;
+  sidebarOpen?: boolean;
 }
 
-const TopNav = ({ toggleSidebar }: TopNavProps) => {
+const TopNav = ({ toggleSidebar, sidebarOpen = false }: TopNavProps) => {
   const router = useRouter();
   const [isLoggingOut, setIsLoggingOut] = useState(false);
 
@@ -58,7 +59,7 @@ const TopNav = ({ toggleSidebar }: TopNavProps) => {
   };
 
   return (
-    <div className="sticky top-0 z-40 border-b bg-white">
+    <header className="sticky top-0 z-40 border-b bg-white">
       <div className="flex h-14 items-center justify-between px-4 lg:px-6">
         {/* Left Section */}
         <div className="flex items-center gap-4">
@@ -66,9 +67,14 @@ const TopNav = ({ toggleSidebar }: TopNavProps) => {
             variant="ghost"
             size="icon"
             onClick={toggleSidebar}
+            aria-label={
+              sidebarOpen ? "Close navigation menu" : "Open navigation menu"
+            }
+            aria-expanded={sidebarOpen}
+            aria-controls="dashboard-sidebar"
             className="lg:hidden"
           >
-            <Menu className="h-5 w-5" />
+            <Menu aria-hidden="true" className="h-5 w-5" />
           </Button>
 
           <div className="hidden text-lg font-semibold text-gray-900 md:block">
@@ -79,8 +85,16 @@ const TopNav = ({ toggleSidebar }: TopNavProps) => {
         {/* Search */}
         <div className="flex flex-1 items-center justify-center px-4">
           <div className="relative w-full max-w-2xl">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+            <label htmlFor="topnav-search" className="sr-only">
+              Search alumni, events, or resources
+            </label>
+            <Search
+              aria-hidden="true"
+              className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400"
+            />
             <Input
+              id="topnav-search"
+              type="search"
               placeholder="Search alumni, events, or resources..."
               className="pl-9"
             />
@@ -92,9 +106,17 @@ const TopNav = ({ toggleSidebar }: TopNavProps) => {
           {/* Notifications */}
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="relative">
-                <Bell className="h-5 w-5" />
-                <Badge className="absolute -right-1 -top-1 h-5 w-5 p-0">
+              <Button
+                variant="ghost"
+                size="icon"
+                aria-label="Notifications (3 unread)"
+                className="relative"
+              >
+                <Bell aria-hidden="true" className="h-5 w-5" />
+                <Badge
+                  aria-hidden="true"
+                  className="absolute -right-1 -top-1 h-5 w-5 p-0"
+                >
                   3
                 </Badge>
               </Button>
@@ -134,6 +156,7 @@ const TopNav = ({ toggleSidebar }: TopNavProps) => {
             <DropdownMenuTrigger asChild>
               <Button
                 variant="ghost"
+                aria-label="Account menu for Admin User"
                 className="gap-2 px-2"
                 disabled={isLoggingOut}
               >
@@ -150,11 +173,11 @@ const TopNav = ({ toggleSidebar }: TopNavProps) => {
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem>
-                <User className="mr-2 h-4 w-4" />
+                <User aria-hidden="true" className="mr-2 h-4 w-4" />
                 Profile
               </DropdownMenuItem>
               <DropdownMenuItem>
-                <Settings className="mr-2 h-4 w-4" />
+                <Settings aria-hidden="true" className="mr-2 h-4 w-4" />
                 Settings
               </DropdownMenuItem>
               <DropdownMenuSeparator />
@@ -165,12 +188,15 @@ const TopNav = ({ toggleSidebar }: TopNavProps) => {
               >
                 {isLoggingOut ? (
                   <>
-                    <div className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent"></div>
+                    <div
+                      aria-hidden="true"
+                      className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-red-600 border-t-transparent"
+                    ></div>
                     Logging out...
                   </>
                 ) : (
                   <>
-                    <LogOut className="mr-2 h-4 w-4" />
+                    <LogOut aria-hidden="true" className="mr-2 h-4 w-4" />
                     Logout
                   </>
                 )}
@@ -179,7 +205,7 @@ const TopNav = ({ toggleSidebar }: TopNavProps) => {
           </DropdownMenu>
         </div>
       </div>
-    </div>
+    </header>
   );
 };
 

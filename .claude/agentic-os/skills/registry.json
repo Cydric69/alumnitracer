@@ -1,0 +1,1605 @@
+{
+  "count": 51,
+  "generated_from": "skills/**/SKILL.md",
+  "schema_version": 1,
+  "skills": {
+    "analyst/codebase-analysis": {
+      "agents": [
+        "analyst",
+        "builder",
+        "repairer",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/evidence"
+      ],
+      "description": "Trace the real flow through unfamiliar code before changing it - entry points, callers, data, and the existing helpers you should reuse.",
+      "domains": [
+        "codebase",
+        "analysis"
+      ],
+      "has_tests": false,
+      "name": "analyst/codebase-analysis",
+      "path": "skills/analyst/codebase-analysis/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "codebase",
+        "existing code",
+        "where is",
+        "how does",
+        "trace",
+        "architecture",
+        "callers"
+      ],
+      "version": "1.0.0",
+      "words": 318
+    },
+    "analyst/requirements-analysis": {
+      "agents": [
+        "analyst",
+        "orchestrator",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/uncertainty"
+      ],
+      "description": "Extract what the user actually asked for, separate it from what they implied, and write acceptance criteria that can be checked.",
+      "domains": [
+        "requirements",
+        "planning"
+      ],
+      "has_tests": false,
+      "name": "analyst/requirements-analysis",
+      "path": "skills/analyst/requirements-analysis/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "requirement",
+        "acceptance criteria",
+        "spec",
+        "what should",
+        "expected behavior",
+        "scope"
+      ],
+      "version": "1.0.0",
+      "words": 348
+    },
+    "analyst/specification": {
+      "agents": [
+        "analyst",
+        "orchestrator"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "analyst/requirements-analysis",
+        "analyst/codebase-analysis"
+      ],
+      "description": "Write the implementable spec - problem, behaviour change, criteria, affected files, non-goals, unknowns.",
+      "domains": [
+        "requirements",
+        "planning"
+      ],
+      "has_tests": false,
+      "name": "analyst/specification",
+      "path": "skills/analyst/specification/SKILL.md",
+      "priority": 7,
+      "triggers": [
+        "specification",
+        "spec",
+        "design doc",
+        "plan the change",
+        "write up"
+      ],
+      "version": "1.0.0",
+      "words": 296
+    },
+    "builder/accessibility": {
+      "agents": [
+        "builder",
+        "design-critic",
+        "tester",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [],
+      "description": "Keyboard, screen reader, contrast, and focus - the accessibility floor that no design decision may override.",
+      "domains": [
+        "frontend",
+        "ui",
+        "accessibility"
+      ],
+      "has_tests": false,
+      "name": "builder/accessibility",
+      "path": "skills/builder/accessibility/SKILL.md",
+      "priority": 9,
+      "triggers": [
+        "accessib",
+        "a11y",
+        "aria",
+        "keyboard",
+        "screen reader",
+        "focus",
+        "contrast",
+        "wcag",
+        "alt text"
+      ],
+      "version": "1.0.0",
+      "words": 371
+    },
+    "builder/anti-ai-slop": {
+      "agents": [
+        "builder",
+        "design-critic",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [],
+      "description": "Detect and remove the tells that mark generated UI and copy as generic, templated, or machine-written - a quality gate that functioning code can still fail.",
+      "domains": [
+        "frontend",
+        "visual",
+        "design",
+        "quality"
+      ],
+      "has_tests": true,
+      "name": "builder/anti-ai-slop",
+      "path": "skills/builder/anti-ai-slop/SKILL.md",
+      "priority": 9,
+      "triggers": [
+        "generic",
+        "ai slop",
+        "templated",
+        "boring",
+        "looks like every",
+        "cookie cutter",
+        "bland",
+        "copy",
+        "placeholder"
+      ],
+      "version": "1.0.0",
+      "words": 683
+    },
+    "builder/backend-engineering": {
+      "agents": [
+        "builder",
+        "reviewer",
+        "repairer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/evidence",
+        "builder/security"
+      ],
+      "description": "Server, API, and data-layer changes - contracts, validation, transactions, idempotency, and failure behaviour.",
+      "domains": [
+        "backend",
+        "api",
+        "data"
+      ],
+      "has_tests": false,
+      "name": "builder/backend-engineering",
+      "path": "skills/builder/backend-engineering/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "api",
+        "endpoint",
+        "server",
+        "database",
+        "query",
+        "migration",
+        "backend",
+        "route",
+        "handler",
+        "sql",
+        "orm",
+        "queue"
+      ],
+      "version": "1.0.0",
+      "words": 425
+    },
+    "builder/component-architecture": {
+      "agents": [
+        "builder",
+        "design-critic",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [],
+      "description": "Decide what becomes a component, where state lives, and what the prop contract is - without inventing abstractions nobody asked for.",
+      "domains": [
+        "frontend",
+        "architecture"
+      ],
+      "has_tests": false,
+      "name": "builder/component-architecture",
+      "path": "skills/builder/component-architecture/SKILL.md",
+      "priority": 7,
+      "triggers": [
+        "component",
+        "props",
+        "reusable",
+        "abstraction",
+        "refactor component",
+        "design system",
+        "composition"
+      ],
+      "version": "1.0.0",
+      "words": 326
+    },
+    "builder/design-taste": {
+      "agents": [
+        "builder",
+        "design-critic"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "builder/anti-ai-slop",
+        "builder/accessibility",
+        "builder/responsive-design"
+      ],
+      "description": "The product-design quality standard - editorial hierarchy, intentional whitespace, a restrained visual system, coherent type and iconography, and a specific product personality.",
+      "domains": [
+        "frontend",
+        "visual",
+        "design"
+      ],
+      "has_tests": true,
+      "name": "builder/design-taste",
+      "path": "skills/builder/design-taste/SKILL.md",
+      "priority": 9,
+      "triggers": [
+        "design",
+        "ui",
+        "landing page",
+        "redesign",
+        "look",
+        "visual",
+        "styling",
+        "beautiful",
+        "taste",
+        "brand",
+        "layout",
+        "hero"
+      ],
+      "version": "1.0.0",
+      "words": 1069
+    },
+    "builder/existing-project-redesign": {
+      "agents": [
+        "builder",
+        "design-critic",
+        "analyst"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "builder/design-taste",
+        "builder/anti-ai-slop",
+        "builder/accessibility"
+      ],
+      "description": "Upgrade the visual quality of a live product without breaking it - audit first, tokenise, then migrate surface by surface.",
+      "domains": [
+        "frontend",
+        "visual",
+        "design"
+      ],
+      "has_tests": false,
+      "name": "builder/existing-project-redesign",
+      "path": "skills/builder/existing-project-redesign/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "redesign",
+        "revamp",
+        "modernize",
+        "refresh",
+        "make it look better",
+        "existing site",
+        "improve the ui",
+        "facelift"
+      ],
+      "version": "1.0.0",
+      "words": 442
+    },
+    "builder/frontend-engineering": {
+      "agents": [
+        "builder",
+        "design-critic",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/evidence",
+        "builder/component-architecture"
+      ],
+      "description": "Build UI code that fits the project's framework and conventions - state, data flow, rendering, and the boring correctness that UI code usually skips.",
+      "domains": [
+        "frontend",
+        "ui"
+      ],
+      "has_tests": false,
+      "name": "builder/frontend-engineering",
+      "path": "skills/builder/frontend-engineering/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "component",
+        "react",
+        "vue",
+        "svelte",
+        "next.js",
+        "css",
+        "ui",
+        "page",
+        "frontend",
+        "jsx",
+        "tailwind",
+        "dom"
+      ],
+      "version": "1.0.0",
+      "words": 392
+    },
+    "builder/frontend-testing": {
+      "agents": [
+        "builder",
+        "tester"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "tester/test-design"
+      ],
+      "description": "Test UI by behaviour a user can perform - queries, interactions, async, and the visual checks worth automating.",
+      "domains": [
+        "frontend",
+        "testing"
+      ],
+      "has_tests": false,
+      "name": "builder/frontend-testing",
+      "path": "skills/builder/frontend-testing/SKILL.md",
+      "priority": 7,
+      "triggers": [
+        "test component",
+        "testing library",
+        "vitest",
+        "jest",
+        "playwright",
+        "cypress",
+        "ui test",
+        "snapshot",
+        "render test"
+      ],
+      "version": "1.0.0",
+      "words": 335
+    },
+    "builder/interaction-design": {
+      "agents": [
+        "builder",
+        "design-critic"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "builder/accessibility"
+      ],
+      "description": "State, feedback, and affordance - making an interface respond so users always know what happened and what they can do next.",
+      "domains": [
+        "frontend",
+        "ui",
+        "design"
+      ],
+      "has_tests": false,
+      "name": "builder/interaction-design",
+      "path": "skills/builder/interaction-design/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "interaction",
+        "hover",
+        "click",
+        "feedback",
+        "state",
+        "loading",
+        "error state",
+        "empty state",
+        "form",
+        "undo",
+        "toast"
+      ],
+      "version": "1.0.0",
+      "words": 472
+    },
+    "builder/motion": {
+      "agents": [
+        "builder",
+        "design-critic"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "builder/performance"
+      ],
+      "description": "Purposeful animation - duration, easing, orchestration, and performance - with reduced-motion support built in.",
+      "domains": [
+        "frontend",
+        "ui",
+        "visual"
+      ],
+      "has_tests": false,
+      "name": "builder/motion",
+      "path": "skills/builder/motion/SKILL.md",
+      "priority": 6,
+      "triggers": [
+        "animation",
+        "motion",
+        "transition",
+        "animate",
+        "easing",
+        "spring",
+        "scroll effect",
+        "parallax",
+        "gsap",
+        "framer"
+      ],
+      "version": "1.0.0",
+      "words": 437
+    },
+    "builder/performance": {
+      "agents": [
+        "builder",
+        "reviewer",
+        "repairer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/evidence"
+      ],
+      "description": "Measure before optimising, fix the actual bottleneck, and prove the improvement with numbers.",
+      "domains": [
+        "performance",
+        "frontend",
+        "backend"
+      ],
+      "has_tests": false,
+      "name": "builder/performance",
+      "path": "skills/builder/performance/SKILL.md",
+      "priority": 7,
+      "triggers": [
+        "slow",
+        "performance",
+        "optimize",
+        "latency",
+        "bundle size",
+        "memory",
+        "profil",
+        "n+1",
+        "cache"
+      ],
+      "version": "1.0.0",
+      "words": 330
+    },
+    "builder/responsive-design": {
+      "agents": [
+        "builder",
+        "design-critic"
+      ],
+      "conflicts": [],
+      "dependencies": [],
+      "description": "Layouts that hold from 320px to ultrawide - fluid by default, breakpoints only where the design actually breaks.",
+      "domains": [
+        "frontend",
+        "ui",
+        "visual"
+      ],
+      "has_tests": false,
+      "name": "builder/responsive-design",
+      "path": "skills/builder/responsive-design/SKILL.md",
+      "priority": 7,
+      "triggers": [
+        "responsive",
+        "mobile",
+        "breakpoint",
+        "viewport",
+        "layout",
+        "grid",
+        "flex",
+        "tablet",
+        "desktop"
+      ],
+      "version": "1.0.0",
+      "words": 310
+    },
+    "builder/security": {
+      "agents": [
+        "builder",
+        "reviewer",
+        "repairer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/evidence"
+      ],
+      "description": "Build without the standard vulnerability classes - injection, broken authorization, secret exposure, unsafe deserialization, and dependency risk.",
+      "domains": [
+        "security",
+        "backend",
+        "frontend"
+      ],
+      "has_tests": false,
+      "name": "builder/security",
+      "path": "skills/builder/security/SKILL.md",
+      "priority": 10,
+      "triggers": [
+        "security",
+        "auth",
+        "authoriz",
+        "token",
+        "password",
+        "injection",
+        "xss",
+        "csrf",
+        "secret",
+        "encrypt",
+        "permission",
+        "upload"
+      ],
+      "version": "1.0.0",
+      "words": 466
+    },
+    "design-critic/visual-critique": {
+      "agents": [
+        "design-critic",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "builder/design-taste",
+        "builder/anti-ai-slop"
+      ],
+      "description": "Structured critique of a UI - ranked, specific findings with a concrete replacement for each, rather than opinion.",
+      "domains": [
+        "visual",
+        "design",
+        "quality"
+      ],
+      "has_tests": false,
+      "name": "design-critic/visual-critique",
+      "path": "skills/design-critic/visual-critique/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "critique",
+        "review the design",
+        "feedback on ui",
+        "does this look",
+        "design review",
+        "why does it look"
+      ],
+      "version": "1.0.0",
+      "words": 327
+    },
+    "orchestrator/decomposition": {
+      "agents": [
+        "orchestrator",
+        "analyst"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/context-minimization"
+      ],
+      "description": "Break a request into tasks that are independently executable, independently verifiable, and correctly ordered.",
+      "domains": [
+        "process",
+        "planning"
+      ],
+      "has_tests": false,
+      "name": "orchestrator/decomposition",
+      "path": "skills/orchestrator/decomposition/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "plan",
+        "decompose",
+        "break down",
+        "tasks",
+        "steps",
+        "milestones"
+      ],
+      "version": "1.0.0",
+      "words": 383
+    },
+    "orchestrator/delegation-economics": {
+      "agents": [
+        "orchestrator",
+        "router"
+      ],
+      "conflicts": [],
+      "dependencies": [],
+      "description": "Decide whether delegating to a subagent is worth its cost - and when to just do the work.",
+      "domains": [
+        "process",
+        "efficiency"
+      ],
+      "has_tests": false,
+      "name": "orchestrator/delegation-economics",
+      "path": "skills/orchestrator/delegation-economics/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "delegate",
+        "subagent",
+        "agent",
+        "orchestrate",
+        "parallel",
+        "spawn"
+      ],
+      "version": "1.0.0",
+      "words": 363
+    },
+    "repairer/failure-analysis": {
+      "agents": [
+        "repairer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "tester/failure-analysis"
+      ],
+      "description": "Turn a production or CI failure into a diagnosis - logs, traces, timing, and the state you cannot reproduce locally.",
+      "domains": [
+        "debugging",
+        "reliability"
+      ],
+      "has_tests": false,
+      "name": "repairer/failure-analysis",
+      "path": "skills/repairer/failure-analysis/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "production error",
+        "incident",
+        "only in ci",
+        "cannot reproduce",
+        "intermittent",
+        "flaky",
+        "timeout",
+        "500"
+      ],
+      "version": "1.0.0",
+      "words": 332
+    },
+    "repairer/regression-repair": {
+      "agents": [
+        "repairer",
+        "builder"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "repairer/root-cause-analysis"
+      ],
+      "description": "Something that worked now fails - find the change that caused it and repair without reverting what the change was for.",
+      "domains": [
+        "debugging"
+      ],
+      "has_tests": false,
+      "name": "repairer/regression-repair",
+      "path": "skills/repairer/regression-repair/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "regression",
+        "used to work",
+        "broke after",
+        "since the update",
+        "worked yesterday",
+        "bisect"
+      ],
+      "version": "1.0.0",
+      "words": 304
+    },
+    "repairer/root-cause-analysis": {
+      "agents": [
+        "repairer",
+        "builder",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "repairer/systematic-debugging"
+      ],
+      "description": "Fix the cause once, where every affected caller routes through - and find the siblings the report did not mention.",
+      "domains": [
+        "debugging",
+        "quality"
+      ],
+      "has_tests": false,
+      "name": "repairer/root-cause-analysis",
+      "path": "skills/repairer/root-cause-analysis/SKILL.md",
+      "priority": 9,
+      "triggers": [
+        "root cause",
+        "why did",
+        "underlying",
+        "real problem",
+        "symptom",
+        "recurring",
+        "again"
+      ],
+      "version": "1.0.0",
+      "words": 361
+    },
+    "repairer/systematic-debugging": {
+      "agents": [
+        "repairer",
+        "builder"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/evidence",
+        "tester/failure-analysis"
+      ],
+      "description": "Reproduce, narrow, hypothesise, falsify - the procedure that finds bugs without guessing.",
+      "domains": [
+        "debugging"
+      ],
+      "has_tests": false,
+      "name": "repairer/systematic-debugging",
+      "path": "skills/repairer/systematic-debugging/SKILL.md",
+      "priority": 9,
+      "triggers": [
+        "debug",
+        "bug",
+        "broken",
+        "not working",
+        "crash",
+        "exception",
+        "stack trace",
+        "reproduce",
+        "investigate"
+      ],
+      "version": "1.0.0",
+      "words": 430
+    },
+    "repairer/verification": {
+      "agents": [
+        "repairer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/verification"
+      ],
+      "description": "Prove a repair actually repaired - the original reproduction, the class of bug, and everything the fix could have broken.",
+      "domains": [
+        "debugging",
+        "verification"
+      ],
+      "has_tests": false,
+      "name": "repairer/verification",
+      "path": "skills/repairer/verification/SKILL.md",
+      "priority": 9,
+      "triggers": [
+        "verify fix",
+        "is it fixed",
+        "confirm repair",
+        "retest",
+        "after the fix"
+      ],
+      "version": "1.0.0",
+      "words": 255
+    },
+    "researcher/documentation-analysis": {
+      "agents": [
+        "researcher",
+        "builder",
+        "analyst"
+      ],
+      "conflicts": [],
+      "dependencies": [],
+      "description": "Read documentation for what it actually guarantees - version scope, defaults, error behaviour, and the gaps between docs and code.",
+      "domains": [
+        "research"
+      ],
+      "has_tests": false,
+      "name": "researcher/documentation-analysis",
+      "path": "skills/researcher/documentation-analysis/SKILL.md",
+      "priority": 6,
+      "triggers": [
+        "documentation",
+        "docs",
+        "readme",
+        "api reference",
+        "changelog",
+        "migration guide"
+      ],
+      "version": "1.0.0",
+      "words": 257
+    },
+    "researcher/source-evaluation": {
+      "agents": [
+        "researcher",
+        "analyst"
+      ],
+      "conflicts": [],
+      "dependencies": [],
+      "description": "Rank sources by reliability and detect the failure modes of each - including AI-generated and outdated content.",
+      "domains": [
+        "research"
+      ],
+      "has_tests": false,
+      "name": "researcher/source-evaluation",
+      "path": "skills/researcher/source-evaluation/SKILL.md",
+      "priority": 6,
+      "triggers": [
+        "source",
+        "reliable",
+        "citation",
+        "blog",
+        "stack overflow",
+        "tutorial",
+        "is it true"
+      ],
+      "version": "1.0.0",
+      "words": 248
+    },
+    "researcher/technical-research": {
+      "agents": [
+        "researcher",
+        "analyst",
+        "builder"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/evidence"
+      ],
+      "description": "Answer a specific technical question with sourced, version-correct findings and a stated confidence.",
+      "domains": [
+        "research"
+      ],
+      "has_tests": false,
+      "name": "researcher/technical-research",
+      "path": "skills/researcher/technical-research/SKILL.md",
+      "priority": 7,
+      "triggers": [
+        "research",
+        "how does",
+        "best practice",
+        "which library",
+        "compare",
+        "investigate",
+        "api"
+      ],
+      "version": "1.0.0",
+      "words": 287
+    },
+    "researcher/uncertainty-reduction": {
+      "agents": [
+        "researcher",
+        "orchestrator",
+        "analyst"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/uncertainty"
+      ],
+      "description": "Spend investigation effort where it changes the decision - order unknowns by cost of being wrong, not by curiosity.",
+      "domains": [
+        "research",
+        "planning"
+      ],
+      "has_tests": false,
+      "name": "researcher/uncertainty-reduction",
+      "path": "skills/researcher/uncertainty-reduction/SKILL.md",
+      "priority": 7,
+      "triggers": [
+        "unknown",
+        "risk",
+        "spike",
+        "prototype",
+        "de-risk",
+        "unclear",
+        "investigate"
+      ],
+      "version": "1.0.0",
+      "words": 284
+    },
+    "reviewer/adversarial-review": {
+      "agents": [
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "tester/edge-case-analysis"
+      ],
+      "description": "Actively try to break the change - assume it is wrong and hunt for the input, state, or sequence that proves it.",
+      "domains": [
+        "review",
+        "quality"
+      ],
+      "has_tests": false,
+      "name": "reviewer/adversarial-review",
+      "path": "skills/reviewer/adversarial-review/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "adversarial",
+        "break it",
+        "stress",
+        "attack",
+        "red team",
+        "poke holes",
+        "worst case"
+      ],
+      "version": "1.0.0",
+      "words": 292
+    },
+    "reviewer/code-review": {
+      "agents": [
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/evidence"
+      ],
+      "description": "Read a diff for defects that matter - correctness, reuse, and simplification - with a concrete failure scenario behind every finding.",
+      "domains": [
+        "review",
+        "quality"
+      ],
+      "has_tests": false,
+      "name": "reviewer/code-review",
+      "path": "skills/reviewer/code-review/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "review",
+        "code review",
+        "pr",
+        "diff",
+        "look over",
+        "check my code",
+        "feedback"
+      ],
+      "version": "1.0.0",
+      "words": 311
+    },
+    "reviewer/completion-audit": {
+      "agents": [
+        "reviewer",
+        "orchestrator"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "reviewer/requirements-review",
+        "shared/evidence",
+        "shared/unlazy"
+      ],
+      "description": "The final gate before COMPLETED - evidence per requirement, and the eight questions that catch a false finish.",
+      "domains": [
+        "review",
+        "quality",
+        "process"
+      ],
+      "has_tests": false,
+      "name": "reviewer/completion-audit",
+      "path": "skills/reviewer/completion-audit/SKILL.md",
+      "priority": 10,
+      "triggers": [
+        "complete",
+        "done",
+        "finished",
+        "final check",
+        "audit",
+        "sign off",
+        "ship it"
+      ],
+      "version": "1.0.0",
+      "words": 303
+    },
+    "reviewer/quality-review": {
+      "agents": [
+        "reviewer",
+        "design-critic"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "reviewer/code-review"
+      ],
+      "description": "Judge whether the work is maintainable and idiomatic for this codebase - without turning preference into a blocking finding.",
+      "domains": [
+        "review",
+        "quality"
+      ],
+      "has_tests": false,
+      "name": "reviewer/quality-review",
+      "path": "skills/reviewer/quality-review/SKILL.md",
+      "priority": 6,
+      "triggers": [
+        "quality",
+        "maintainable",
+        "clean",
+        "readable",
+        "idiomatic",
+        "tech debt",
+        "refactor review"
+      ],
+      "version": "1.0.0",
+      "words": 292
+    },
+    "reviewer/requirements-review": {
+      "agents": [
+        "reviewer",
+        "orchestrator"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "analyst/requirements-analysis"
+      ],
+      "description": "Check the delivered work against what the user actually asked for - coverage, drift, and silent scope changes.",
+      "domains": [
+        "review",
+        "requirements"
+      ],
+      "has_tests": false,
+      "name": "reviewer/requirements-review",
+      "path": "skills/reviewer/requirements-review/SKILL.md",
+      "priority": 9,
+      "triggers": [
+        "does it meet",
+        "requirements",
+        "asked for",
+        "scope",
+        "drift",
+        "coverage of criteria"
+      ],
+      "version": "1.0.0",
+      "words": 285
+    },
+    "reviewer/security-review": {
+      "agents": [
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "builder/security"
+      ],
+      "description": "Review a change for the vulnerability classes that actually ship - authorization, injection, secrets, and unsafe handling of untrusted input.",
+      "domains": [
+        "review",
+        "security"
+      ],
+      "has_tests": false,
+      "name": "reviewer/security-review",
+      "path": "skills/reviewer/security-review/SKILL.md",
+      "priority": 10,
+      "triggers": [
+        "security review",
+        "vulnerability",
+        "exploit",
+        "auth check",
+        "injection",
+        "secrets",
+        "permissions",
+        "audit"
+      ],
+      "version": "1.0.0",
+      "words": 296
+    },
+    "shared/artifact-handoff": {
+      "agents": [
+        "orchestrator",
+        "analyst",
+        "researcher",
+        "builder",
+        "design-critic",
+        "tester",
+        "repairer",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/context-minimization"
+      ],
+      "description": "The structured result contract every agent returns, and how the next agent consumes it.",
+      "domains": [
+        "process",
+        "contracts"
+      ],
+      "has_tests": false,
+      "name": "shared/artifact-handoff",
+      "path": "skills/shared/artifact-handoff/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "artifact",
+        "handoff",
+        "result",
+        "output contract",
+        "report"
+      ],
+      "version": "1.0.0",
+      "words": 264
+    },
+    "shared/context-minimization": {
+      "agents": [
+        "orchestrator",
+        "analyst",
+        "researcher",
+        "builder",
+        "design-critic",
+        "tester",
+        "repairer",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [],
+      "description": "Pass the minimum sufficient context between agents - specification, relevant files, acceptance criteria, evidence - never whole transcripts.",
+      "domains": [
+        "process",
+        "efficiency"
+      ],
+      "has_tests": false,
+      "name": "shared/context-minimization",
+      "path": "skills/shared/context-minimization/SKILL.md",
+      "priority": 7,
+      "triggers": [
+        "context",
+        "handoff",
+        "delegate",
+        "summarize",
+        "pass along"
+      ],
+      "version": "1.0.0",
+      "words": 277
+    },
+    "shared/evidence": {
+      "agents": [
+        "orchestrator",
+        "analyst",
+        "researcher",
+        "builder",
+        "design-critic",
+        "tester",
+        "repairer",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [],
+      "description": "Ground every claim in something observable. Distinguishes what was run from what was assumed.",
+      "domains": [
+        "quality",
+        "verification"
+      ],
+      "has_tests": false,
+      "name": "shared/evidence",
+      "path": "skills/shared/evidence/SKILL.md",
+      "priority": 9,
+      "triggers": [
+        "evidence",
+        "verify",
+        "prove",
+        "confirm",
+        "claim"
+      ],
+      "version": "1.0.0",
+      "words": 361
+    },
+    "shared/failure-recovery": {
+      "agents": [
+        "orchestrator",
+        "builder",
+        "tester",
+        "repairer",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/evidence"
+      ],
+      "description": "What to do when a stage fails - isolate, preserve state, decide between retry, strategy change, and escalation.",
+      "domains": [
+        "process",
+        "reliability"
+      ],
+      "has_tests": false,
+      "name": "shared/failure-recovery",
+      "path": "skills/shared/failure-recovery/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "failed",
+        "failure",
+        "error",
+        "broken",
+        "stuck",
+        "retry",
+        "escalate"
+      ],
+      "version": "1.0.0",
+      "words": 325
+    },
+    "shared/safe-tool-use": {
+      "agents": [
+        "orchestrator",
+        "analyst",
+        "researcher",
+        "builder",
+        "design-critic",
+        "tester",
+        "repairer",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [],
+      "description": "How to use granted tools autonomously without tripping - or bypassing - the dangerous-action guards.",
+      "domains": [
+        "safety",
+        "tooling"
+      ],
+      "has_tests": false,
+      "name": "shared/safe-tool-use",
+      "path": "skills/shared/safe-tool-use/SKILL.md",
+      "priority": 10,
+      "triggers": [
+        "command",
+        "shell",
+        "bash",
+        "delete",
+        "deploy",
+        "migrate",
+        "force",
+        "sudo",
+        "credentials"
+      ],
+      "version": "1.0.0",
+      "words": 408
+    },
+    "shared/uncertainty": {
+      "agents": [
+        "orchestrator",
+        "analyst",
+        "researcher",
+        "builder",
+        "tester",
+        "repairer",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [],
+      "description": "Handle what you do not know - surface it, price it, and decide between asking, assuming, or investigating.",
+      "domains": [
+        "quality",
+        "process"
+      ],
+      "has_tests": false,
+      "name": "shared/uncertainty",
+      "path": "skills/shared/uncertainty/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "not sure",
+        "unclear",
+        "ambiguous",
+        "assume",
+        "unknown",
+        "which one"
+      ],
+      "version": "1.0.0",
+      "words": 339
+    },
+    "shared/unlazy": {
+      "agents": [
+        "orchestrator",
+        "analyst",
+        "researcher",
+        "builder",
+        "design-critic",
+        "tester",
+        "repairer",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/evidence"
+      ],
+      "description": "Prevents premature stopping, partial implementation, validation avoidance, and responsibility dumping - while equally preventing pointless overwork.",
+      "domains": [
+        "quality",
+        "process"
+      ],
+      "has_tests": false,
+      "name": "shared/unlazy",
+      "path": "skills/shared/unlazy/SKILL.md",
+      "priority": 10,
+      "triggers": [
+        "finish",
+        "complete",
+        "done",
+        "remaining",
+        "partial",
+        "rest of"
+      ],
+      "version": "1.0.0",
+      "words": 402
+    },
+    "shared/verification": {
+      "agents": [
+        "builder",
+        "tester",
+        "repairer",
+        "reviewer",
+        "orchestrator"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/evidence"
+      ],
+      "description": "Turn \"I think it works\" into a reproducible check that would fail if it did not.",
+      "domains": [
+        "quality",
+        "verification",
+        "testing"
+      ],
+      "has_tests": false,
+      "name": "shared/verification",
+      "path": "skills/shared/verification/SKILL.md",
+      "priority": 9,
+      "triggers": [
+        "verify",
+        "verification",
+        "validate",
+        "check",
+        "confirm",
+        "does it work"
+      ],
+      "version": "1.0.0",
+      "words": 322
+    },
+    "tester/e2e-testing": {
+      "agents": [
+        "tester"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "tester/test-design"
+      ],
+      "description": "Few, deterministic, user-journey tests through the real stack - and the discipline to keep them from becoming a flaky tax.",
+      "domains": [
+        "testing",
+        "frontend"
+      ],
+      "has_tests": false,
+      "name": "tester/e2e-testing",
+      "path": "skills/tester/e2e-testing/SKILL.md",
+      "priority": 6,
+      "triggers": [
+        "e2e",
+        "end-to-end",
+        "playwright",
+        "cypress",
+        "browser test",
+        "user journey",
+        "smoke test"
+      ],
+      "version": "1.0.0",
+      "words": 320
+    },
+    "tester/edge-case-analysis": {
+      "agents": [
+        "tester",
+        "builder",
+        "reviewer",
+        "repairer"
+      ],
+      "conflicts": [],
+      "dependencies": [],
+      "description": "Systematically enumerate the inputs and states that break code - boundaries, emptiness, scale, concurrency, and hostility.",
+      "domains": [
+        "testing",
+        "quality"
+      ],
+      "has_tests": false,
+      "name": "tester/edge-case-analysis",
+      "path": "skills/tester/edge-case-analysis/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "edge case",
+        "boundary",
+        "corner case",
+        "what if",
+        "empty",
+        "null",
+        "overflow",
+        "concurrent",
+        "unicode"
+      ],
+      "version": "1.0.0",
+      "words": 384
+    },
+    "tester/failure-analysis": {
+      "agents": [
+        "tester",
+        "repairer",
+        "builder"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/evidence"
+      ],
+      "description": "Read a failing test correctly - what it proves, what it does not, and whether the test or the code is wrong.",
+      "domains": [
+        "testing",
+        "debugging"
+      ],
+      "has_tests": false,
+      "name": "tester/failure-analysis",
+      "path": "skills/tester/failure-analysis/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "test failed",
+        "failing",
+        "assertion error",
+        "red",
+        "why did it fail",
+        "error output"
+      ],
+      "version": "1.0.0",
+      "words": 334
+    },
+    "tester/integration-testing": {
+      "agents": [
+        "tester",
+        "builder"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "tester/test-design"
+      ],
+      "description": "Test the seams - real components talking to each other, real database, real serialization - where most production bugs actually live.",
+      "domains": [
+        "testing",
+        "backend"
+      ],
+      "has_tests": false,
+      "name": "tester/integration-testing",
+      "path": "skills/tester/integration-testing/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "integration test",
+        "api test",
+        "database test",
+        "test the endpoint",
+        "contract test",
+        "seam"
+      ],
+      "version": "1.0.0",
+      "words": 359
+    },
+    "tester/regression-testing": {
+      "agents": [
+        "tester",
+        "repairer",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "tester/test-design"
+      ],
+      "description": "Prove that what worked still works - suite selection, bug-fix regression tests, and detecting the breakage a change caused elsewhere.",
+      "domains": [
+        "testing"
+      ],
+      "has_tests": false,
+      "name": "tester/regression-testing",
+      "path": "skills/tester/regression-testing/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "regression",
+        "still works",
+        "broke something",
+        "did I break",
+        "full suite",
+        "re-run tests"
+      ],
+      "version": "1.0.0",
+      "words": 320
+    },
+    "tester/test-design": {
+      "agents": [
+        "tester",
+        "builder",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [],
+      "description": "Choose what to test, at which level, with what data - so the suite catches real defects without becoming a maintenance tax.",
+      "domains": [
+        "testing"
+      ],
+      "has_tests": false,
+      "name": "tester/test-design",
+      "path": "skills/tester/test-design/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "test plan",
+        "what to test",
+        "test strategy",
+        "coverage",
+        "test cases",
+        "how should I test"
+      ],
+      "version": "1.0.0",
+      "words": 385
+    },
+    "tester/test-driven-development": {
+      "agents": [
+        "tester",
+        "builder"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "tester/test-design"
+      ],
+      "description": "Red-green-refactor applied where it pays - write the failing test, the smallest implementation, then clean up, with the failure actually observed.",
+      "domains": [
+        "testing",
+        "process"
+      ],
+      "has_tests": false,
+      "name": "tester/test-driven-development",
+      "path": "skills/tester/test-driven-development/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "tdd",
+        "test first",
+        "failing test",
+        "red green",
+        "write a test"
+      ],
+      "version": "1.0.0",
+      "words": 353
+    },
+    "tester/unit-testing": {
+      "agents": [
+        "tester",
+        "builder"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "tester/test-design"
+      ],
+      "description": "Fast, isolated tests of single behaviours - structure, assertions, and the discipline that keeps them meaningful.",
+      "domains": [
+        "testing"
+      ],
+      "has_tests": false,
+      "name": "tester/unit-testing",
+      "path": "skills/tester/unit-testing/SKILL.md",
+      "priority": 7,
+      "triggers": [
+        "unit test",
+        "pytest",
+        "jest",
+        "vitest",
+        "assertion",
+        "mock",
+        "stub",
+        "test function"
+      ],
+      "version": "1.0.0",
+      "words": 304
+    },
+    "tester/verification": {
+      "agents": [
+        "tester",
+        "reviewer"
+      ],
+      "conflicts": [],
+      "dependencies": [
+        "shared/verification",
+        "shared/evidence"
+      ],
+      "description": "The tester's completion check - every acceptance criterion mapped to a run command and its observed output.",
+      "domains": [
+        "testing",
+        "verification"
+      ],
+      "has_tests": false,
+      "name": "tester/verification",
+      "path": "skills/tester/verification/SKILL.md",
+      "priority": 8,
+      "triggers": [
+        "verify",
+        "verification",
+        "proof",
+        "criteria met",
+        "sign off",
+        "is it done"
+      ],
+      "version": "1.0.0",
+      "words": 220
+    }
+  }
+}

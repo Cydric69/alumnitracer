@@ -1,0 +1,175 @@
+{
+  "schema_version": 1,
+  "safety_floor": true,
+  "default_action": "ALLOW",
+  "rules": [
+    {
+      "id": "fs.rm_root",
+      "action": "BLOCK",
+      "why": "Recursive delete of a root or home path",
+      "regex": "\\brm\\b[^|;&]*\\s-[a-z]*[rR][a-z]*f?[a-z]*\\s+(/|~|\\$HOME|/\\*|\\.\\s*$|/Users/[^/\\s]+/?\\s*$)"
+    },
+    {
+      "id": "fs.rm_recursive",
+      "action": "CONFIRM",
+      "why": "Recursive force delete",
+      "regex": "\\brm\\b[^|;&]*\\s-[a-z]*r[a-z]*f|\\brm\\b[^|;&]*\\s-[a-z]*f[a-z]*r"
+    },
+    {
+      "id": "fs.overwrite_device",
+      "action": "BLOCK",
+      "why": "Writing to a raw device",
+      "regex": "\\bdd\\b[^\\n]*of=/dev/"
+    },
+    {
+      "id": "fs.chmod_world",
+      "action": "CONFIRM",
+      "why": "World-writable permissions",
+      "regex": "\\bchmod\\b[^\\n]*(777|a\\+w)"
+    },
+    {
+      "id": "git.force_push",
+      "action": "REVIEW_REQUIRED",
+      "why": "Force push rewrites remote history",
+      "regex": "\\bgit\\b[^\\n]*\\bpush\\b[^\\n]*(--force(?!-with-lease)|\\s-f\\b|--force-with-lease)"
+    },
+    {
+      "id": "git.history_rewrite",
+      "action": "REVIEW_REQUIRED",
+      "why": "History rewrite",
+      "regex": "\\bgit\\b[^\\n]*(filter-branch|filter-repo|rebase\\s+(-i|--interactive)|reflog\\s+expire|gc\\s+--prune=now)"
+    },
+    {
+      "id": "git.hard_reset",
+      "action": "CONFIRM",
+      "why": "Discards uncommitted work",
+      "regex": "\\bgit\\b[^\\n]*reset\\s+--hard"
+    },
+    {
+      "id": "git.clean",
+      "action": "CONFIRM",
+      "why": "Deletes untracked files",
+      "regex": "\\bgit\\b[^\\n]*\\bclean\\b[^\\n]*-[a-z]*f"
+    },
+    {
+      "id": "git.branch_delete_remote",
+      "action": "CONFIRM",
+      "why": "Deletes a remote branch",
+      "regex": "\\bgit\\b[^\\n]*push[^\\n]*(--delete|\\s:[A-Za-z0-9_./-]+)"
+    },
+    {
+      "id": "db.drop",
+      "action": "REVIEW_REQUIRED",
+      "why": "Destructive schema change",
+      "regex": "\\b(drop\\s+(table|database|schema|column)|truncate\\s+table)\\b"
+    },
+    {
+      "id": "db.unqualified_write",
+      "action": "REVIEW_REQUIRED",
+      "why": "DELETE/UPDATE without WHERE",
+      "regex": "\\b(delete\\s+from|update)\\s+[a-z_.\"`]+\\s*(;|$)"
+    },
+    {
+      "id": "db.schema_push",
+      "action": "REVIEW_REQUIRED",
+      "why": "Schema push/migration applied directly to a database",
+      "regex": "\\b(drizzle-kit\\s+(push|drop)|prisma\\s+(db\\s+push|migrate\\s+(deploy|reset|resolve))|supabase\\s+db\\s+(push|reset)|sequelize\\s+db:migrate|alembic\\s+(upgrade|downgrade)|rails\\s+db:(migrate|drop|reset)|knex\\s+migrate:(latest|rollback)|atlas\\s+schema\\s+apply)\\b"
+    },
+    {
+      "id": "db.seed_reset",
+      "action": "CONFIRM",
+      "why": "Reseeding or resetting local database state",
+      "regex": "\\b(prisma\\s+db\\s+seed|drizzle-kit\\s+generate\\s+--custom|supabase\\s+db\\s+dump)\\b"
+    },
+    {
+      "id": "db.prod_cli",
+      "action": "REVIEW_REQUIRED",
+      "why": "Database CLI pointed at production",
+      "regex": "\\b(psql|mysql|mongo|redis-cli)\\b[^\\n]*(prod|production)"
+    },
+    {
+      "id": "deploy.push",
+      "action": "REVIEW_REQUIRED",
+      "why": "Deployment to a live environment",
+      "regex": "\\b(kubectl\\s+(apply|delete|scale)|helm\\s+(upgrade|install|delete)|terraform\\s+(apply|destroy)|serverless\\s+deploy|vercel\\s+(deploy|--prod)|fly\\s+deploy|eb\\s+deploy|netlify\\s+deploy)\\b"
+    },
+    {
+      "id": "cloud.delete",
+      "action": "REVIEW_REQUIRED",
+      "why": "External resource deletion",
+      "regex": "\\b(aws|gcloud|az)\\b[^\\n]*\\b(delete|rm|destroy|terminate)\\b"
+    },
+    {
+      "id": "creds.read",
+      "action": "CONFIRM",
+      "why": "Credential material touched (read or written)",
+      "regex": "(cat|less|head|tail|bat|strings|xxd)\\s+[^\\n]*(\\.env(\\.[a-z]+)?|id_rsa|id_ed25519|\\.pem|\\.p12|credentials|\\.netrc|\\.aws/|\\.ssh/)"
+    },
+    {
+      "id": "creds.exfiltrate",
+      "action": "BLOCK",
+      "why": "Sending credential material off the machine",
+      "regex": "(\\.env|id_rsa|id_ed25519|\\.pem|credentials|SECRET|API_KEY|TOKEN)[^\\n]*\\|[^\\n]*(curl|wget|nc\\b|ncat|http)|\\b(curl|wget)\\b[^\\n]*(-d|--data|-F|-T|--upload-file)[^\\n]*(\\.env|id_rsa|\\.pem|credentials)"
+    },
+    {
+      "id": "net.pipe_to_shell",
+      "action": "BLOCK",
+      "why": "Executing code downloaded from the network",
+      "regex": "\\b(curl|wget)\\b[^\\n]*\\|[^\\n]*\\b(sh|bash|zsh|python[0-9.]*|perl|ruby|node)\\b"
+    },
+    {
+      "id": "priv.sudo",
+      "action": "CONFIRM",
+      "why": "Privilege escalation",
+      "regex": "(^|[;&|]\\s*)\\bsudo\\b|\\bdoas\\b|\\bsu\\s+-"
+    },
+    {
+      "id": "sys.global_config",
+      "action": "CONFIRM",
+      "why": "System-wide configuration change",
+      "regex": "\\b(launchctl|systemctl|defaults\\s+write|scutil|/etc/(hosts|passwd|sudoers))\\b|\\bgit\\s+config\\s+--global\\b|\\bnpm\\s+config\\s+set\\b[^\\n]*-g"
+    },
+    {
+      "id": "obf.eval_decoded",
+      "action": "BLOCK",
+      "why": "Obfuscated execution of decoded content",
+      "regex": "\\b(base64|openssl\\s+enc|xxd|uudecode)\\b[^\\n]*(-d|-D|--decode)[^\\n]*\\|[^\\n]*\\b(sh|bash|zsh|python[0-9.]*|perl|node)\\b|\\beval\\b[^\\n]*\\$\\("
+    },
+    {
+      "id": "obf.inline_runtime",
+      "action": "CONFIRM",
+      "why": "Shelling out from inside a language runtime",
+      "regex": "\\b(python[0-9.]*|node|ruby|perl)\\b\\s+-(c|e)\\b[^\\n]*(os\\.system|subprocess|shutil\\.rmtree|child_process|execSync|FileUtils\\.rm|unlink)"
+    },
+    {
+      "id": "pkg.publish",
+      "action": "REVIEW_REQUIRED",
+      "why": "Publishing a package externally",
+      "regex": "\\b(npm|pnpm|yarn)\\s+publish\\b|\\btwine\\s+upload\\b|\\bcargo\\s+publish\\b|\\bgem\\s+push\\b"
+    },
+    {
+      "id": "hist.shred",
+      "action": "BLOCK",
+      "why": "Anti-forensic history destruction",
+      "regex": "\\b(history\\s+-c|shred\\b|srm\\b)|>\\s*(~|\\$HOME)/\\.(bash|zsh)_history"
+    }
+  ],
+  "protected_paths": [
+    ".git",
+    ".env",
+    ".env.*",
+    "**/*.pem",
+    "**/id_rsa*",
+    "**/id_ed25519*",
+    "~/.ssh/**",
+    "~/.aws/**",
+    "~/.claude/settings.json",
+    "~/.claude/CLAUDE.md"
+  ],
+  "immutable_keys": [
+    "safety_floor",
+    "rules",
+    "protected_paths",
+    "immutable_keys"
+  ]
+}

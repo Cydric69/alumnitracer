@@ -1,0 +1,204 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "allow": [
+      "Bash(npm run lint)",
+      "Bash(npm run lint *)",
+      "Bash(npm run test)",
+      "Bash(npm run test *)",
+      "Bash(npm run typecheck)",
+      "Bash(npm run build)",
+      "Bash(npm run dev)",
+      "Bash(npx tsc --noEmit)",
+      "Bash(git status)",
+      "Bash(git diff *)",
+      "Bash(git log *)",
+      "Bash(git branch *)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git fetch *)",
+      "Bash(git checkout *)",
+      "Bash(git switch *)",
+      "Bash(gh pr *)",
+      "Bash(gh issue *)",
+      "Bash(gh run *)"
+    ],
+    "deny": [
+      "Read(**/.env)",
+      "Read(**/.env.*)",
+      "Read(**/secrets/**)",
+      "Read(**/*.pem)",
+      "Read(**/*.key)",
+      "Write(**/.env)",
+      "Write(**/.env.*)",
+      "Write(**/secrets/**)",
+      "Write(**/*.pem)",
+      "Write(**/*.key)",
+      "Edit(**/.env)",
+      "Edit(**/.env.*)",
+      "Edit(**/secrets/**)",
+      "Edit(**/*.pem)",
+      "Edit(**/*.key)",
+      "Write(**/.claude/hooks/**)",
+      "Write(**/.claude/settings.json)",
+      "Write(**/.claude/settings.local.json)",
+      "Edit(**/.claude/hooks/**)",
+      "Edit(**/.claude/settings.json)",
+      "Edit(**/.claude/settings.local.json)",
+      "MultiEdit(**/.claude/hooks/**)",
+      "MultiEdit(**/.claude/settings.json)",
+      "MultiEdit(**/.claude/settings.local.json)",
+      "NotebookEdit(**/.claude/hooks/**)",
+      "NotebookEdit(**/.claude/settings.json)",
+      "NotebookEdit(**/.claude/settings.local.json)",
+      "Bash(git reset --hard*)",
+      "Bash(git clean -f*)",
+      "Bash(git clean -d*)",
+      "Bash(git checkout -- *)",
+      "Bash(git restore *)",
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Agent(general-purpose)",
+      "Agent(claude)"
+    ],
+    "defaultMode": "acceptEdits"
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/protect-files.sh",
+            "timeout": 10,
+            "statusMessage": "Checking file protections..."
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/warn-large-files.sh",
+            "timeout": 10,
+            "statusMessage": "Checking for build artifacts..."
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/scan-secrets.sh",
+            "timeout": 10,
+            "statusMessage": "Scanning for secrets..."
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/block-dangerous-commands.sh",
+            "timeout": 10,
+            "statusMessage": "Checking command safety..."
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/orchestrator-only-git.sh",
+            "timeout": 10,
+            "statusMessage": "Checking git ownership..."
+          },
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/require-review-receipt.sh",
+            "timeout": 15,
+            "statusMessage": "Checking the review gate..."
+          }
+        ]
+      },
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/role-based-dispatch.py",
+            "timeout": 10,
+            "statusMessage": "Checking dispatch role..."
+          }
+        ]
+      },
+      {
+        "matcher": "*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/auto-approve-all.py",
+            "timeout": 60,
+            "statusMessage": "Auto-approving (deny rules + guards enforced)..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/christian/alumnitracer/.claude/agentic-os/hooks/pre_tool_use.py",
+            "timeout": 15
+          }
+        ],
+        "matcher": "Bash|Write|Edit|MultiEdit|NotebookEdit"
+      }
+    ],
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|clear",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "$CLAUDE_PROJECT_DIR/.claude/hooks/session-start.sh",
+            "timeout": 10,
+            "statusMessage": "Loading project context..."
+          }
+        ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/christian/alumnitracer/.claude/agentic-os/hooks/session_start.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/christian/alumnitracer/.claude/agentic-os/hooks/post_tool_use.py",
+            "timeout": 15
+          }
+        ],
+        "matcher": "Bash|Write|Edit|MultiEdit|NotebookEdit"
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/christian/alumnitracer/.claude/agentic-os/hooks/user_prompt_submit.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 /Users/christian/alumnitracer/.claude/agentic-os/hooks/stop.py",
+            "timeout": 15
+          }
+        ]
+      }
+    ]
+  }
+}

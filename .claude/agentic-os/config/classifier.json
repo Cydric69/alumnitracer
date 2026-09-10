@@ -1,0 +1,163 @@
+{
+  "dimensions": {
+    "integration": {
+      "weight": 0.8
+    },
+    "reasoning": {
+      "weight": 1.0
+    },
+    "risk": {
+      "weight": 1.2
+    },
+    "scope": {
+      "weight": 1.0
+    },
+    "state": {
+      "weight": 0.8
+    },
+    "testing": {
+      "weight": 0.8
+    },
+    "uncertainty": {
+      "weight": 1.0
+    },
+    "visual": {
+      "weight": 0.6
+    }
+  },
+  "file_count_points": {
+    "10": 2,
+    "25": 3,
+    "3": 1
+  },
+  "level_thresholds": [
+    2.0,
+    5.0,
+    9.0,
+    14.0
+  ],
+  "schema_version": 1,
+  "signals": {
+    "integration": {
+      "api": 1,
+      "endpoint": 1,
+      "external service": 2,
+      "graphql": 2,
+      "grpc": 2,
+      "http": 1,
+      "integration": 2,
+      "oauth": 2,
+      "queue": 1,
+      "rate limit": 2,
+      "s3": 1,
+      "stripe": 2,
+      "third-party": 2,
+      "upload": 1,
+      "webhook": 2
+    },
+    "reasoning": {
+      "algorithm": 2,
+      "architecture": 3,
+      "concurren": 2,
+      "design a": 2,
+      "distributed": 3,
+      "optimi": 1,
+      "pagination": 1,
+      "parser": 2,
+      "protocol": 2,
+      "race condition": 3,
+      "refactor": 1,
+      "search": 1,
+      "state machine": 2,
+      "trade-off": 2
+    },
+    "risk": {
+      "auth": 2,
+      "billing": 3,
+      "credential": 3,
+      "delete": 2,
+      "deploy": 2,
+      "drop table": 4,
+      "force push": 3,
+      "migrate": 2,
+      "payment": 3,
+      "pii": 3,
+      "prod": 2,
+      "production": 3,
+      "secret": 3
+    },
+    "scope": {
+      "across the": 2,
+      "add ": 1,
+      "build ": 1,
+      "comment": -1,
+      "create ": 1,
+      "dashboard": 1,
+      "end-to-end": 2,
+      "entire": 2,
+      "feature": 2,
+      "field": 1,
+      "filter": 1,
+      "flow": 1,
+      "form": 1,
+      "implement": 2,
+      "migrate": 3,
+      "modal": 1,
+      "multiple": 2,
+      "page": 1,
+      "redesign": 3,
+      "refactor": 1,
+      "rename": -1,
+      "rewrite": 3,
+      "screen": 1,
+      "support for": 2,
+      "table": 1,
+      "typo": -2,
+      "whole app": 3
+    },
+    "state": {
+      "cache": 1,
+      "consistency": 2,
+      "database": 2,
+      "migration": 3,
+      "persist": 2,
+      "schema": 2,
+      "session": 1,
+      "stateful": 2,
+      "store": 1,
+      "transaction": 2
+    },
+    "testing": {
+      "coverage": 1,
+      "e2e": 2,
+      "flaky": 2,
+      "regression": 2,
+      "test": 1
+    },
+    "uncertainty": {
+      "explore": 1,
+      "figure out": 2,
+      "flaky": 3,
+      "intermittent": 3,
+      "investigate": 2,
+      "not sure": 2,
+      "research": 2,
+      "somehow": 2,
+      "sometimes": 2,
+      "unclear": 2,
+      "why does": 2
+    },
+    "visual": {
+      "accessib": 2,
+      "animation": 2,
+      "component": 1,
+      "css": 1,
+      "design": 2,
+      "landing page": 2,
+      "layout": 1,
+      "redesign": 3,
+      "responsive": 2,
+      "ui": 1
+    }
+  }
+}

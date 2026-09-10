@@ -1,0 +1,124 @@
+{
+  "factors": {
+    "credentials": {
+      "patterns": [
+        "secret",
+        "credential",
+        ".env",
+        "api key",
+        "private key"
+      ],
+      "points": 4
+    },
+    "data_loss": {
+      "patterns": [
+        "delete",
+        "drop table",
+        "truncate",
+        "purge",
+        "wipe",
+        "rm -rf"
+      ],
+      "points": 5
+    },
+    "destructive": {
+      "patterns": [
+        "force push",
+        "reset --hard",
+        "rewrite history",
+        "revert everything"
+      ],
+      "points": 4
+    },
+    "external": {
+      "patterns": [
+        "send email",
+        "post to",
+        "publish",
+        "webhook",
+        "third-party api"
+      ],
+      "points": 2
+    },
+    "financial": {
+      "patterns": [
+        "payment",
+        "billing",
+        "invoice",
+        "charge",
+        "refund",
+        "stripe",
+        "payout"
+      ],
+      "points": 4
+    },
+    "infra": {
+      "patterns": [
+        "terraform",
+        "kubernetes",
+        "dns",
+        "ci/cd config",
+        "iam"
+      ],
+      "points": 3
+    },
+    "irreversible": {
+      "patterns": [
+        "irreversible",
+        "cannot be undone",
+        "permanent"
+      ],
+      "points": 3
+    },
+    "privacy": {
+      "patterns": [
+        "pii",
+        "personal data",
+        "gdpr",
+        "user data export",
+        "email list"
+      ],
+      "points": 3
+    },
+    "production": {
+      "patterns": [
+        "production",
+        "prod ",
+        "live site",
+        "customers see"
+      ],
+      "points": 4
+    },
+    "security": {
+      "patterns": [
+        "auth",
+        "authoriz",
+        "permission",
+        "token",
+        "jwt",
+        "crypto",
+        "password",
+        "xss",
+        "csrf",
+        "sql injection",
+        "login",
+        "signup",
+        "sign in",
+        "session"
+      ],
+      "points": 3
+    }
+  },
+  "level_thresholds": {
+    "critical": 9,
+    "elevated": 2,
+    "high": 5
+  },
+  "schema_version": 1,
+  "workflow_floor": {
+    "critical": 4,
+    "elevated": 2,
+    "high": 3,
+    "normal": null
+  }
+}

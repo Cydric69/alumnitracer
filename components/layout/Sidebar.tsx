@@ -130,9 +130,12 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
       <aside
         id="dashboard-sidebar"
         className={cn(
-          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r bg-white transition-transform duration-200 ease-in-out lg:translate-x-0 lg:fixed lg:inset-y-0 lg:left-0",
+          "fixed inset-y-0 left-0 z-40 flex w-64 flex-col border-r bg-white transition-[transform,visibility] duration-200 ease-in-out lg:translate-x-0 lg:fixed lg:inset-y-0 lg:left-0",
           // `invisible` (visibility:hidden) also pulls the off-canvas links out of
           // the tab order, so keyboard users can't tab into a closed drawer.
+          // visibility must be in the transition list: it is discretely animated,
+          // so transitioning it holds the drawer visible for the full slide-out
+          // instead of blanking it on the first frame.
           isOpen
             ? "translate-x-0"
             : "-translate-x-full invisible lg:visible lg:translate-x-0",
@@ -186,9 +189,13 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
                         />
                       )}
                     </button>
-                    {expandedSections[section.section] && (
-                      <div
+                    {/* Always rendered, toggled with `hidden`, so the
+                        aria-controls reference above always resolves — a
+                        collapsed section is exactly when a screen-reader user
+                        follows it. `hidden` keeps it out of the tab order. */}
+                    <div
                         id={`nav-section-${section.section}`}
+                        hidden={!expandedSections[section.section]}
                         className="ml-4 space-y-1 border-l border-gray-200 pl-3"
                       >
                         {section.items.map((item) => (
@@ -211,7 +218,6 @@ const Sidebar = ({ isOpen, setIsOpen }: SidebarProps) => {
                           </Link>
                         ))}
                       </div>
-                    )}
                   </>
                 ) : (
                   <>

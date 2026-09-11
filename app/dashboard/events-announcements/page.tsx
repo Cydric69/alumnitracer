@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
 import {
   Calendar,
   Bell,
@@ -64,6 +65,12 @@ interface Announcement {
 type FormMode = "create" | "edit" | null;
 type ContentType = "event" | "announcement";
 
+function showActionError(result: { message: string; errors?: string[] }) {
+  toast.error(result.message, {
+    description: result.errors?.length ? result.errors.join("\n") : undefined,
+  });
+}
+
 export default function AdminEventsAnnouncementsPage() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"events" | "announcements">(
@@ -124,11 +131,7 @@ export default function AdminEventsAnnouncementsPage() {
       }
     } catch (error) {
       console.error("Error fetching data:", error);
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Failed to fetch data. Please try again.",
-      );
+      toast.error("Failed to fetch data. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -202,30 +205,33 @@ export default function AdminEventsAnnouncementsPage() {
         });
       }
 
+      let result;
       if (formMode === "create") {
-        if (contentType === "event") {
-          await createEvent(dataToSend);
-        } else {
-          await createAnnouncement(dataToSend);
-        }
+        result =
+          contentType === "event"
+            ? await createEvent(dataToSend)
+            : await createAnnouncement(dataToSend);
       } else if (formMode === "edit" && selectedItem) {
-        if (contentType === "event") {
-          await updateEvent(selectedItem._id, dataToSend);
-        } else {
-          await updateAnnouncement(selectedItem._id, dataToSend);
-        }
+        result =
+          contentType === "event"
+            ? await updateEvent(selectedItem._id, dataToSend)
+            : await updateAnnouncement(selectedItem._id, dataToSend);
+      } else {
+        return;
       }
 
+      if (!result.success) {
+        showActionError(result);
+        return;
+      }
+
+      toast.success(result.message);
       resetForm();
       fetchData();
       fetchYears();
     } catch (error) {
       console.error("Error saving item:", error);
-      alert(
-        error instanceof Error
-          ? error.message
-          : "Failed to save. Please try again.",
-      );
+      toast.error("Failed to save. Please try again.");
     } finally {
       setSaving(false);
     }
@@ -238,33 +244,43 @@ export default function AdminEventsAnnouncementsPage() {
     }
 
     try {
-      if (contentType === "event") {
-        await deleteEvent(id);
-      } else {
-        await deleteAnnouncement(id);
+      const result =
+        contentType === "event"
+          ? await deleteEvent(id)
+          : await deleteAnnouncement(id);
+
+      if (!result.success) {
+        showActionError(result);
+        return;
       }
 
+      toast.success(result.message);
       fetchData();
       fetchYears();
     } catch (error) {
       console.error("Error deleting item:", error);
-      alert("Failed to delete. Please try again.");
+      toast.error("Failed to delete. Please try again.");
     }
   };
 
   // Handle toggle active status
   const handleToggleActive = async (id: string) => {
     try {
-      if (contentType === "event") {
-        await toggleEventActive(id);
-      } else {
-        await toggleAnnouncementActive(id);
+      const result =
+        contentType === "event"
+          ? await toggleEventActive(id)
+          : await toggleAnnouncementActive(id);
+
+      if (!result.success) {
+        showActionError(result);
+        return;
       }
 
+      toast.success(result.message);
       fetchData();
     } catch (error) {
       console.error("Error toggling status:", error);
-      alert("Failed to update status. Please try again.");
+      toast.error("Failed to update status. Please try again.");
     }
   };
 

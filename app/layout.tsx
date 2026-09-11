@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { Toaster } from "sonner";
 import ConsoleWelcome from "@/components/ConsoleWelcome";
 import "./globals.css";
 
@@ -30,6 +31,11 @@ export default function RootLayout({
       >
         <ConsoleWelcome /> {/* Add this line */}
         {children}
+        {/* Mounted once at the root: every toast() call in the dashboard was
+            rendering nothing, because the only <Toaster> lived inside
+            /test-feedback. Imported from "sonner" directly rather than from
+            components/ui/sonner, which pulls in the uninstalled next-themes. */}
+        <Toaster position="top-right" richColors closeButton />
       </body>
     </html>
   );

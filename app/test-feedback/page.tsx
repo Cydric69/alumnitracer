@@ -4,7 +4,6 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import FeedbackForm from "@/components/forms/FeedbackForm";
-import { Toaster } from "sonner";
 
 // Shadcn UI Components
 import { Button } from "@/components/ui/button";
@@ -39,8 +38,6 @@ export default function FeedbackTestPage() {
 
   return (
     <div className="min-h-screen bg-white py-8 px-4 sm:px-6 lg:px-8">
-      <Toaster position="top-right" expand={false} richColors closeButton />
-
       <div className="max-w-5xl mx-auto">
         {/* Header - Left Aligned */}
         <div className="pl-20 mb-5">

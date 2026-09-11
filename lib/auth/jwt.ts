@@ -25,7 +25,9 @@ export interface AuthTokenPayload {
  */
 export function verifyAuthToken(token: string): AuthTokenPayload | null {
   try {
-    const decoded = jwt.verify(token, JWT_SECRET) as {
+    const decoded = jwt.verify(token, JWT_SECRET, {
+      algorithms: ["HS256"],
+    }) as {
       userId?: unknown;
       email?: unknown;
       role?: unknown;
@@ -55,7 +57,15 @@ export function verifyAuthToken(token: string): AuthTokenPayload | null {
       iat: decoded.iat,
       exp: decoded.exp,
     };
-  } catch {
+  } catch (error) {
+    // An expired or forged token is routine — stay quiet. Anything else means
+    // the secret was rotated/mistyped or the crypto layer is broken, which
+    // logs every admin out while looking identical to "not signed in". Without
+    // this line that outage leaves no trace anywhere.
+    const name = (error as { name?: string } | null)?.name;
+    if (name !== "TokenExpiredError" && name !== "JsonWebTokenError") {
+      console.error("verifyAuthToken: unexpected verification failure:", error);
+    }
     return null;
   }
 }

@@ -23,13 +23,16 @@ export const announcementSchema = eventSchema.omit({
 export const announcementUpdateSchema = announcementSchema.partial();
 
 // Announcements take the same filter shape as events.
+//
+// `year` deliberately mirrors the WRITE schema above (a free trimmed string,
+// not /^\d{4}$/). `year` is free text on the create form and getYears() offers
+// whatever was stored as a filter option, so a stricter read schema rejects
+// values the app itself produced — e.g. "2024-2025". Being a string is what
+// prevents operator injection; the 4-digit shape never added safety, only a
+// disagreement between the two schemas.
 export const eventFiltersSchema = z.object({
   status: z.enum(["all", "active", "inactive"]).optional(),
-  year: z
-    .string()
-    .regex(/^\d{4}$/)
-    .optional()
-    .or(z.literal("all")),
+  year: z.string().trim().min(1).max(20).optional(),
 });
 
 export type EventFilters = z.infer<typeof eventFiltersSchema>;

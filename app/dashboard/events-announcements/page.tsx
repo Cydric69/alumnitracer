@@ -238,14 +238,19 @@ export default function AdminEventsAnnouncementsPage() {
   };
 
   // Handle delete
-  const handleDelete = async (id: string) => {
+  // `type` is passed in rather than read from `contentType` state: the row
+  // buttons call setContentType() and this handler in the same tick, so the
+  // state has not updated yet and the first click on the Announcements tab
+  // dispatched deleteEvent() — which then reported "Event not found" for an
+  // announcement that plainly exists.
+  const handleDelete = async (id: string, type: ContentType) => {
     if (!confirm("Are you sure you want to delete this item?")) {
       return;
     }
 
     try {
       const result =
-        contentType === "event"
+        type === "event"
           ? await deleteEvent(id)
           : await deleteAnnouncement(id);
 
@@ -264,10 +269,11 @@ export default function AdminEventsAnnouncementsPage() {
   };
 
   // Handle toggle active status
-  const handleToggleActive = async (id: string) => {
+  // Same stale-state hazard as handleDelete — take the type as an argument.
+  const handleToggleActive = async (id: string, type: ContentType) => {
     try {
       const result =
-        contentType === "event"
+        type === "event"
           ? await toggleEventActive(id)
           : await toggleAnnouncementActive(id);
 
@@ -614,7 +620,12 @@ export default function AdminEventsAnnouncementsPage() {
                                       : "announcement",
                                   );
                                   setSelectedItem(item);
-                                  handleToggleActive(item._id);
+                                  handleToggleActive(
+                                    item._id,
+                                    activeTab === "events"
+                                      ? "event"
+                                      : "announcement",
+                                  );
                                 }}
                                 className={`p-2 rounded-lg transition-colors ${
                                   item.isActive && !expired
@@ -653,7 +664,12 @@ export default function AdminEventsAnnouncementsPage() {
                                       : "announcement",
                                   );
                                   setSelectedItem(item);
-                                  handleDelete(item._id);
+                                  handleDelete(
+                                    item._id,
+                                    activeTab === "events"
+                                      ? "event"
+                                      : "announcement",
+                                  );
                                 }}
                                 className="p-2 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors"
                                 title="Delete"

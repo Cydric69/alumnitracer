@@ -4,7 +4,11 @@ import { revalidatePath } from "next/cache";
 import mongoose from "mongoose";
 
 import { dbConnect } from "@/lib/dbConnect";
-import { requireAdmin, UnauthorizedError } from "@/lib/auth/require-admin";
+import {
+  requireAdmin,
+  isAdminSession,
+  isUnauthorizedError,
+} from "@/lib/auth/require-admin";
 import {
   fail,
   unauthorized,
@@ -131,22 +135,44 @@ function mongooseValidationErrors(error: any): string[] {
 
 // Never let a raw argument reach a mongo query filter: build the filter from the
 // parsed values only, so `{"year":{"$ne":null}}` cannot become an operator.
-function buildContentFilters(params: { status?: string; year?: string }) {
+/**
+ * Build a mongo filter from caller-supplied params.
+ *
+ * `allowInactive` is the security boundary, not a convenience flag. A public
+ * caller may narrow what it sees but must never widen it: `isActive: true` is
+ * pinned for them regardless of what `status` they send and regardless of
+ * whether the rest of the input parses. Failing to parse must never produce a
+ * BROADER result set than succeeding — that turns one bad field into a
+ * disclosure of unpublished content.
+ */
+function buildContentFilters(
+  params: { status?: string; year?: string },
+  { allowInactive }: { allowInactive: boolean },
+) {
   const parsed = eventFiltersSchema.safeParse(params);
   const filters: Record<string, unknown> = {};
 
   if (!parsed.success) {
-    return filters;
+    console.error(
+      "buildContentFilters: ignoring unparseable filter params:",
+      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
+    );
   }
 
-  const { status, year } = parsed.data;
+  // On a parse failure every caller-supplied narrowing is dropped, so what is
+  // left is the pinned default below — never an empty (match-everything) filter.
+  const data = parsed.success ? parsed.data : {};
 
-  if (status && status !== "all") {
-    filters.isActive = status === "active";
+  if (allowInactive) {
+    if (data.status && data.status !== "all") {
+      filters.isActive = data.status === "active";
+    }
+  } else {
+    filters.isActive = true;
   }
 
-  if (year && year !== "all") {
-    filters.year = year;
+  if (data.year && data.year !== "all") {
+    filters.year = data.year;
   }
 
   return filters;
@@ -164,7 +190,13 @@ export async function getEvents(
   try {
     await dbConnect();
 
-    const events = await Event.find(buildContentFilters(params))
+    // Public by design (the landing page and /events-announcements call it),
+    // so inactive rows are only reachable with an admin session. Without this
+    // an anonymous caller could pass status:"inactive" — or nothing at all —
+    // and read unpublished content straight out of the client bundle's action id.
+    const allowInactive = await isAdminSession();
+
+    const events = await Event.find(buildContentFilters(params, { allowInactive }))
       .sort({ date: -1, createdAt: -1 })
       .lean();
 
@@ -231,7 +263,7 @@ export async function createEvent(
     };
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   } catch (error: any) {
-    if (error instanceof UnauthorizedError) return unauthorized();
+    if (isUnauthorizedError(error)) return unauthorized();
     console.error("createEvent error:", error);
 
     if (error?.name === "ValidationError") {
@@ -326,7 +358,7 @@ export async function updateEvent(
     };
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   } catch (error: any) {
-    if (error instanceof UnauthorizedError) return unauthorized();
+    if (isUnauthorizedError(error)) return unauthorized();
     console.error("updateEvent error:", error);
 
     if (error?.name === "ValidationError") {
@@ -360,7 +392,7 @@ export async function deleteEvent(id: string): Promise<ActionResult> {
 
     return { success: true, message: "Event deleted" };
   } catch (error) {
-    if (error instanceof UnauthorizedError) return unauthorized();
+    if (isUnauthorizedError(error)) return unauthorized();
     console.error("deleteEvent error:", error);
     return fail("Failed to delete event");
   }
@@ -394,7 +426,7 @@ export async function toggleEventActive(
       data: serializeEvent(event),
     };
   } catch (error) {
-    if (error instanceof UnauthorizedError) return unauthorized();
+    if (isUnauthorizedError(error)) return unauthorized();
     console.error("toggleEventActive error:", error);
     return fail("Failed to toggle event status");
   }
@@ -418,7 +450,7 @@ export async function getEventById(id: string) {
     return serializeEvent(event);
   } catch (error) {
     console.error("Error fetching event:", error);
-    throw error instanceof UnauthorizedError
+    throw isUnauthorizedError(error)
       ? error
       : new Error("Failed to fetch event");
   }
@@ -436,7 +468,12 @@ export async function getAnnouncements(
   try {
     await dbConnect();
 
-    const announcements = await Announcement.find(buildContentFilters(params))
+    // Same public/admin split as getEvents above.
+    const allowInactive = await isAdminSession();
+
+    const announcements = await Announcement.find(
+      buildContentFilters(params, { allowInactive }),
+    )
       .sort({ date: -1, createdAt: -1 })
       .lean();
 
@@ -506,7 +543,7 @@ export async function createAnnouncement(
     };
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   } catch (error: any) {
-    if (error instanceof UnauthorizedError) return unauthorized();
+    if (isUnauthorizedError(error)) return unauthorized();
     console.error("createAnnouncement error:", error);
 
     if (error?.name === "ValidationError") {
@@ -609,7 +646,7 @@ export async function updateAnnouncement(
     };
     /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
   } catch (error: any) {
-    if (error instanceof UnauthorizedError) return unauthorized();
+    if (isUnauthorizedError(error)) return unauthorized();
     console.error("updateAnnouncement error:", error);
 
     if (error?.name === "ValidationError") {
@@ -643,7 +680,7 @@ export async function deleteAnnouncement(id: string): Promise<ActionResult> {
 
     return { success: true, message: "Announcement deleted" };
   } catch (error) {
-    if (error instanceof UnauthorizedError) return unauthorized();
+    if (isUnauthorizedError(error)) return unauthorized();
     console.error("deleteAnnouncement error:", error);
     return fail("Failed to delete announcement");
   }
@@ -679,7 +716,7 @@ export async function toggleAnnouncementActive(
       data: serializeAnnouncement(announcement),
     };
   } catch (error) {
-    if (error instanceof UnauthorizedError) return unauthorized();
+    if (isUnauthorizedError(error)) return unauthorized();
     console.error("toggleAnnouncementActive error:", error);
     return fail("Failed to toggle announcement status");
   }
@@ -703,7 +740,7 @@ export async function getAnnouncementById(id: string) {
     return serializeAnnouncement(announcement);
   } catch (error) {
     console.error("Error fetching announcement:", error);
-    throw error instanceof UnauthorizedError
+    throw isUnauthorizedError(error)
       ? error
       : new Error("Failed to fetch announcement");
   }
@@ -786,7 +823,12 @@ export async function searchContent(
       return [];
     }
 
-    const searchRegex = { $regex: query.trim(), $options: "i" };
+    // Escaped: $regex treats the input as a PATTERN, not a literal, so an
+    // unescaped `(a+)+$` pins a CPU on an unindexed collection scan.
+    const searchRegex = {
+      $regex: query.trim().replace(/[.*+?^${}()|[\]\\]/g, "\\$&"),
+      $options: "i",
+    };
 
     if (contentType === "events") {
       const events = await Event.find({
@@ -891,7 +933,7 @@ export async function searchContent(
     }
   } catch (error) {
     console.error("Error searching content:", error);
-    throw error instanceof UnauthorizedError
+    throw isUnauthorizedError(error)
       ? error
       : new Error("Failed to search content");
   }

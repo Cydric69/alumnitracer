@@ -2,14 +2,15 @@ import jwt from "jsonwebtoken";
 
 // NOTE: kept free of mongoose / next / @/models imports so it can be pulled into
 // any runtime (middleware, root proxy) without dragging in the DB layer.
-const secret = process.env.JWT_SECRET;
+// Read once, NOT thrown on at module scope. This module is now reachable from
+// the PUBLIC landing page (app/page.tsx -> events actions -> require-admin ->
+// here), so a module-level throw would take the whole marketing site down — and
+// fail `next build` collecting page data — in any environment missing the
+// secret. Previously only the login endpoints depended on it. Verification
+// fails closed instead: no secret means no token ever verifies.
+const JWT_SECRET = process.env.JWT_SECRET;
 
-if (!secret) {
-  throw new Error("JWT_SECRET environment variable is not set");
-}
-
-// Re-bound so the narrowing survives into the closure below.
-const JWT_SECRET: string = secret;
+let warnedMissingSecret = false;
 
 export interface AuthTokenPayload {
   userId: string;
@@ -24,6 +25,18 @@ export interface AuthTokenPayload {
  * expired, or a role outside the admin union) — never throws.
  */
 export function verifyAuthToken(token: string): AuthTokenPayload | null {
+  if (!JWT_SECRET) {
+    // Once per process — this is a deployment fault, and a silent `null` here
+    // is indistinguishable from "not signed in", which is how an outage hides.
+    if (!warnedMissingSecret) {
+      warnedMissingSecret = true;
+      console.error(
+        "verifyAuthToken: JWT_SECRET is not set — no session can be verified.",
+      );
+    }
+    return null;
+  }
+
   try {
     const decoded = jwt.verify(token, JWT_SECRET, {
       algorithms: ["HS256"],

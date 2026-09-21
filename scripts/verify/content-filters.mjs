@@ -43,22 +43,16 @@ fs.writeFileSync(
     })
     .outputText.replace(/from ["']zod["']/g, `from "${path.join(ROOT, "node_modules/zod/index.js")}"`),
 );
-const { eventFiltersSchema } = await import(out);
+const mod = await import(out);
+const { eventFiltersSchema } = mod;
 
-// Mirrors buildContentFilters() in the actions file. Kept in step by the
-// structural assertions at the bottom, which fail if the real one drifts.
-function buildContentFilters(params, { allowInactive }) {
-  const parsed = eventFiltersSchema.safeParse(params);
-  const filters = {};
-  const data = parsed.success ? parsed.data : {};
-  if (allowInactive) {
-    if (data.status && data.status !== "all") filters.isActive = data.status === "active";
-  } else {
-    filters.isActive = true;
-  }
-  if (data.year && data.year !== "all") filters.year = data.year;
-  return filters;
-}
+// THE REAL FUNCTION, imported — not a copy. A previous version of this script
+// re-implemented buildContentFilters inline and checked the source with regexes.
+// A reviewer defeated it: adding `if (params.status === "inactive")
+// filters.isActive = false;` after the pin reopened the vulnerability in full
+// and this script still printed `failures: 0`. A guard that tests its own copy
+// of the code tests nothing.
+const { buildContentFilters } = mod;
 
 let failures = 0;
 const check = (name, ok) => {
@@ -80,13 +74,13 @@ for (const params of [
   { year: "" },
   { year: "x".repeat(999) },
 ]) {
-  const f = buildContentFilters(params, { allowInactive: false });
+  const { filters: f } = buildContentFilters(params, { allowInactive: false });
   check(`${JSON.stringify(params)} -> ${JSON.stringify(f)}`, f.isActive === true);
 }
 
 console.log("\nNo mongo operator reaches the filter:");
 for (const params of [{ year: { $ne: null } }, { year: { $gt: "" } }, { status: { $ne: null } }]) {
-  const f = buildContentFilters(params, { allowInactive: true });
+  const { filters: f } = buildContentFilters(params, { allowInactive: true });
   check(
     `${JSON.stringify(params)} -> ${JSON.stringify(f)}`,
     Object.values(f).every((v) => typeof v !== "object"),
@@ -94,22 +88,35 @@ for (const params of [{ year: { $ne: null } }, { year: { $gt: "" } }, { status: 
 }
 
 console.log("\nAn admin keeps the full view:");
-check("inactive -> isActive:false", buildContentFilters({ status: "inactive" }, { allowInactive: true }).isActive === false);
-check("all -> unfiltered", !("isActive" in buildContentFilters({ status: "all" }, { allowInactive: true })));
+check("inactive -> isActive:false", buildContentFilters({ status: "inactive" }, { allowInactive: true }).filters.isActive === false);
+check("all -> unfiltered", !("isActive" in buildContentFilters({ status: "all" }, { allowInactive: true }).filters));
 
 console.log("\nThe read schema accepts what the write side can store:");
 check('"2024-2025" parses', eventFiltersSchema.safeParse({ status: "active", year: "2024-2025" }).success);
 check(
   "and is applied rather than silently dropped",
-  buildContentFilters({ status: "active", year: "2024-2025" }, { allowInactive: true }).year === "2024-2025",
+  buildContentFilters({ status: "active", year: "2024-2025" }, { allowInactive: true }).filters.year === "2024-2025",
 );
 
-console.log("\nThe real source still has the shape this check models:");
+console.log("\nThe call sites resolve allowInactive from the session:");
 const actions = fs.readFileSync(ACTIONS, "utf8");
-check("buildContentFilters takes an allowInactive option", /buildContentFilters\(\s*params[^)]*\{\s*allowInactive/s.test(actions));
-check("it pins isActive = true on the non-admin branch", /else\s*\{\s*filters\.isActive = true;/.test(actions));
-check("it never returns early on a parse failure", !/if \(!parsed\.success\) \{\s*return filters;/.test(actions));
-check("both public getters resolve the session", (actions.match(/await isAdminSession\(\)/g) || []).length >= 2);
+// The imported function above proves the LOGIC. These prove the two public
+// getters actually feed it a session-derived value instead of a literal —
+// the exact regression the previous structural regexes let through.
+const callSites = [...actions.matchAll(/buildContentFilters\(\s*params\s*,\s*\{\s*allowInactive\s*\}\s*\)/g)];
+check(`both public getters call it with the session-derived flag (found ${callSites.length})`, callSites.length === 2);
+check(
+  "allowInactive is assigned from isAdminSession(), never a literal",
+  (actions.match(/const allowInactive = await isAdminSession\(\);/g) || []).length === 2,
+);
+check(
+  "no call site hardcodes allowInactive",
+  !/allowInactive:\s*(true|false)/.test(actions),
+);
+check(
+  "the filter builder is not redefined locally (it must be the imported one)",
+  !/function buildContentFilters\s*\(/.test(actions),
+);
 
 console.log(`\nfailures: ${failures}`);
 process.exit(failures ? 1 : 0);

@@ -17,7 +17,7 @@ import {
 import {
   announcementSchema,
   announcementUpdateSchema,
-  eventFiltersSchema,
+  buildContentFilters,
   eventSchema,
   eventUpdateSchema,
 } from "@/lib/validations/events-announcements";
@@ -133,51 +133,6 @@ function mongooseValidationErrors(error: any): string[] {
   return Object.values(error.errors).map((err: any) => err.message);
 }
 
-// Never let a raw argument reach a mongo query filter: build the filter from the
-// parsed values only, so `{"year":{"$ne":null}}` cannot become an operator.
-/**
- * Build a mongo filter from caller-supplied params.
- *
- * `allowInactive` is the security boundary, not a convenience flag. A public
- * caller may narrow what it sees but must never widen it: `isActive: true` is
- * pinned for them regardless of what `status` they send and regardless of
- * whether the rest of the input parses. Failing to parse must never produce a
- * BROADER result set than succeeding — that turns one bad field into a
- * disclosure of unpublished content.
- */
-function buildContentFilters(
-  params: { status?: string; year?: string },
-  { allowInactive }: { allowInactive: boolean },
-) {
-  const parsed = eventFiltersSchema.safeParse(params);
-  const filters: Record<string, unknown> = {};
-
-  if (!parsed.success) {
-    console.error(
-      "buildContentFilters: ignoring unparseable filter params:",
-      parsed.error.issues.map((i) => `${i.path.join(".")}: ${i.message}`),
-    );
-  }
-
-  // On a parse failure every caller-supplied narrowing is dropped, so what is
-  // left is the pinned default below — never an empty (match-everything) filter.
-  const data = parsed.success ? parsed.data : {};
-
-  if (allowInactive) {
-    if (data.status && data.status !== "all") {
-      filters.isActive = data.status === "active";
-    }
-  } else {
-    filters.isActive = true;
-  }
-
-  if (data.year && data.year !== "all") {
-    filters.year = data.year;
-  }
-
-  return filters;
-}
-
 // ========== EVENT ACTIONS ==========
 
 // Get all events with optional filters (PUBLIC — landing page and events page)
@@ -196,7 +151,12 @@ export async function getEvents(
     // and read unpublished content straight out of the client bundle's action id.
     const allowInactive = await isAdminSession();
 
-    const events = await Event.find(buildContentFilters(params, { allowInactive }))
+    const { filters, dropped } = buildContentFilters(params, { allowInactive });
+    if (dropped.length) {
+      console.error("getEvents: ignoring unparseable filter fields:", dropped);
+    }
+
+    const events = await Event.find(filters)
       .sort({ date: -1, createdAt: -1 })
       .lean();
 
@@ -471,9 +431,12 @@ export async function getAnnouncements(
     // Same public/admin split as getEvents above.
     const allowInactive = await isAdminSession();
 
-    const announcements = await Announcement.find(
-      buildContentFilters(params, { allowInactive }),
-    )
+    const { filters, dropped } = buildContentFilters(params, { allowInactive });
+    if (dropped.length) {
+      console.error("getAnnouncements: ignoring unparseable filter fields:", dropped);
+    }
+
+    const announcements = await Announcement.find(filters)
       .sort({ date: -1, createdAt: -1 })
       .lean();
 
@@ -755,15 +718,20 @@ export async function getYears(
   try {
     await dbConnect();
 
+    // PUBLIC. `distinct` with no filter surfaces a year that exists only on
+    // unpublished rows, which the public dropdown then renders — the same
+    // boundary the getters above pin, reached by a different route.
+    const scope = (await isAdminSession()) ? {} : { isActive: true };
+
     let years: string[] = [];
 
     if (contentType === "events" || contentType === "all") {
-      const eventYears = await Event.distinct("year");
+      const eventYears = await Event.distinct("year", scope);
       years = [...years, ...eventYears];
     }
 
     if (contentType === "announcements" || contentType === "all") {
-      const announcementYears = await Announcement.distinct("year");
+      const announcementYears = await Announcement.distinct("year", scope);
       years = [...years, ...announcementYears];
     }
 
@@ -795,6 +763,20 @@ export async function getEventsAnnouncementsStats() {
         Announcement.countDocuments(),
         Announcement.countDocuments({ isActive: true }),
       ]);
+
+    // PUBLIC. The landing page renders only the active counts, but this action
+    // is directly invocable, so shipping the inactive ones makes it an oracle on
+    // how much unpublished content exists. Admins still get the full shape.
+    if (!(await isAdminSession())) {
+      return {
+        totalEvents: activeEvents,
+        activeEvents,
+        inactiveEvents: 0,
+        totalAnnouncements: activeAnnouncements,
+        activeAnnouncements,
+        inactiveAnnouncements: 0,
+      };
+    }
 
     return {
       totalEvents,

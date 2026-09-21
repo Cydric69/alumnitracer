@@ -24,3 +24,11 @@ executable guard — and the promotion is recorded in the entry.
 - **Guard:** A lint/grep verifier asserting every exported function in app/actions/**.ts either calls requireAdmin() as its first statement or is listed in an explicit PUBLIC_ACTIONS allowlist; plus a rule that no safeParse .success===false branch returns an empty query filter
 - **Promoted:** no
 
+## 2026-09-21 — A verify script under scripts/verify/ asserts a security invariant against a hand-copied reimplementation of the real function, linked to the source only by structural regexes
+<!-- key:e1728f7e0cb5 -->
+
+- **Trigger:** A verify script under scripts/verify/ asserts a security invariant against a hand-copied reimplementation of the real function, linked to the source only by structural regexes
+- **Lesson:** Never accept a structural-regex link as proof the verifier covers the real code. Mutate the real source in a scratchpad, re-run the verifier's regexes against the mutated string, and confirm at least one goes red. Here all four stayed green while both public call sites were rewritten to hardcode allowInactive:true. The fix is to make the invariant importable: move the pure filter builder out of the 'use server' module into lib/validations/ so the verifier imports the real function instead of a copy. Second: in a Next.js App Router repo, a middleware.ts located inside app/ is NEVER executed - only the project root or src/. Check the file's LOCATION, not its contents, before concluding an auth gate exists.
+- **Guard:** scripts/verify/content-filters.mjs importing the real buildContentFilters from lib/ rather than reimplementing it; plus a grep check failing when app/middleware.ts exists while root middleware.ts does not
+- **Promoted:** no
+

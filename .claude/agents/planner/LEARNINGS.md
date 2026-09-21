@@ -16,3 +16,11 @@ executable guard — and the promotion is recorded in the entry.
 - **Guard:** scripts/classify-change.sh HEAVY_PATHS: proxy.ts middleware.ts app/api/auth/** services/authService.ts lib/auth/** app/actions/** models/User.ts; plus a scripts/verify check that fails when app/middleware.ts or app/proxy.ts exists
 - **Promoted:** no
 
+## 2026-09-21 — Brief said 'a verified patch script is waiting at <scratchpad path>' and 'a design spec already exists'; neither file existed (scratchpad is per-session, spec lived only in a prior chat). Also the checkout was on the PR branch, not main, and 'tsc | grep -v ^alumnitracer/' hid that next build itself type-checks the nested clone and fails on it first.
+<!-- key:330ebad87e66 -->
+
+- **Trigger:** Brief said 'a verified patch script is waiting at <scratchpad path>' and 'a design spec already exists'; neither file existed (scratchpad is per-session, spec lived only in a prior chat). Also the checkout was on the PR branch, not main, and 'tsc | grep -v ^alumnitracer/' hid that next build itself type-checks the nested clone and fails on it first.
+- **Lesson:** Before planning: cat .git/HEAD; ls -la every path a brief hands over as 'ready'; and run the real gate (next build) not a filtered proxy for it. Treat any artifact referenced by scratchpad path as lost unless it is in the repo or vault.
+- **Guard:** NONE-YET (a preflight that ls's every absolute path in the brief would catch the first; classify-change.sh could refuse when HEAD != default branch)
+- **Promoted:** no
+
